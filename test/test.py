@@ -66,7 +66,7 @@ async def drive_rx(dut, byte):
 
 async def reset_dut(dut):
     clock = Clock(dut.clk, 20, unit="ns")
-    cocotb.start_soon(clock.start())
+    task = cocotb.start_soon(clock.start())
     dut.ena.value = 1
     dut.ui_in.value = 0x04  # RX idle high
     dut.uio_in.value = 0
@@ -74,42 +74,55 @@ async def reset_dut(dut):
     await ClockCycles(dut.clk, 8)
     dut.rst_n.value = 1
     await ClockCycles(dut.clk, 4)
+    return task
 
 
 @cocotb.test()
 async def test_idle_ones(dut):
-    await reset_dut(dut)
-    assert ones_ok(dut) == 1, "ONES_OK after reset"
-    assert tx_bit(dut) == 1, "TX idle high"
-    assert tx_busy(dut) == 0, "idle not busy"
+    task = await reset_dut(dut)
+    try:
+        assert ones_ok(dut) == 1, "ONES_OK after reset"
+        assert tx_bit(dut) == 1, "TX idle high"
+        assert tx_busy(dut) == 0, "idle not busy"
+    finally:
+        task.cancel()
 
 
 @cocotb.test()
 async def test_fire_0x55(dut):
-    await reset_dut(dut)
-    await fire_byte(dut, 0x55)
-    got = await sample_frame(dut)
-    assert got == 0x55, f"data {got:#x}"
-    for _ in range(16):
-        await RisingEdge(dut.clk)
-        if tx_busy(dut) == 0:
-            break
-    assert ones_ok(dut) == 1, "ONES_OK held"
+    task = await reset_dut(dut)
+    try:
+        await fire_byte(dut, 0x55)
+        got = await sample_frame(dut)
+        assert got == 0x55, f"data {got:#x}"
+        for _ in range(16):
+            await RisingEdge(dut.clk)
+            if tx_busy(dut) == 0:
+                break
+        assert ones_ok(dut) == 1, "ONES_OK held"
+    finally:
+        task.cancel()
 
 
 @cocotb.test()
 async def test_fire_ones_low(dut):
-    await reset_dut(dut)
-    await fire_byte(dut, 0x53)
-    got = await sample_frame(dut)
-    assert got == 0x53, f"ONES low byte {got:#x}"
-    assert ones_ok(dut) == 1
+    task = await reset_dut(dut)
+    try:
+        await fire_byte(dut, 0x53)
+        got = await sample_frame(dut)
+        assert got == 0x53, f"ONES low byte {got:#x}"
+        assert ones_ok(dut) == 1
+    finally:
+        task.cancel()
 
 
 @cocotb.test()
 async def test_rx_0x55(dut):
-    await reset_dut(dut)
-    await drive_rx(dut, 0x55)
-    await ClockCycles(dut.clk, 4)
-    assert rx_live(dut) == 1, "RX got a byte"
-    assert ones_ok(dut) == 1
+    task = await reset_dut(dut)
+    try:
+        await drive_rx(dut, 0x55)
+        await ClockCycles(dut.clk, 4)
+        assert rx_live(dut) == 1, "RX got a byte"
+        assert ones_ok(dut) == 1
+    finally:
+        task.cancel()

@@ -74,12 +74,13 @@ module tt_um_jlnuijens_one11_uart #(
   genvar k;
   generate
     for (k = 0; k < N_BASES; k = k + 1) begin : bases
+      wire [31:0] seq_k = seq + k;
       one_cpu11 #(.LANE(k)) u_cpu (
         .clk       (clk),
         .rst_n     (rst_n),
         .run_hot   (hot),
         .fire      (fire),
-        .seq       (seq + k),
+        .seq       (seq_k),
         .rx_strobe (rx_strobe),
         .rx_data   (rx_byte),
         .sig0      (s0[k]),
