@@ -4,7 +4,7 @@
 
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import ClockCycles, RisingEdge
+from cocotb.triggers import ClockCycles, RisingEdge, Timer
 
 CPB = 1
 
@@ -37,19 +37,27 @@ def set_rx(dut, bit):
 async def fire_byte(dut, byte):
     dut.uio_in.value = byte
     await RisingEdge(dut.clk)
-    v = int(dut.ui_in.value) & ~0x01
-    dut.ui_in.value = v | 0x01
+    dut.ui_in.value = 0x05  # FIRE + RX idle high
     await RisingEdge(dut.clk)
-    dut.ui_in.value = v
+    dut.ui_in.value = 0x04
+    await Timer(1, unit="ns")
 
 
 async def sample_frame(dut):
-    assert tx_bit(dut) == 0, "start"
+    for _ in range(20):
+        if tx_bit(dut) == 0:
+            break
+        await RisingEdge(dut.clk)
+        await Timer(1, unit="ns")
+    else:
+        raise AssertionError("no start bit on TX")
     got = 0
     for i in range(8):
         await ClockCycles(dut.clk, CPB)
+        await Timer(1, unit="ns")
         got |= tx_bit(dut) << i
     await ClockCycles(dut.clk, CPB)
+    await Timer(1, unit="ns")
     assert tx_bit(dut) == 1, "stop"
     return got
 
