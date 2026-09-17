@@ -4,7 +4,7 @@
 
 Jane Street protocol-emulator ASIC — Tiny Tapeout IHP CMOS5L, 6×4 tiles.
 
-UART is FIRE on a pad. Clock is the oscillator. RX on `ui[2]`, TX on `uo[0]`. Byte on `uio`, pulse `ui[0]`, one clock walks one bit. Sixteen 1.1-class bases take that FIRE on the same edge. Preloaded. No fetch.
+UART, SPI, and I2C are one FIRE walk. Stretch USB LS NRZI and 10 Mbit Manchester. Clock range is the count (1 = 50 Mbit). Sixteen 1.1-class bases. Preloaded. No fetch.
 
 Joshua Luke Nuijens / Axiom 1 Technology, LLC
 
@@ -35,12 +35,18 @@ This is not a Quartus project. Quartus is the Nano / CPU 1.1 processor path.
 |---|---|
 | `ui[0]` | FIRE (rising) |
 | `ui[1]` | HOT |
-| `ui[2]` | UART RX |
-| `uio[7:0]` | seq byte |
-| `uo[0]` | UART TX |
-| `uo[1]` | TX_BUSY |
+| `ui[2]` | UART RX / SPI MISO |
+| `ui[4:3]` | map: UART SPI I2C USB/ETH |
+| `ui[7:5]` | range 1 / 4 / 5 / 8 / 16 / 33 / 125 / 434 |
+| `uio[7:0]` | seq byte (I2C SDA on bit 0) |
+| `uo[0]` | UART TX / USB DM / ETH |
+| `uo[1]` | BUSY |
 | `uo[2]` | ONES (`r15 == 0x4F4E4553`) |
-| `uo[3]` | RX_GOT |
+| `uo[3]` | GOT |
+| `uo[4]` | SPI MOSI / I2C SCL |
+| `uo[5]` | SPI SCLK |
+| `uo[6]` | SPI CS_n |
+| `uo[7]` | USB DP / face |
 
 ## Sim
 
@@ -49,7 +55,7 @@ python3 test/sim_uart.py
 cd test && make
 ```
 
-`CLKS_PER_BIT` is 1. 50 MHz → 50 Mbit. One oscillation, one bit.
+`Range` is 1, 4, 5, 8, 16, 33, 125, 434 clocks per bit. Identity is 1.
 
 ## License
 

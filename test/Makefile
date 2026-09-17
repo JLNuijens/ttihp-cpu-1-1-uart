@@ -5,7 +5,7 @@ SIM ?= icarus
 FST ?= -fst
 TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
-PROJECT_SOURCES = project.v one_cpu11.v js_uart_fire.v
+PROJECT_SOURCES = project.v one_cpu11.v js_uart_fire.v js_range.v js_spi_fire.v js_i2c_fire.v js_line_fire.v
 
 ifneq ($(GATES),yes)
 

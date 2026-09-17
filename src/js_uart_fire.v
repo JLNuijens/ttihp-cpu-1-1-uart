@@ -1,15 +1,13 @@
 // UART as FIRE on a pad. RX and TX. Clock is the oscillator, not the data.
-// 1 clock = 1 bit = 1 oscillation. FIRE walks 8N1 on TX. RX samples 8N1 in.
-// Byte on seq[7:0] for TX. r15 stays ONES.
+// clks is the range: 1 = one oscillation per bit. r15 stays ONES.
 `default_nettype none
 
-module js_uart_fire #(
-  parameter CLKS_PER_BIT = 1
-) (
+module js_uart_fire (
   input  wire        clk,
   input  wire        rst_n,
   input  wire        fire,
   input  wire [31:0] seq,
+  input  wire [15:0] clks,
   input  wire        rx,
   output reg         tx,
   output wire [31:0] r15,
@@ -19,15 +17,16 @@ module js_uart_fire #(
   output reg         rx_got
 );
   localparam [31:0] ONES = 32'h4F4E4553;
-
   assign r15 = ONES;
 
-  // ---- TX: FIRE packs {stop, data, start}, clock walks one bit per CPB ----
+  wire [15:0] cpb = (clks == 16'd0) ? 16'd1 : clks;
+
   reg        go;
   reg [3:0]  bit_i;
   reg [15:0] ck;
   reg [9:0]  frame;
   reg        busy_r;
+  reg [15:0] hold;
 
   assign tx_busy = busy_r;
 
@@ -39,15 +38,17 @@ module js_uart_fire #(
       ck     <= 16'd0;
       frame  <= 10'h3FF;
       busy_r <= 1'b0;
+      hold   <= 16'd1;
     end else if (fire && !busy_r) begin
       frame  <= {1'b1, seq[7:0], 1'b0};
       bit_i  <= 4'd0;
       ck     <= 16'd0;
       go     <= 1'b1;
       busy_r <= 1'b1;
+      hold   <= cpb;
       tx     <= 1'b0;
     end else if (go) begin
-      if (ck == CLKS_PER_BIT - 1) begin
+      if (ck == hold - 16'd1) begin
         ck <= 16'd0;
         if (bit_i == 4'd9) begin
           go     <= 1'b0;
@@ -63,16 +64,15 @@ module js_uart_fire #(
     end
   end
 
-  // ---- RX: falling edge is start. Same clock count. Byte lands on the pads. ----
   reg        rx_d;
   reg        rx_go;
   reg [3:0]  rx_i;
   reg [15:0] rx_ck;
   reg [7:0]  rx_shift;
   reg        rx_busy_r;
+  reg [15:0] rx_hold;
 
   assign rx_busy = rx_busy_r;
-
   wire rx_fall = rx_d & ~rx;
 
   always @(posedge clk or negedge rst_n) begin
@@ -85,6 +85,7 @@ module js_uart_fire #(
       rx_byte   <= 8'd0;
       rx_busy_r <= 1'b0;
       rx_got    <= 1'b0;
+      rx_hold   <= 16'd1;
     end else begin
       rx_d <= rx;
       if (fire) rx_got <= 1'b0;
@@ -94,8 +95,9 @@ module js_uart_fire #(
         rx_i      <= 4'd0;
         rx_ck     <= 16'd0;
         rx_shift  <= 8'd0;
+        rx_hold   <= cpb;
       end else if (rx_go) begin
-        if (rx_ck == CLKS_PER_BIT - 1) begin
+        if (rx_ck == rx_hold - 16'd1) begin
           rx_ck <= 16'd0;
           if (rx_i == 4'd0) begin
             rx_shift[0] <= rx;

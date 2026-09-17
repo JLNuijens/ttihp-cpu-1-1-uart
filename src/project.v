@@ -3,15 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  * Tiny Tapeout 6x4 — CPU 1.1 UART
- * Clock is the oscillator. RX and TX are the data pair.
- * 16 pad/register sites. 16 bases on the same clock.
- * 1 clock = 1 bit. UART is FIRE on the pads.
+ * One oscillator. FIRE. Pads. Clock count is the range.
+ * UART / SPI / I2C walks. Stretch USB LS + 10 Mbit Manchester.
+ * 16 bases, 16 pad/register sites. Not pasted IP.
  */
 `default_nettype none
 
 module tt_um_jlnuijens_one11_uart #(
-  parameter N_BASES      = 16,
-  parameter CLKS_PER_BIT = 1
+  parameter N_BASES = 16
 ) (
   input  wire [7:0] ui_in,
   output wire [7:0] uo_out,
@@ -24,7 +23,9 @@ module tt_um_jlnuijens_one11_uart #(
 );
   wire fire_pin = ui_in[0];
   wire hot_pin  = ui_in[1];
-  wire rx_pin   = ui_in[2];
+  wire line_in  = ui_in[2];
+  wire [1:0] map  = ui_in[4:3];
+  wire [2:0] rsel = ui_in[7:5];
   wire [31:0] seq = {24'd0, uio_in};
 
   reg fire_d;
@@ -35,6 +36,14 @@ module tt_um_jlnuijens_one11_uart #(
   wire fire = fire_pin & ~fire_d;
   wire hot  = hot_pin | ena;
 
+  wire [15:0] cpb;
+  js_range u_range (.sel(rsel), .clks(cpb));
+
+  wire uart_f = fire & (map == 2'd0);
+  wire spi_f  = fire & (map == 2'd1);
+  wire i2c_f  = fire & (map == 2'd2);
+  wire line_f = fire & (map == 2'd3);
+
   wire [31:0] s0 [0:N_BASES-1];
   wire [31:0] s1 [0:N_BASES-1];
   wire [31:0] sw [0:N_BASES-1];
@@ -44,32 +53,83 @@ module tt_um_jlnuijens_one11_uart #(
   wire [1:0]  st [0:N_BASES-1];
   wire [31:0] px [0:N_BASES-1];
 
-  wire        tx, tx_busy, rx_busy, rx_got;
+  wire        uart_tx, uart_busy, uart_rxb, uart_got;
   wire [31:0] r15_ones;
-  wire [7:0]  rx_byte;
-  wire        rx_strobe;
+  wire [7:0]  uart_byte;
 
-  js_uart_fire #(.CLKS_PER_BIT(CLKS_PER_BIT)) u_uart (
+  js_uart_fire u_uart (
     .clk      (clk),
     .rst_n    (rst_n),
-    .fire     (fire),
+    .fire     (uart_f),
     .seq      (seq),
-    .rx       (rx_pin),
-    .tx       (tx),
+    .clks     (cpb),
+    .rx       (line_in),
+    .tx       (uart_tx),
     .r15      (r15_ones),
-    .tx_busy  (tx_busy),
-    .rx_byte  (rx_byte),
-    .rx_busy  (rx_busy),
-    .rx_got   (rx_got)
+    .tx_busy  (uart_busy),
+    .rx_byte  (uart_byte),
+    .rx_busy  (uart_rxb),
+    .rx_got   (uart_got)
   );
 
-  // rx_got is sticky; pulse one clock into the pads when it rises.
-  reg rx_got_d;
+  wire spi_mosi, spi_sclk, spi_csn, spi_busy, spi_got;
+  wire [7:0] spi_byte;
+  js_spi_fire u_spi (
+    .clk     (clk),
+    .rst_n   (rst_n),
+    .fire    (spi_f),
+    .seq     (uio_in),
+    .clks    (cpb),
+    .miso    (line_in),
+    .mosi    (spi_mosi),
+    .sclk    (spi_sclk),
+    .csn     (spi_csn),
+    .busy    (spi_busy),
+    .rx_byte (spi_byte),
+    .rx_got  (spi_got)
+  );
+
+  wire i2c_scl, i2c_oe, i2c_sda, i2c_busy, i2c_ack, i2c_got;
+  js_i2c_fire u_i2c (
+    .clk     (clk),
+    .rst_n   (rst_n),
+    .fire    (i2c_f),
+    .seq     (uio_in),
+    .clks    (cpb),
+    .sda_in  (uio_in[0]),
+    .scl     (i2c_scl),
+    .sda_oe  (i2c_oe),
+    .sda_out (i2c_sda),
+    .busy    (i2c_busy),
+    .ack     (i2c_ack),
+    .rx_got  (i2c_got)
+  );
+
+  wire line_dm, line_dp, line_busy;
+  js_line_fire u_line (
+    .clk       (clk),
+    .rst_n     (rst_n),
+    .fire      (line_f),
+    .seq       (uio_in),
+    .clks      (cpb),
+    .usb_n_eth (rsel >= 3'd3),
+    .dm        (line_dm),
+    .dp        (line_dp),
+    .busy      (line_busy)
+  );
+
+  wire [7:0] rx_byte =
+      (map == 2'd1) ? spi_byte :
+      uart_byte;
+  wire got = uart_got | spi_got | i2c_got;
+  wire busy = uart_busy | spi_busy | i2c_busy | line_busy | uart_rxb;
+
+  reg got_d;
   always @(posedge clk or negedge rst_n) begin
-    if (!rst_n) rx_got_d <= 1'b0;
-    else        rx_got_d <= rx_got;
+    if (!rst_n) got_d <= 1'b0;
+    else        got_d <= got;
   end
-  assign rx_strobe = rx_got & ~rx_got_d;
+  wire rx_strobe = got & ~got_d;
 
   genvar k;
   generate
@@ -95,7 +155,6 @@ module tt_um_jlnuijens_one11_uart #(
     end
   endgenerate
 
-  // Reduction so every base and every site is in the output cone.
   wire [3:0]  wt_x [0:N_BASES];
   wire        cy_x [0:N_BASES];
   wire [31:0] px_x [0:N_BASES];
@@ -110,14 +169,17 @@ module tt_um_jlnuijens_one11_uart #(
     end
   endgenerate
 
-  assign uo_out[0] = tx;
-  assign uo_out[1] = tx_busy;
+  assign uo_out[0] = (map == 2'd0) ? uart_tx : (map == 2'd3) ? line_dm : 1'b1;
+  assign uo_out[1] = busy;
   assign uo_out[2] = (r15_ones == 32'h4F4E4553);
-  assign uo_out[3] = rx_got | rx_busy;
-  assign uo_out[7:4] = wt_x[N_BASES] ^ rx_byte[3:0] ^ {3'b000, cy_x[N_BASES]} ^ px_x[N_BASES][3:0];
+  assign uo_out[3] = (map == 2'd2) ? (got | ~i2c_ack) : (got | uart_rxb);
+  assign uo_out[4] = (map == 2'd1) ? spi_mosi : (map == 2'd2) ? i2c_scl : wt_x[N_BASES][0];
+  assign uo_out[5] = (map == 2'd1) ? spi_sclk : wt_x[N_BASES][1];
+  assign uo_out[6] = (map == 2'd1) ? spi_csn  : wt_x[N_BASES][2];
+  assign uo_out[7] = (map == 2'd3) ? line_dp : (wt_x[N_BASES][3] ^ px_x[N_BASES][0] ^ cy_x[N_BASES]);
 
-  assign uio_out = 8'd0;
-  assign uio_oe  = 8'd0;
+  assign uio_out = {7'd0, i2c_sda};
+  assign uio_oe  = {7'd0, (map == 2'd2) & i2c_oe};
 
-  wire _unused = &{ena, ui_in[7:3], s0[0], s1[0], sl[0], ss[0], st[0], 1'b0};
+  wire _unused = &{ena, s0[0], s1[0], sl[0], ss[0], st[0], i2c_ack, 1'b0};
 endmodule

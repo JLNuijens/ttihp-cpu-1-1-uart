@@ -134,3 +134,73 @@ async def test_rx_0x55(dut):
         assert ones_ok(dut) == 1
     finally:
         task.cancel()
+
+
+def csn(dut):
+    return (int(dut.uo_out.value) >> 6) & 1
+
+
+def mosi(dut):
+    return (int(dut.uo_out.value) >> 4) & 1
+
+
+async def fire_map(dut, byte, map_bits, range_bits=0):
+    dut.uio_in.value = byte
+    await RisingEdge(dut.clk)
+    dut.ui_in.value = 0x01 | map_bits | (range_bits << 5)
+    await RisingEdge(dut.clk)
+    dut.ui_in.value = map_bits | (range_bits << 5)
+    await Timer(1, unit="ns")
+
+
+@cocotb.test()
+async def test_spi_0xa5(dut):
+    task = await reset_dut(dut)
+    try:
+        await fire_map(dut, 0xA5, 0x08)
+        await Timer(1, unit="ns")
+        assert csn(dut) == 0, "CS low"
+        assert mosi(dut) == 1, "MSB of 0xA5"
+        for _ in range(64):
+            await RisingEdge(dut.clk)
+            if tx_busy(dut) == 0 and csn(dut) == 1:
+                break
+        assert csn(dut) == 1, "CS back high"
+        assert ones_ok(dut) == 1
+    finally:
+        task.cancel()
+
+
+@cocotb.test()
+async def test_i2c_start_stop(dut):
+    task = await reset_dut(dut)
+    try:
+        await fire_map(dut, 0xA0, 0x10)
+        saw_low = False
+        for _ in range(80):
+            await RisingEdge(dut.clk)
+            if mosi(dut) == 0:
+                saw_low = True
+            if tx_busy(dut) == 0 and saw_low:
+                break
+        assert saw_low, "SCL dropped"
+        assert ones_ok(dut) == 1
+    finally:
+        task.cancel()
+
+
+@cocotb.test()
+async def test_eth_manchester(dut):
+    task = await reset_dut(dut)
+    try:
+        await fire_map(dut, 0x55, 0x18, 2)
+        await Timer(1, unit="ns")
+        assert tx_busy(dut) == 1, "line busy"
+        for _ in range(80):
+            await RisingEdge(dut.clk)
+            if tx_busy(dut) == 0:
+                break
+        assert tx_busy(dut) == 0
+        assert ones_ok(dut) == 1
+    finally:
+        task.cancel()
