@@ -4,7 +4,7 @@
 
 Jane Street protocol-emulator ASIC — Tiny Tapeout IHP CMOS5L, 6×4 tiles.
 
-UART is FIRE on a pad. Byte on `uio`, pulse `ui[0]`, clock count walks 8N1 on `uo[0]`. Sixteen 1.1-class bases take that FIRE on the same edge. Preloaded. No fetch.
+UART is FIRE on a pad. Clock is the oscillator. RX on `ui[2]`, TX on `uo[0]`. Byte on `uio`, pulse `ui[0]`, one clock walks one bit. Sixteen 1.1-class bases take that FIRE on the same edge. Preloaded. No fetch.
 
 Joshua Luke Nuijens / Axiom 1 Technology, LLC
 
@@ -35,10 +35,12 @@ This is not a Quartus project. Quartus is the Nano / CPU 1.1 processor path.
 |---|---|
 | `ui[0]` | FIRE (rising) |
 | `ui[1]` | HOT |
+| `ui[2]` | UART RX |
 | `uio[7:0]` | seq byte |
 | `uo[0]` | UART TX |
-| `uo[1]` | BUSY |
+| `uo[1]` | TX_BUSY |
 | `uo[2]` | ONES (`r15 == 0x4F4E4553`) |
+| `uo[3]` | RX_GOT |
 
 ## Sim
 
@@ -47,7 +49,7 @@ python3 test/sim_uart.py
 cd test && make
 ```
 
-`CLKS_PER_BIT` is 8 in sim. Silicon at 50 MHz / 115200 ≈ 434.
+`CLKS_PER_BIT` is 1. 50 MHz → 50 Mbit. One oscillation, one bit.
 
 ## License
 

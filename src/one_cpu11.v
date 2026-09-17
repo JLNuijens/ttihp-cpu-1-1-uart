@@ -1,20 +1,25 @@
 // CPU 1.1 class-line base — UART SKU. 16 pad/register sites. Clock-preloaded.
+// LANE is a parameter so async reset is constant. RX byte lands on r8.
 `default_nettype none
 
-module one_cpu11 (
+module one_cpu11 #(
+  parameter [31:0] LANE = 32'd0
+) (
   input  wire        clk,
   input  wire        rst_n,
   input  wire        run_hot,
   input  wire        fire,
   input  wire [31:0] seq,
-  input  wire [31:0] lane,
+  input  wire        rx_strobe,
+  input  wire [7:0]  rx_data,
   output wire [31:0] sig0,
   output wire [31:0] sig1,
   output wire [31:0] wt,
   output wire [31:0] last_seq,
   output wire [31:0] stride,
   output wire [31:0] cyc_o,
-  output wire [1:0]  status
+  output wire [1:0]  status,
+  output wire [31:0] pad_xor
 );
   wire [31:0] f_sig0, f_sig1, f_wt;
   one_cpu11_fold u_fold (
@@ -24,11 +29,11 @@ module one_cpu11 (
     .wt   (f_wt)
   );
 
-  reg [31:0] rf [0:15];
-  reg [31:0] cyc;
-  reg [31:0] str;
-  reg [31:0] latched;
-  reg [1:0]  st;
+  (* keep *) reg [31:0] rf [0:15];
+  (* keep *) reg [31:0] cyc;
+  (* keep *) reg [31:0] str;
+  (* keep *) reg [31:0] latched;
+  (* keep *) reg [1:0]  st;
 
   always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
@@ -49,7 +54,7 @@ module one_cpu11 (
       rf[14] <= 32'd4;
       rf[15] <= 32'h4F4E4553;
       cyc    <= 32'd0;
-      str    <= lane;
+      str    <= LANE;
       latched<= 32'd0;
       st     <= 2'd2;
     end else begin
@@ -69,6 +74,9 @@ module one_cpu11 (
         rf[6]   <= f_wt;
         rf[9]   <= seq;
         st      <= 2'd2;
+      end else if (rx_strobe) begin
+        rf[8] <= {24'd0, rx_data};
+        st    <= 2'd2;
       end else if (run_hot) begin
         st <= 2'd1;
       end else begin
@@ -84,6 +92,13 @@ module one_cpu11 (
   assign stride   = str;
   assign cyc_o    = cyc;
   assign status   = st;
+
+  // Every site stays in the output cone so synth cannot eat the 16 pads.
+  assign pad_xor = rf[0]  ^ rf[1]  ^ rf[2]  ^ rf[3]  ^
+                   rf[4]  ^ rf[5]  ^ rf[6]  ^ rf[7]  ^
+                   rf[8]  ^ rf[9]  ^ rf[10] ^ rf[11] ^
+                   rf[12] ^ rf[13] ^ rf[14] ^ rf[15] ^
+                   cyc ^ str ^ latched;
 endmodule
 
 module one_cpu11_fold (

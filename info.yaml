@@ -4,11 +4,11 @@ project:
   title:        "CPU 1.1 UART"
   author:       "Joshua Luke Nuijens / Axiom 1 Technology, LLC"
   discord:      ""
-  description:  "CPU 1.1 UART. FIRE walks 8N1 on TX. 16 bases, 16 pad/register sites. 50 MHz."
+  description:  "CPU 1.1 UART. RX+TX. FIRE walks 8N1. 16 bases, 16 sites. 50 MHz, 1 clock/bit."
   language:     "Verilog"
   clock_hz:     50000000
 
-  # Jane Street allocation. A tile is ~167x108 um.
+  # Jane Street allocation. A tile is ~167x108 µm.
   tiles: "6x4"
 
   # Must start with tt_um_. Unique with github username.
@@ -22,7 +22,7 @@ project:
 pinout:
   ui[0]: "FIRE"
   ui[1]: "HOT"
-  ui[2]: ""
+  ui[2]: "UART_RX"
   ui[3]: ""
   ui[4]: ""
   ui[5]: ""
@@ -30,13 +30,13 @@ pinout:
   ui[7]: ""
 
   uo[0]: "UART_TX"
-  uo[1]: "BUSY"
+  uo[1]: "TX_BUSY"
   uo[2]: "ONES_OK"
-  uo[3]: "CYC"
-  uo[4]: "WT0"
-  uo[5]: "WT1"
-  uo[6]: "WT2"
-  uo[7]: "WT3"
+  uo[3]: "RX_GOT"
+  uo[4]: "FACE0"
+  uo[5]: "FACE1"
+  uo[6]: "FACE2"
+  uo[7]: "FACE3"
 
   uio[0]: "SEQ0"
   uio[1]: "SEQ1"

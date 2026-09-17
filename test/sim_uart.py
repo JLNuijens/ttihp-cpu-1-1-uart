@@ -2,7 +2,7 @@
 """Cycle model of js_uart_fire.v — FIRE 0x55 must be 8N1 on TX."""
 from __future__ import annotations
 
-CLKS = 8
+CLKS = 1
 ONES = 0x4F4E4553
 
 
