@@ -4,7 +4,7 @@
 
 Jane Street protocol-emulator ASIC — Tiny Tapeout IHP CMOS5L, 6×4 tiles.
 
-UART, SPI, and I2C are one FIRE walk. Stretch USB LS NRZI and 10 Mbit Manchester. Clock range is the count (1 = 50 Mbit). Sixteen 1.1-class bases. Preloaded. No fetch.
+The clock is the stage. 50 MHz oscillator. Data is RX/TX, not the power. UART, SPI, and I2C are one FIRE walk. Stretch USB LS NRZI and 10 Mbit Manchester. Clock range is the count (1 = 50 Mbit). Sixteen 1.1-class bases. Preloaded. No fetch.
 
 Joshua Luke Nuijens / Axiom 1 Technology, LLC
 
