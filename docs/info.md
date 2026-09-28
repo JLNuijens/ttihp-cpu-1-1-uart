@@ -1,6 +1,15 @@
 # CPU 1.1 UART
 
-1.1 class line. The clock is the stage. 50 MHz oscillator. Data is RX/TX, not the power. FIRE. Pads. Clock count is the range.
+Preloaded Universal UART. The stage is already loaded. The clock is the stage. 50 MHz oscillator. Data is RX/TX, not the power. FIRE. Pads. Clock count is the range.
+
+## Available
+
+Same preload for every coding.
+
+- Windows — PE/COFF x86
+- Mac — Mach-O
+- Linux — ELF
+- WASM, Java class, Android DEX, UTF-8, and the other measured codings — same preload
 
 UART, SPI, and I2C are the same walk on different pins. Stretch is low-speed USB NRZI and 10 Mbit Manchester — bit cells, not a USB stack or an Ethernet MAC. Nothing is pasted from OpenCores.
 

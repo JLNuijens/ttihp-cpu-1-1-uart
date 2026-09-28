@@ -4,7 +4,7 @@ project:
   title:        "CPU 1.1 UART"
   author:       "Joshua Luke Nuijens / Axiom 1 Technology, LLC"
   discord:      ""
-  description:  "CPU 1.1 UART. One FIRE walk: UART SPI I2C, stretch USB/Eth. Clock range. 16 bases."
+  description:  "Preloaded Universal UART. Windows PE/COFF x86, Mac Mach-O, Linux ELF, same preload. UART SPI I2C. Clock range."
   language:     "Verilog"
   clock_hz:     50000000
 
