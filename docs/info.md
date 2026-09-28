@@ -4,11 +4,11 @@ Preloaded Universal UART. The stage is already loaded. The clock is the stage. 5
 
 ## Available
 
-Same preload for every coding.
+Two ordinary machines. x86 and ARM64. Same preload.
 
-- Windows — PE/COFF x86
-- Mac — Mach-O
-- Linux — ELF
+- Windows PE — i386, x86-64, and Windows-on-ARM
+- Mac Mach-O — x86-64 and ARM64
+- Linux ELF
 - WASM, Java class, Android DEX, UTF-8, and the other measured codings — same preload
 
 UART, SPI, and I2C are the same walk on different pins. Stretch is low-speed USB NRZI and 10 Mbit Manchester — bit cells, not a USB stack or an Ethernet MAC. Nothing is pasted from OpenCores.
