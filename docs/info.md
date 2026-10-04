@@ -24,11 +24,11 @@ UART, SPI, and I2C are the same walk on different pins. Stretch is low-speed USB
 
 ## Range (`ui[7:5]`)
 
-Identity is **1** oscillation. The rest is holds on the same 50 MHz clock.
+Identity is **1**. That count uses both edges of the 50 MHz wave, so the cell is 10 ns and the line is 100 Mbit/s. Every larger count stays on the rising edge. 434 is still 115200.
 
 | sel | clocks | at 50 MHz |
 |---|---|---|
-| 0 | 1 | 50 Mbit |
+| 0 | 1 | 100 Mbit, both edges |
 | 1 | 4 | USB FS bit |
 | 2 | 5 | 10 Mbit Ethernet |
 | 3 | 8 | |

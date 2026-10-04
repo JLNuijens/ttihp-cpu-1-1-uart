@@ -7,7 +7,7 @@ module js_range (
 );
   always @* begin
     case (sel)
-      3'd0: clks = 16'd1;    // floor — 50 Mbit at 50 MHz
+      3'd0: clks = 16'd1;    // both edges — 100 Mbit at 50 MHz
       3'd1: clks = 16'd4;    // USB FS bit
       3'd2: clks = 16'd5;    // 10 Mbit Ethernet
       3'd3: clks = 16'd8;

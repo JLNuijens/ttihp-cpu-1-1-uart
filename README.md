@@ -4,7 +4,7 @@
 
 Jane Street protocol-emulator ASIC — Tiny Tapeout IHP CMOS5L, 6×4 tiles.
 
-The clock is the stage. 50 MHz oscillator. Data is RX/TX, not the power. UART, SPI, and I2C are one FIRE walk. Stretch USB LS NRZI and 10 Mbit Manchester. Clock range is the count (1 = 50 Mbit). Sixteen 1.1-class bases. Preloaded. No fetch.
+The clock is the stage. 50 MHz oscillator. Data is RX/TX, not the power. UART, SPI, and I2C are one FIRE walk. Count 1 uses both edges: 10 ns a bit, 100 Mbit/s. Slower counts stay on the rising edge, so 434 is still 115200. Stretch USB LS NRZI and 10 Mbit Manchester. Sixteen 1.1-class bases. Preloaded. No fetch.
 
 ## Preloaded
 
@@ -68,7 +68,7 @@ python3 test/sim_uart.py
 cd test && make
 ```
 
-`Range` is 1, 4, 5, 8, 16, 33, 125, 434 clocks per bit. Identity is 1.
+`Range` is 1, 4, 5, 8, 16, 33, 125, 434. Count 1 is both edges, 100 Mbit/s. The rest are holds on the rising edge.
 
 ## License
 

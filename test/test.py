@@ -1,10 +1,10 @@
 # SPDX-FileCopyrightText: © 2026 Joshua Luke Nuijens / Axiom 1 Technology, LLC
 # SPDX-License-Identifier: Apache-2.0
-"""CPU 1.1 UART — RX and TX. Clock is the oscillator. 1 clock = 1 bit."""
+"""CPU 1.1 UART — RX and TX. Count 1 uses both edges. 10 ns = 1 bit."""
 
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import ClockCycles, RisingEdge, Timer
+from cocotb.triggers import ClockCycles, FallingEdge, RisingEdge, Timer
 
 CPB = 1
 
@@ -43,33 +43,38 @@ async def fire_byte(dut, byte):
     await Timer(1, unit="ns")
 
 
+async def advance_half(dut):
+    if int(dut.clk.value) == 1:
+        await FallingEdge(dut.clk)
+    else:
+        await RisingEdge(dut.clk)
+    await Timer(1, unit="ns")
+
+
 async def sample_frame(dut):
-    for _ in range(20):
+    for _ in range(40):
         if tx_bit(dut) == 0:
             break
-        await RisingEdge(dut.clk)
-        await Timer(1, unit="ns")
+        await advance_half(dut)
     else:
         raise AssertionError("no start bit on TX")
     got = 0
     for i in range(8):
-        await ClockCycles(dut.clk, CPB)
-        await Timer(1, unit="ns")
+        await advance_half(dut)
         got |= tx_bit(dut) << i
-    await ClockCycles(dut.clk, CPB)
-    await Timer(1, unit="ns")
+    await advance_half(dut)
     assert tx_bit(dut) == 1, "stop"
     return got
 
 
 async def drive_rx(dut, byte):
-    set_rx(dut, 0)
-    await ClockCycles(dut.clk, CPB)
-    for i in range(8):
-        set_rx(dut, (byte >> i) & 1)
-        await ClockCycles(dut.clk, CPB)
-    set_rx(dut, 1)
-    await ClockCycles(dut.clk, CPB)
+    if int(dut.clk.value) == 0:
+        await RisingEdge(dut.clk)
+        await Timer(1, unit="ns")
+    bits = [0] + [((byte >> i) & 1) for i in range(8)] + [1]
+    for bit in bits:
+        set_rx(dut, bit)
+        await advance_half(dut)
 
 
 async def reset_dut(dut):
