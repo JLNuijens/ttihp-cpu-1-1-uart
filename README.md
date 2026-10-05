@@ -1,10 +1,10 @@
 ![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg)
 
-# CPU 1.1 UART
+# ONE CPU 1.1 32 · 1.6 GB/s
 
 Jane Street protocol-emulator ASIC. Tiny Tapeout IHP CMOS5L, 6×4. Joshua Luke Nuijens / Axiom 1 Technology.
 
-ONE CPU 1.1 32. The UART is that processor, not a block beside it. Thirty-two bases, same sites, same FIRE. The rise steps at 1.6 GB/s inside. The UART line is unchanged: 8N1, both edges at count 1, 100 Mbit/s. Layout used 40% of the tile. GDS built.
+That name is the UART. Thirty-two bases, same sites, same FIRE, same pads. The rise is 1.6 GB/s inside. The wire is 8N1, both edges at count 1, 100 Mbit/s. Layout used 40% of the tile. GDS built.
 
 Jane Street asked for flexibility, not a UART block plus an SPI block plus an I2C block. This die does not take a new program after fabrication. The clock holds the stage while the tile is enabled. The map picks the walk: UART, SPI mode 0, I2C, USB low-speed bit, or 10 Mbit Manchester. The byte on the pads is any word. A different coding, including a GPU file, is another word on that same FIRE.
 

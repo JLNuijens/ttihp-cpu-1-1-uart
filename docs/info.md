@@ -1,6 +1,6 @@
-# CPU 1.1 UART
+# ONE CPU 1.1 32 · 1.6 GB/s
 
-ONE CPU 1.1 32. The UART is that processor. Thirty-two bases on one FIRE. 1.6 GB/s inside on the rise. The line is 100 Mbit/s. Layout 40% of the 6×4. GDS built.
+That is the UART. Thirty-two bases on one FIRE. 1.6 GB/s inside on the rise. The line is 100 Mbit/s. Layout 40% of the 6×4. GDS built.
 
 Not three protocol blocks. The map selects the walk. The byte is any word. The clock holds the stage while the tile is enabled. No fetch after fabrication.
 
