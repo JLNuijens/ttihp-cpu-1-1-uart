@@ -2,11 +2,11 @@
 
 # CPU 1.1 UART
 
-Jane Street protocol-emulator ASIC — Tiny Tapeout IHP CMOS5L, 6×4 tiles.
+Jane Street protocol-emulator ASIC. Tiny Tapeout IHP CMOS5L, 6×4. Joshua Luke Nuijens / Axiom 1 Technology.
 
-The clock is the stage. 50 MHz oscillator. Data is RX/TX, not the power. UART, SPI, and I2C are one FIRE walk. Count 1 uses both edges: 10 ns a bit, 100 Mbit/s. Slower counts stay on the rising edge, so 434 is still 115200. Stretch USB LS NRZI and 10 Mbit Manchester.
+ONE CPU 1.1 32. The UART is that processor, not a block beside it. Thirty-two bases, same sites, same FIRE. The rise steps at 1.6 GB/s inside. The UART line is unchanged: 8N1, both edges at count 1, 100 Mbit/s. Layout used 40% of the tile. GDS built.
 
-The same die is a 16-stack processor. Two copies, 32 bases. Each base steps on the rise: 1.6 billion steps/s, 1.6 GB/s inside. Any byte, same sites. No fetch. The UART walk is still one copy. Four copies measured 77% and did not legalize.
+Jane Street asked for flexibility, not a UART block plus an SPI block plus an I2C block. This die does not take a new program after fabrication. The clock holds the stage while the tile is enabled. The map picks the walk: UART, SPI mode 0, I2C, USB low-speed bit, or 10 Mbit Manchester. The byte on the pads is any word. A different coding, including a GPU file, is another word on that same FIRE.
 
 ## Preloaded
 
