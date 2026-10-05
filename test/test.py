@@ -240,16 +240,56 @@ async def test_jtag_shift(dut):
     task = await reset_dut(dut)
     try:
         await fire_map(dut, 0x80, 0x18, 1)
+        await RisingEdge(dut.clk)
+        assert tx_busy(dut) == 0, "TMS latches, no TCK yet"
+        await fire_map(dut, 0x80, 0x18, 1)
         await Timer(1, unit="ns")
         assert tx_busy(dut) == 1
         assert pin(dut, 4) == 1, "TDI MSB"
+        assert pin(dut, 6) == 1, "TMS MSB"
         assert pin(dut, 5) == 0, "TCK starts low"
-        assert pin(dut, 6) == 0, "TMS low"
         for _ in range(200):
             await RisingEdge(dut.clk)
             if tx_busy(dut) == 0:
                 break
         assert tx_busy(dut) == 0
+        assert ones_ok(dut) == 1
+    finally:
+        task.cancel()
+
+
+@cocotb.test()
+async def test_swd_header(dut):
+    task = await reset_dut(dut)
+    try:
+        await fire_map(dut, 0x02, 0x18, 3)
+        await RisingEdge(dut.clk)
+        assert tx_busy(dut) == 0, "request latches"
+        await fire_map(dut, 0x00, 0x18, 3)
+        await Timer(1, unit="ns")
+        assert tx_busy(dut) == 1
+        assert (int(dut.uio_oe.value) & 1) == 1, "SWDIO driven"
+        assert (int(dut.uio_out.value) & 1) == 1, "start bit"
+        assert pin(dut, 5) == 0, "SWCLK starts low"
+        for _ in range(800):
+            await RisingEdge(dut.clk)
+            if tx_busy(dut) == 0:
+                break
+        assert tx_busy(dut) == 0
+        assert ones_ok(dut) == 1
+    finally:
+        task.cancel()
+
+
+@cocotb.test()
+async def test_ps2_start(dut):
+    task = await reset_dut(dut)
+    try:
+        await fire_map(dut, 0x16, 0x18, 4)
+        await Timer(1, unit="ns")
+        assert tx_busy(dut) == 1
+        assert (int(dut.uio_oe.value) & 1) == 1, "start bit pulled"
+        assert (int(dut.uio_out.value) & 1) == 0
         assert ones_ok(dut) == 1
     finally:
         task.cancel()

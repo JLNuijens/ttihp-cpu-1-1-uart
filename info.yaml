@@ -4,7 +4,7 @@ project:
   title:        "CPU 1.1 UART"
   author:       "Joshua Luke Nuijens / Axiom 1 Technology, LLC"
   discord:      ""
-  description:  "ONE CPU 1.1 32. UART, SPI, I2C, and the stretch hook: Manchester, USB LS, JTAG, SWD, PS/2, CAN bit. Our counts."
+  description:  "ONE CPU 1.1 32. UART, SPI, I2C. Hook 11: Manchester, USB LS, JTAG bit-bang, SWD header, PS/2 at 12.5 kHz, CAN bit cell."
   language:     "Verilog"
   clock_hz:     50000000
 

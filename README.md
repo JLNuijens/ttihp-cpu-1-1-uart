@@ -20,7 +20,7 @@ That name is the UART. Thirty-two bases, same sites, same FIRE, same pads. The r
 | `uo[2]` | ONES | `r15` is `0x4F4E4553` |
 | `uo[4:7]` | SPI / I2C / stretch, or the face | the mix, four bits |
 
-Jane Street asked for flexibility, not a UART block plus an SPI block plus an I2C block. This die does not take a new program after fabrication. The clock holds the stage while the tile is enabled. The map picks the walk: UART, SPI mode 0, I2C, or hook `11`. On hook `11` the count slot picks Manchester, a JTAG shift, SWD, a PS/2 frame, USB low-speed, or a CAN bit cell. The timing is our count, not the textbook rate. The byte on the pads is any word.
+Jane Street asked for flexibility, not a UART block plus an SPI block plus an I2C block. This die does not take a new program after fabrication. The clock holds the stage while the tile is enabled. The map picks the walk: UART, SPI mode 0, I2C, or hook `11`. On hook `11` the count slot picks Manchester, a real JTAG bit-bang, a real SWD header, a PS/2 device frame at 12.5 kHz, USB low-speed, or a CAN bit cell. The byte on the pads is any word.
 
 ## Preloaded
 
