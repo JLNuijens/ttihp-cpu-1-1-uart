@@ -5,12 +5,12 @@
  * Tiny Tapeout 6x4 — CPU 1.1 UART
  * One oscillator. FIRE. Pads. Clock count is the range.
  * UART / SPI / I2C walks. Stretch USB LS + 10 Mbit Manchester.
- * 4 stacks, 64 bases. 16 pad/register sites. UART walk is one copy.
+ * 2 stacks, 32 bases. 16 pad/register sites. UART walk is one copy.
  */
 `default_nettype none
 
 module tt_um_jlnuijens_one11_uart #(
-  parameter N_BASES = 64
+  parameter N_BASES = 32
 ) (
   input  wire [7:0] ui_in,
   output wire [7:0] uo_out,
@@ -155,65 +155,57 @@ module tt_um_jlnuijens_one11_uart #(
     end
   endgenerate
 
-  // Pairwise mix. Same XOR as a chain, six deep instead of 64, so the rise still closes.
-  wire [3:0]  w0 [0:63];
-  wire        c0 [0:63];
-  wire [31:0] p0 [0:63];
-  wire [3:0]  w1 [0:31];
-  wire        c1 [0:31];
-  wire [31:0] p1 [0:31];
-  wire [3:0]  w2 [0:15];
-  wire        c2 [0:15];
-  wire [31:0] p2 [0:15];
-  wire [3:0]  w3 [0:7];
-  wire        c3 [0:7];
-  wire [31:0] p3 [0:7];
-  wire [3:0]  w4 [0:3];
-  wire        c4 [0:3];
-  wire [31:0] p4 [0:3];
-  wire [3:0]  w5 [0:1];
-  wire        c5 [0:1];
-  wire [31:0] p5 [0:1];
+  // Pairwise mix. Same XOR as a chain, five deep instead of 32.
+  wire [3:0]  w0 [0:31];
+  wire        c0 [0:31];
+  wire [31:0] p0 [0:31];
+  wire [3:0]  w1 [0:15];
+  wire        c1 [0:15];
+  wire [31:0] p1 [0:15];
+  wire [3:0]  w2 [0:7];
+  wire        c2 [0:7];
+  wire [31:0] p2 [0:7];
+  wire [3:0]  w3 [0:3];
+  wire        c3 [0:3];
+  wire [31:0] p3 [0:3];
+  wire [3:0]  w4 [0:1];
+  wire        c4 [0:1];
+  wire [31:0] p4 [0:1];
   wire [3:0]  wt_all;
   wire        cy_all;
   wire [31:0] px_all;
 
   genvar m;
   generate
-    for (m = 0; m < 64; m = m + 1) begin : lv0
+    for (m = 0; m < 32; m = m + 1) begin : lv0
       assign w0[m] = sw[m][3:0];
       assign c0[m] = cc[m][16];
       assign p0[m] = px[m];
     end
-    for (m = 0; m < 32; m = m + 1) begin : lv1
+    for (m = 0; m < 16; m = m + 1) begin : lv1
       assign w1[m] = w0[2*m] ^ w0[2*m+1];
       assign c1[m] = c0[2*m] ^ c0[2*m+1];
       assign p1[m] = p0[2*m] ^ p0[2*m+1];
     end
-    for (m = 0; m < 16; m = m + 1) begin : lv2
+    for (m = 0; m < 8; m = m + 1) begin : lv2
       assign w2[m] = w1[2*m] ^ w1[2*m+1];
       assign c2[m] = c1[2*m] ^ c1[2*m+1];
       assign p2[m] = p1[2*m] ^ p1[2*m+1];
     end
-    for (m = 0; m < 8; m = m + 1) begin : lv3
+    for (m = 0; m < 4; m = m + 1) begin : lv3
       assign w3[m] = w2[2*m] ^ w2[2*m+1];
       assign c3[m] = c2[2*m] ^ c2[2*m+1];
       assign p3[m] = p2[2*m] ^ p2[2*m+1];
     end
-    for (m = 0; m < 4; m = m + 1) begin : lv4
+    for (m = 0; m < 2; m = m + 1) begin : lv4
       assign w4[m] = w3[2*m] ^ w3[2*m+1];
       assign c4[m] = c3[2*m] ^ c3[2*m+1];
       assign p4[m] = p3[2*m] ^ p3[2*m+1];
     end
-    for (m = 0; m < 2; m = m + 1) begin : lv5
-      assign w5[m] = w4[2*m] ^ w4[2*m+1];
-      assign c5[m] = c4[2*m] ^ c4[2*m+1];
-      assign p5[m] = p4[2*m] ^ p4[2*m+1];
-    end
   endgenerate
-  assign wt_all = w5[0] ^ w5[1];
-  assign cy_all = c5[0] ^ c5[1];
-  assign px_all = p5[0] ^ p5[1];
+  assign wt_all = w4[0] ^ w4[1];
+  assign cy_all = c4[0] ^ c4[1];
+  assign px_all = p4[0] ^ p4[1];
 
   assign uo_out[0] = (map == 2'd0) ? uart_tx : (map == 2'd3) ? line_dm : 1'b1;
   assign uo_out[1] = busy;

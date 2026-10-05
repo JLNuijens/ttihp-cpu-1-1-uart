@@ -37,7 +37,7 @@ Identity is **1**. That count uses both edges of the 50 MHz wave, so the cell is
 | 6 | 125 | I2C 400 kHz |
 | 7 | 434 | UART 115200 |
 
-Byte on `uio`. Pulse FIRE. Sixty-four bases take that FIRE, four stacks of 16. `r15` stays `0x4F4E4553`. The UART, SPI, and I2C walks are still one copy.
+Byte on `uio`. Pulse FIRE. Thirty-two bases take that FIRE, two stacks of 16. `r15` stays `0x4F4E4553`. The UART, SPI, and I2C walks are still one copy.
 
 ## Processor · same die
 
@@ -46,10 +46,10 @@ Allnary. Any byte. The sites do not change with the coding.
 | | |
 |---|---|
 | Clock | 50 MHz. The stack steps on the rise. |
-| Stack | 4×16 = 64 bases. 16 sites each. |
+| Stack | 2×16 = 32 bases. 16 sites each. |
 | Pressed | `r7` = 128, `r14` = 4, `r15` = `0x4F4E4553`, every rise |
 | HOT | cycle + 1 and stride + 128, per base, per rise |
-| Rate | 64 × 50 MHz = 3.2 billion steps/s. 3.2 GB/s inside |
+| Rate | 32 × 50 MHz = 1.6 billion steps/s. 1.6 GB/s inside |
 | FIRE | one pulse on the rise. Base *k* folds `byte + k` |
 | Face | `uo[2]` ONES. `uo[4]`–`uo[7]` the mix, while the map is UART |
 | Word in | 8 bits. Any word. No fetch |
@@ -64,4 +64,4 @@ Leave the map at UART. Put the byte on `uio`. Pulse `ui[0]`. Read `uo[2]` and `u
 4. Map 10. SCL falls, SDA open-drain, STOP, SCL idle high.
 5. Drive 8N1 on `ui[2]` with map 00. `uo[3]` GOT.
 
-`N_BASES` is 64. Four stacks of the 16. The step is the rise. The fall stays the UART bit at count 1. The face mix is a tree, six deep. The UART line does not change.
+`N_BASES` is 32. Two stacks of the 16. Four stacks measured 77% of the core and detailed placement failed, so they do not fit this tile. The step is the rise. The fall stays the UART bit at count 1.

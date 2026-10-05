@@ -6,7 +6,7 @@ Jane Street protocol-emulator ASIC — Tiny Tapeout IHP CMOS5L, 6×4 tiles.
 
 The clock is the stage. 50 MHz oscillator. Data is RX/TX, not the power. UART, SPI, and I2C are one FIRE walk. Count 1 uses both edges: 10 ns a bit, 100 Mbit/s. Slower counts stay on the rising edge, so 434 is still 115200. Stretch USB LS NRZI and 10 Mbit Manchester.
 
-The same die is a 16-stack processor. Four copies, 64 bases. Each base steps on the rise: 3.2 billion steps/s, 3.2 GB/s inside. Any byte, same sites. No fetch. The UART walk is still one copy. The fall is the UART bit, not a second step.
+The same die is a 16-stack processor. Two copies, 32 bases. Each base steps on the rise: 1.6 billion steps/s, 1.6 GB/s inside. Any byte, same sites. No fetch. The UART walk is still one copy. Four copies measured 77% and did not legalize.
 
 ## Preloaded
 
