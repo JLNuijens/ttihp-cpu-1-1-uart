@@ -70,7 +70,7 @@ module tt_um_jlnuijens_one11_uart #(
     .fire     (uart_f),
     .seq      (seq),
     .clks     (cpb),
-    .rx       (line_in),
+    .rx       (map == 2'd0 ? line_in : 1'b1),
     .tx       (uart_tx),
     .r15      (r15_ones),
     .tx_busy  (uart_busy),

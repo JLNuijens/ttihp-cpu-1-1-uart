@@ -172,9 +172,10 @@ def mosi(dut):
 async def fire_map(dut, byte, map_bits, range_bits=0):
     dut.uio_in.value = byte
     await RisingEdge(dut.clk)
-    dut.ui_in.value = 0x01 | map_bits | (range_bits << 5)
+    # Bit 2 stays high so a UART start is not a side effect of the hook.
+    dut.ui_in.value = 0x05 | map_bits | (range_bits << 5)
     await RisingEdge(dut.clk)
-    dut.ui_in.value = map_bits | (range_bits << 5)
+    dut.ui_in.value = 0x04 | map_bits | (range_bits << 5)
     await Timer(1, unit="ns")
 
 
