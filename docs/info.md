@@ -58,22 +58,35 @@ JTAG is a real bit-bang. The first FIRE stores TMS. The second FIRE clocks eight
 
 Byte on `uio`. Pulse FIRE. Thirty-two bases take that FIRE, two stacks of 16. `r15` stays `0x4F4E4553`. The UART, SPI, and I2C walks are still one copy.
 
-## Processor · same die
+## Processor · ONE CPU 1.1 32
 
-Allnary. Any byte. The sites do not change with the coding.
+Allnary. Any byte. The sites do not change with the coding. 32 bases, 16 sites each. The lane is the only difference.
 
 | | |
 |---|---|
-| Clock | 50 MHz. The stack steps on the rise. |
-| Stack | 2×16 = 32 bases. 16 sites each. |
-| Pressed | `r7` = 128, `r14` = 4, `r15` = `0x4F4E4553`, every rise |
-| HOT | cycle + 1 and stride + 128, per base, per rise |
-| Rate | 32 × 50 MHz = 1.6 billion steps/s. 1.6 GB/s inside |
-| FIRE | one pulse on the rise. Base *k* folds `byte + k` |
-| Face | `uo[2]` ONES. `uo[4]`–`uo[7]` the mix, while the map is UART |
-| Word in | 8 bits. Any word. No fetch |
+| Clock | 50 MHz. The step is the rise. 20 ns. |
+| Stack | 32 bases. Not 128. |
+| Inside | 32 × 50 MHz = 1.6 billion steps/s = 1.6 GB/s |
+| Word in | 8 bits, one FIRE. Not one byte per clock. |
+| Face out | `uo[2]` plus four bits. 4 × 50 MHz = 200 Mbit/s. The rest stays inside. |
+| Fetch | none. Already loaded. |
 
-Leave the map at UART. Put the byte on `uio`. Pulse `ui[0]`. Read `uo[2]` and `uo[4]` through `uo[7]`. A finished RX byte lands in `r8` of every base. The full face stays inside. The pins are four bits wide.
+| Site | At reset | While the clock holds |
+|---|---|---|
+| r1 | 0 | cycle + 1 each rise |
+| r2 | the lane | stride + 128 each rise |
+| r4 | `0x020A0000` | sig0 of the FIRE word |
+| r5 | 0 | sig1 of the FIRE word |
+| r6 | 1 | weight of the FIRE word |
+| r7 | 128 | held every rise |
+| r8 | 0 | last RX byte |
+| r9 | 0 | last FIRE word |
+| r14 | 4 | held every rise |
+| r15 | `0x4F4E4553` | ONES, held every rise |
+
+r0, r3, and r10 through r13 stay 0. Base k starts its stride at k. FIRE gives that base `byte + k`. A finished RX byte lands in r8 of every base. The count does not change the face.
+
+Leave the map at UART. Put the byte on `uio`. Pulse `ui[0]`. Read `uo[2]` and `uo[4]` through `uo[7]`.
 
 ## How to test
 
