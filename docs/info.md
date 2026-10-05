@@ -39,6 +39,23 @@ Identity is **1**. That count uses both edges of the 50 MHz wave, so the cell is
 
 Byte on `uio`. Pulse FIRE. Sixty-four bases take that FIRE, four stacks of 16. `r15` stays `0x4F4E4553`. The UART, SPI, and I2C walks are still one copy.
 
+## Processor · same die
+
+Allnary. Any byte. The sites do not change with the coding.
+
+| | |
+|---|---|
+| Clock | 50 MHz. Stage steps on both edges. |
+| Stack | 4×16 = 64 bases. 16 sites each. |
+| Pressed | `r7` = 128, `r14` = 4, `r15` = `0x4F4E4553`, every rise |
+| HOT | cycle + 1 and stride + 128, per base, per edge |
+| Rate | 64 × 2 × 50 MHz = 6.4 billion steps/s. 6.4 GB/s inside |
+| FIRE | one pulse on the rise. Base *k* folds `byte + k` |
+| Face | `uo[2]` ONES. `uo[4]`–`uo[7]` the mix, while the map is UART |
+| Word in | 8 bits. Any word. No fetch |
+
+Leave the map at UART. Put the byte on `uio`. Pulse `ui[0]`. Read `uo[2]` and `uo[4]` through `uo[7]`. A finished RX byte lands in `r8` of every base. The full face stays inside. The pins are four bits wide.
+
 ## How to test
 
 1. `rst_n` low then high. `uo[2]` ONES_OK. TX idle high.
