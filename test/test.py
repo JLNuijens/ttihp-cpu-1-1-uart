@@ -229,3 +229,45 @@ async def test_eth_manchester(dut):
         assert ones_ok(dut) == 1
     finally:
         task.cancel()
+
+
+def pin(dut, bit):
+    return (int(dut.uo_out.value) >> bit) & 1
+
+
+@cocotb.test()
+async def test_jtag_shift(dut):
+    task = await reset_dut(dut)
+    try:
+        await fire_map(dut, 0x80, 0x18, 1)
+        await Timer(1, unit="ns")
+        assert tx_busy(dut) == 1
+        assert pin(dut, 4) == 1, "TDI MSB"
+        assert pin(dut, 5) == 0, "TCK starts low"
+        assert pin(dut, 6) == 0, "TMS low"
+        for _ in range(200):
+            await RisingEdge(dut.clk)
+            if tx_busy(dut) == 0:
+                break
+        assert tx_busy(dut) == 0
+        assert ones_ok(dut) == 1
+    finally:
+        task.cancel()
+
+
+@cocotb.test()
+async def test_can_bit(dut):
+    task = await reset_dut(dut)
+    try:
+        await fire_map(dut, 0x80, 0x18, 6)
+        await Timer(1, unit="ns")
+        assert tx_busy(dut) == 1
+        assert pin(dut, 0) == 1, "recessive MSB"
+        for _ in range(1600):
+            await RisingEdge(dut.clk)
+            if tx_busy(dut) == 0:
+                break
+        assert tx_busy(dut) == 0
+        assert ones_ok(dut) == 1
+    finally:
+        task.cancel()

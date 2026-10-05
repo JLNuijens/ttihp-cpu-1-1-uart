@@ -35,22 +35,24 @@ UART, SPI, and I2C are the same walk on different pins. Stretch is low-speed USB
 | 00 | UART 8N1 RX/TX | `ui[2]` RX, `uo[0]` TX |
 | 01 | SPI mode 0, 8 bits | `uo[4]` MOSI, `uo[5]` SCLK, `uo[6]` CS_n, `ui[2]` MISO |
 | 10 | I2C START + byte + ACK + STOP | `uo[4]` SCL, `uio[0]` SDA open-drain |
-| 11 | stretch | `uo[0]` DM/TX, `uo[7]` DP. Range 0–2 Manchester, 3–7 USB LS NRZI |
+| 11 | stretch, and the other walks | see the count slot. Manchester and USB stay. JTAG, SWD, PS/2, and a CAN bit are the slots we took |
 
 ## Range (`ui[7:5]`)
 
 Identity is **1**. That count uses both edges of the 50 MHz wave, so the cell is 10 ns and the line is 100 Mbit/s. Every larger count stays on the rising edge. 434 is still 115200.
 
-| sel | clocks | at 50 MHz |
-|---|---|---|
-| 0 | 1 | 100 Mbit, both edges |
-| 1 | 4 | USB FS bit |
-| 2 | 5 | 10 Mbit Ethernet |
-| 3 | 8 | |
-| 4 | 16 | |
-| 5 | 33 | USB LS ~1.5 Mbit |
-| 6 | 125 | I2C 400 kHz |
-| 7 | 434 | UART 115200 |
+| sel | clocks | UART / SPI / I2C | hook `11` |
+|---|---|---|---|
+| 0 | 1 | 100 Mbit, both edges | Manchester |
+| 1 | 4 | | JTAG shift. TCK `uo[5]`, TMS `uo[6]`, TDI `uo[4]`, TDO `ui[2]` |
+| 2 | 5 | 10 Mbit | Manchester |
+| 3 | 8 | | SWD. SWCLK `uo[5]`, SWDIO `uio[0]` |
+| 4 | 16 | | PS/2 frame. clock `uo[5]`, data `uio[0]` |
+| 5 | 33 | USB LS ~1.5 Mbit | USB LS NRZI |
+| 6 | 125 | I2C 400 kHz | CAN bit. recessive/dominant on `uo[0]`, RX `ui[2]` |
+| 7 | 434 | UART 115200 | USB at that count |
+
+Hook `11` only. On UART, SPI, and I2C the same slots are still just the bit time. JTAG is a shift, not a TAP. SWD is the byte and one turnaround. PS/2 is start, byte, parity, stop, at our count, not 16 kHz. CAN is eight bit cells, not a frame.
 
 Byte on `uio`. Pulse FIRE. Thirty-two bases take that FIRE, two stacks of 16. `r15` stays `0x4F4E4553`. The UART, SPI, and I2C walks are still one copy.
 

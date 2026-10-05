@@ -4,7 +4,7 @@ project:
   title:        "CPU 1.1 UART"
   author:       "Joshua Luke Nuijens / Axiom 1 Technology, LLC"
   discord:      ""
-  description:  "Preloaded Universal UART. x86 and ARM64, same preload. Windows PE, Mac Mach-O, Linux ELF."
+  description:  "ONE CPU 1.1 32. UART, SPI, I2C, and the stretch hook: Manchester, USB LS, JTAG, SWD, PS/2, CAN bit. Our counts."
   language:     "Verilog"
   clock_hz:     50000000
 
@@ -22,6 +22,7 @@ project:
     - "js_spi_fire.v"
     - "js_i2c_fire.v"
     - "js_line_fire.v"
+    - "js_tap_fire.v"
 
 pinout:
   ui[0]: "FIRE"

@@ -42,7 +42,13 @@ module tt_um_jlnuijens_one11_uart #(
   wire uart_f = fire & (map == 2'd0);
   wire spi_f  = fire & (map == 2'd1);
   wire i2c_f  = fire & (map == 2'd2);
-  wire line_f = fire & (map == 2'd3);
+  wire tap_sel = (rsel == 3'd1) || (rsel == 3'd3) || (rsel == 3'd4) || (rsel == 3'd6);
+  wire line_f = fire & (map == 2'd3) & ~tap_sel;
+  wire tap_f  = fire & (map == 2'd3) & tap_sel;
+  wire [1:0] tap_kind =
+      (rsel == 3'd1) ? 2'd0 :
+      (rsel == 3'd3) ? 2'd1 :
+      (rsel == 3'd4) ? 2'd2 : 2'd3;
 
   wire [31:0] s0 [0:N_BASES-1];
   wire [31:0] s1 [0:N_BASES-1];
@@ -112,17 +118,35 @@ module tt_um_jlnuijens_one11_uart #(
     .fire      (line_f),
     .seq       (uio_in),
     .clks      (cpb),
-    .usb_n_eth (rsel >= 3'd3),
+    .usb_n_eth ((rsel == 3'd5) || (rsel == 3'd7)),
     .dm        (line_dm),
     .dp        (line_dp),
     .busy      (line_busy)
+  );
+
+  wire tap_tck, tap_tms, tap_tdi, tap_dio, tap_oe, tap_can, tap_busy;
+  js_tap_fire u_tap (
+    .clk    (clk),
+    .rst_n  (rst_n),
+    .fire   (tap_f),
+    .seq    (uio_in),
+    .clks   (cpb),
+    .kind   (tap_kind),
+    .din    (line_in),
+    .tck    (tap_tck),
+    .tms    (tap_tms),
+    .tdi    (tap_tdi),
+    .dio    (tap_dio),
+    .dio_oe (tap_oe),
+    .can_tx (tap_can),
+    .busy   (tap_busy)
   );
 
   wire [7:0] rx_byte =
       (map == 2'd1) ? spi_byte :
       uart_byte;
   wire got = uart_got | spi_got | i2c_got;
-  wire busy = uart_busy | spi_busy | i2c_busy | line_busy | uart_rxb;
+  wire busy = uart_busy | spi_busy | i2c_busy | line_busy | tap_busy | uart_rxb;
 
   reg got_d;
   always @(posedge clk or negedge rst_n) begin
@@ -207,17 +231,24 @@ module tt_um_jlnuijens_one11_uart #(
   assign cy_all = c4[0] ^ c4[1];
   assign px_all = p4[0] ^ p4[1];
 
-  assign uo_out[0] = (map == 2'd0) ? uart_tx : (map == 2'd3) ? line_dm : 1'b1;
+  wire on_tap = (map == 2'd3) && tap_sel;
+  assign uo_out[0] = (map == 2'd0) ? uart_tx :
+                     (on_tap && (tap_kind == 2'd3)) ? tap_can :
+                     (map == 2'd3 && !on_tap) ? line_dm : 1'b1;
   assign uo_out[1] = busy;
   assign uo_out[2] = (r15_ones == 32'h4F4E4553);
   assign uo_out[3] = (map == 2'd2) ? (got | ~i2c_ack) : (got | uart_rxb);
-  assign uo_out[4] = (map == 2'd1) ? spi_mosi : (map == 2'd2) ? i2c_scl : wt_all[0];
-  assign uo_out[5] = (map == 2'd1) ? spi_sclk : wt_all[1];
-  assign uo_out[6] = (map == 2'd1) ? spi_csn  : wt_all[2];
-  assign uo_out[7] = (map == 2'd3) ? line_dp : (wt_all[3] ^ px_all[0] ^ cy_all);
+  assign uo_out[4] = (map == 2'd1) ? spi_mosi :
+                     (map == 2'd2) ? i2c_scl :
+                     (on_tap && (tap_kind == 2'd0)) ? tap_tdi : wt_all[0];
+  assign uo_out[5] = (map == 2'd1) ? spi_sclk :
+                     (on_tap && (tap_kind != 2'd3)) ? tap_tck : wt_all[1];
+  assign uo_out[6] = (map == 2'd1) ? spi_csn :
+                     (on_tap && (tap_kind == 2'd0)) ? tap_tms : wt_all[2];
+  assign uo_out[7] = (map == 2'd3 && !on_tap) ? line_dp : (wt_all[3] ^ px_all[0] ^ cy_all);
 
-  assign uio_out = {7'd0, i2c_sda};
-  assign uio_oe  = {7'd0, (map == 2'd2) & i2c_oe};
+  assign uio_out = {7'd0, (map == 2'd2) ? i2c_sda : tap_dio};
+  assign uio_oe  = {7'd0, ((map == 2'd2) & i2c_oe) | (on_tap & tap_oe)};
 
   wire _unused = &{ena, s0[0], s1[0], sl[0], ss[0], st[0], i2c_ack, 1'b0};
 endmodule
