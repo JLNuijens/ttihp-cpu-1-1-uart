@@ -71,20 +71,24 @@ This is not a Quartus project. Quartus is the Nano / CPU 1.1 processor path.
 
 | pin | role |
 |---|---|
-| `ui[0]` | FIRE (rising) |
-| `ui[1]` | HOT |
-| `ui[2]` | UART RX / SPI MISO |
-| `ui[4:3]` | map: UART SPI I2C USB/ETH |
-| `ui[7:5]` | range 1 / 4 / 5 / 8 / 16 / 33 / 125 / 434 |
-| `uio[7:0]` | seq byte (I2C SDA on bit 0) |
-| `uo[0]` | UART TX / USB DM / ETH |
+| `ui[0]` | FIRE |
+| `ui[1]` | HOT. The clock holds the stage |
+| `ui[2]` | UART RX, SPI MISO, JTAG TDO, CAN RX. Idle high. UART watches it only on map `00` |
+| `ui[4:3]` | `00` UART, `01` SPI, `10` I2C, `11` the other walks |
+| `ui[7:5]` | count 1, 4, 5, 8, 16, 33, 125, 434. On hook `11` the slot picks the walk |
+| `uio[7:0]` | the byte |
+| `uio[0]` | I2C SDA, SWDIO, or PS/2 data |
+| `uio[1]` | PS/2 clock |
+| `uo[0]` | UART TX, Manchester or USB DM, CAN bit |
 | `uo[1]` | BUSY |
-| `uo[2]` | ONES (`r15 == 0x4F4E4553`) |
+| `uo[2]` | ONES. `r15` is `0x4F4E4553` |
 | `uo[3]` | GOT |
-| `uo[4]` | SPI MOSI / I2C SCL |
-| `uo[5]` | SPI SCLK |
-| `uo[6]` | SPI CS_n |
-| `uo[7]` | USB DP / face |
+| `uo[4]` | SPI MOSI, I2C SCL, JTAG TDI, or face bit 0 |
+| `uo[5]` | SPI SCLK, JTAG TCK, SWCLK, or face bit 1 |
+| `uo[6]` | SPI CS, JTAG TMS, or face bit 2 |
+| `uo[7]` | Manchester or USB DP, or face bit 3 |
+
+The site table, the hook slots, and the walks are in [docs/info.md](docs/info.md).
 
 ## Sim
 
