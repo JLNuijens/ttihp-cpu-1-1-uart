@@ -47,4 +47,4 @@ Byte on `uio`. Pulse FIRE. Sixty-four bases take that FIRE, four stacks of 16. `
 4. Map 10. SCL falls, SDA open-drain, STOP, SCL idle high.
 5. Drive 8N1 on `ui[2]` with map 00. `uo[3]` GOT.
 
-`N_BASES` is 64. Four stacks of the 16. The face mix is a tree, six deep, so the rise stays inside 20 ns. The UART line does not change.
+`N_BASES` is 64. Four stacks of the 16. Each base steps on both edges, so a 50 MHz wave is two steps. The face mix is a tree, six deep. The UART line does not change.
