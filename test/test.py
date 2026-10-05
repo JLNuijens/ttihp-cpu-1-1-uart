@@ -111,6 +111,22 @@ async def test_rise_steps(dut):
 
 
 @cocotb.test()
+async def test_face_both_edges(dut):
+    task = await reset_dut(dut)
+    try:
+        await RisingEdge(dut.clk)
+        await Timer(1, unit="ns")
+        rise = (int(dut.uo_out.value) >> 4) & 0xF
+        await FallingEdge(dut.clk)
+        await Timer(1, unit="ns")
+        fall = (int(dut.uo_out.value) >> 4) & 0xF
+        assert ones_ok(dut) == 1
+        assert rise <= 0xF and fall <= 0xF
+    finally:
+        task.cancel()
+
+
+@cocotb.test()
 async def test_idle_ones(dut):
     task = await reset_dut(dut)
     try:

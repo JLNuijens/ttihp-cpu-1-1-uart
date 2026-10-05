@@ -14,7 +14,7 @@ That is the UART. Thirty-two bases on one FIRE. 1.6 GB/s inside on the rise. The
 | `uio[7:0]` | the byte | base *k* folds byte + *k* |
 | `uo[0]` | TX · 100 Mbit/s | low byte of that word |
 | `uo[2]` | ONES | `r15` is `0x4F4E4553` |
-| `uo[4:7]` | SPI / I2C / stretch, or the face | the mix, four bits |
+| `uo[4:7]` | SPI / I2C / stretch, or the face | rise nibble, then the next four on the fall |
 
 Not three protocol blocks. The map selects the walk. The byte is any word. The clock holds the stage while the tile is enabled. No fetch after fabrication.
 
@@ -68,7 +68,7 @@ Allnary. Any byte. The sites do not change with the coding. 32 bases, 16 sites e
 | Stack | 32 bases. Not 128. |
 | Inside | 32 × 50 MHz = 1.6 billion steps/s = 1.6 GB/s |
 | Word in | 8 bits, one FIRE. Not one byte per clock. |
-| Face out | `uo[2]` plus four bits. 4 × 50 MHz = 200 Mbit/s. The rest stays inside. |
+| Face out | `uo[2]` plus four pins. Rise is the low nibble, fall is the next four. 400 Mbit/s. The rest stays inside. |
 | Fetch | none. Already loaded. |
 
 | Site | At reset | While the clock holds |

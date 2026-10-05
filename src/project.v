@@ -187,29 +187,29 @@ module tt_um_jlnuijens_one11_uart #(
   endgenerate
 
   // Pairwise mix. Same XOR as a chain, five deep instead of 32.
-  wire [3:0]  w0 [0:31];
+  wire [7:0]  w0 [0:31];
   wire        c0 [0:31];
   wire [31:0] p0 [0:31];
-  wire [3:0]  w1 [0:15];
+  wire [7:0]  w1 [0:15];
   wire        c1 [0:15];
   wire [31:0] p1 [0:15];
-  wire [3:0]  w2 [0:7];
+  wire [7:0]  w2 [0:7];
   wire        c2 [0:7];
   wire [31:0] p2 [0:7];
-  wire [3:0]  w3 [0:3];
+  wire [7:0]  w3 [0:3];
   wire        c3 [0:3];
   wire [31:0] p3 [0:3];
-  wire [3:0]  w4 [0:1];
+  wire [7:0]  w4 [0:1];
   wire        c4 [0:1];
   wire [31:0] p4 [0:1];
-  wire [3:0]  wt_all;
+  wire [7:0]  wt_all;
   wire        cy_all;
   wire [31:0] px_all;
 
   genvar m;
   generate
     for (m = 0; m < 32; m = m + 1) begin : lv0
-      assign w0[m] = sw[m][3:0];
+      assign w0[m] = sw[m][7:0];
       assign c0[m] = cc[m][16];
       assign p0[m] = px[m];
     end
@@ -238,6 +238,20 @@ module tt_um_jlnuijens_one11_uart #(
   assign cy_all = c4[0] ^ c4[1];
   assign px_all = p4[0] ^ p4[1];
 
+  // Same four pins. Rise is the low nibble. Fall is the next four. 400 Mbit/s.
+  wire [3:0] face_rise = {wt_all[3] ^ px_all[0] ^ cy_all, wt_all[2:0]};
+  wire [3:0] face_fall = wt_all[7:4];
+  reg  [3:0] rise_q, fall_q;
+  always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) rise_q <= 4'd0;
+    else        rise_q <= face_rise;
+  end
+  always @(negedge clk or negedge rst_n) begin
+    if (!rst_n) fall_q <= 4'd0;
+    else        fall_q <= face_fall;
+  end
+  wire [3:0] face = clk ? rise_q : fall_q;
+
   assign uo_out[0] = (map == 2'd0) ? uart_tx :
                      (on_tap && (tap_kind == 2'd3)) ? tap_can :
                      (map == 2'd3 && !on_tap) ? line_dm : 1'b1;
@@ -246,12 +260,12 @@ module tt_um_jlnuijens_one11_uart #(
   assign uo_out[3] = (map == 2'd2) ? (got | ~i2c_ack) : (got | uart_rxb);
   assign uo_out[4] = (map == 2'd1) ? spi_mosi :
                      (map == 2'd2) ? i2c_scl :
-                     (on_tap && (tap_kind == 2'd0)) ? tap_tdi : wt_all[0];
+                     (on_tap && (tap_kind == 2'd0)) ? tap_tdi : face[0];
   assign uo_out[5] = (map == 2'd1) ? spi_sclk :
-                     (on_tap && (tap_kind == 2'd0 || tap_kind == 2'd1)) ? tap_tck : wt_all[1];
+                     (on_tap && (tap_kind == 2'd0 || tap_kind == 2'd1)) ? tap_tck : face[1];
   assign uo_out[6] = (map == 2'd1) ? spi_csn :
-                     (on_tap && (tap_kind == 2'd0)) ? tap_tms : wt_all[2];
-  assign uo_out[7] = (map == 2'd3 && !on_tap) ? line_dp : (wt_all[3] ^ px_all[0] ^ cy_all);
+                     (on_tap && (tap_kind == 2'd0)) ? tap_tms : face[2];
+  assign uo_out[7] = (map == 2'd3 && !on_tap) ? line_dp : face[3];
 
   assign uio_out = {6'd0, tap_clk_od, (map == 2'd2) ? i2c_sda : tap_dio};
   assign uio_oe  = {6'd0, on_tap & tap_clk_oe, ((map == 2'd2) & i2c_oe) | (on_tap & tap_oe)};
