@@ -37,7 +37,7 @@ Identity is **1**. That count uses both edges of the 50 MHz wave, so the cell is
 | 6 | 125 | I2C 400 kHz |
 | 7 | 434 | UART 115200 |
 
-Byte on `uio`. Pulse FIRE. Sixteen bases take that FIRE. `r15` stays `0x4F4E4553`.
+Byte on `uio`. Pulse FIRE. Sixty-four bases take that FIRE, four stacks of 16. `r15` stays `0x4F4E4553`. The UART, SPI, and I2C walks are still one copy.
 
 ## How to test
 
@@ -47,4 +47,4 @@ Byte on `uio`. Pulse FIRE. Sixteen bases take that FIRE. `r15` stays `0x4F4E4553
 4. Map 10. SCL falls, SDA open-drain, STOP, SCL idle high.
 5. Drive 8N1 on `ui[2]` with map 00. `uo[3]` GOT.
 
-`N_BASES` default 16. Drop to 8 if GDS is fat. 32 is the wall.
+`N_BASES` is 64. Four stacks of the 16. The face mix is a tree, six deep, so the rise stays inside 20 ns. The UART line does not change.

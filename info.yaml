@@ -1,5 +1,5 @@
 # Tiny Tapeout / Jane Street CMOS5L — CPU 1.1 UART
-# 1.1 class line. 6x4. 16 bases. UART is FIRE on a pad.
+# 1.1 class line. 6x4. 4x16 bases. UART is FIRE on a pad.
 project:
   title:        "CPU 1.1 UART"
   author:       "Joshua Luke Nuijens / Axiom 1 Technology, LLC"
