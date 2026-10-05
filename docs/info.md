@@ -2,6 +2,20 @@
 
 That is the UART. Thirty-two bases on one FIRE. 1.6 GB/s inside on the rise. The line is 100 Mbit/s. Layout 40% of the 6×4. GDS built.
 
+## Pin layout
+
+| Pad | UART | ONE CPU 1.1 32 · 1.6 GB/s |
+|---|---|---|
+| `ui[0]` | FIRE | same pulse, all 32 bases |
+| `ui[1]` | HOT | clock holds the stage |
+| `ui[2]` | RX | finished byte lands in `r8` |
+| `ui[4:3]` | UART, SPI, I2C, stretch | `00` keeps the face on `uo[4:7]` |
+| `ui[7:5]` | count 1…434 | does not change the face |
+| `uio[7:0]` | the byte | base *k* folds byte + *k* |
+| `uo[0]` | TX · 100 Mbit/s | low byte of that word |
+| `uo[2]` | ONES | `r15` is `0x4F4E4553` |
+| `uo[4:7]` | SPI / I2C / stretch, or the face | the mix, four bits |
+
 Not three protocol blocks. The map selects the walk. The byte is any word. The clock holds the stage while the tile is enabled. No fetch after fabrication.
 
 Preloaded Universal UART. The stage is already loaded. The clock is the stage. 50 MHz oscillator. Data is RX/TX, not the power. FIRE. Pads. Clock count is the range.

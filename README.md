@@ -6,6 +6,20 @@ Jane Street protocol-emulator ASIC. Tiny Tapeout IHP CMOS5L, 6×4. Joshua Luke N
 
 That name is the UART. Thirty-two bases, same sites, same FIRE, same pads. The rise is 1.6 GB/s inside. The wire is 8N1, both edges at count 1, 100 Mbit/s. Layout used 40% of the tile. GDS built.
 
+## Pin layout
+
+| Pad | UART | ONE CPU 1.1 32 · 1.6 GB/s |
+|---|---|---|
+| `ui[0]` | FIRE | same pulse, all 32 bases |
+| `ui[1]` | HOT | clock holds the stage |
+| `ui[2]` | RX | finished byte lands in `r8` |
+| `ui[4:3]` | UART, SPI, I2C, stretch | `00` keeps the face on `uo[4:7]` |
+| `ui[7:5]` | count 1…434 | does not change the face |
+| `uio[7:0]` | the byte | base *k* folds byte + *k* |
+| `uo[0]` | TX · 100 Mbit/s | low byte of that word |
+| `uo[2]` | ONES | `r15` is `0x4F4E4553` |
+| `uo[4:7]` | SPI / I2C / stretch, or the face | the mix, four bits |
+
 Jane Street asked for flexibility, not a UART block plus an SPI block plus an I2C block. This die does not take a new program after fabrication. The clock holds the stage while the tile is enabled. The map picks the walk: UART, SPI mode 0, I2C, USB low-speed bit, or 10 Mbit Manchester. The byte on the pads is any word. A different coding, including a GPU file, is another word on that same FIRE.
 
 ## Preloaded
