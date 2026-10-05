@@ -1,4 +1,4 @@
-// CPU 1.1 class-line base. Both edges step the cycle and the stride.
+// CPU 1.1 class-line base. The rise is the step.
 // FIRE and the fold stay on the rise. LANE is the stride start.
 `default_nettype none
 
@@ -30,16 +30,10 @@ module one_cpu11 #(
   );
 
   (* keep *) reg [31:0] rf [0:15];
-  (* keep *) reg [31:0] cyc_r;
-  (* keep *) reg [31:0] str_r;
-  (* keep *) reg [31:0] cyc_f;
-  (* keep *) reg [31:0] str_f;
+  (* keep *) reg [31:0] cyc;
+  (* keep *) reg [31:0] str;
   (* keep *) reg [31:0] latched;
   (* keep *) reg [1:0]  st;
-
-  // Rise holds one half. Fall holds the other. The step is the sum.
-  assign cyc_o  = cyc_r + cyc_f;
-  assign stride = str_r + str_f;
 
   always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
@@ -59,16 +53,16 @@ module one_cpu11 #(
       rf[13] <= 32'd0;
       rf[14] <= 32'd4;
       rf[15] <= 32'h4F4E4553;
-      cyc_r  <= 32'd0;
-      str_r  <= LANE;
+      cyc    <= 32'd0;
+      str    <= LANE;
       latched<= 32'd0;
       st     <= 2'd2;
     end else begin
       if (run_hot) begin
-        cyc_r <= cyc_r + 32'd1;
-        str_r <= str_r + 32'd128;
-        rf[1] <= cyc_r + cyc_f + 32'd1;
-        rf[2] <= str_r + str_f + 32'd128;
+        cyc   <= cyc + 32'd1;
+        str   <= str + 32'd128;
+        rf[1] <= cyc + 32'd1;
+        rf[2] <= str + 32'd128;
       end
       rf[7]  <= 32'd128;
       rf[14] <= 32'd4;
@@ -91,20 +85,12 @@ module one_cpu11 #(
     end
   end
 
-  always @(negedge clk or negedge rst_n) begin
-    if (!rst_n) begin
-      cyc_f <= 32'd0;
-      str_f <= 32'd0;
-    end else if (run_hot) begin
-      cyc_f <= cyc_f + 32'd1;
-      str_f <= str_f + 32'd128;
-    end
-  end
-
   assign sig0     = rf[4];
   assign sig1     = rf[5];
   assign wt       = rf[6];
   assign last_seq = latched;
+  assign stride   = str;
+  assign cyc_o    = cyc;
   assign status   = st;
 
   // Every site stays in the output cone so synth cannot eat the 16 pads.
@@ -112,7 +98,7 @@ module one_cpu11 #(
                    rf[4]  ^ rf[5]  ^ rf[6]  ^ rf[7]  ^
                    rf[8]  ^ rf[9]  ^ rf[10] ^ rf[11] ^
                    rf[12] ^ rf[13] ^ rf[14] ^ rf[15] ^
-                   cyc_r ^ cyc_f ^ str_r ^ str_f ^ latched;
+                   cyc ^ str ^ latched;
 endmodule
 
 module one_cpu11_fold (

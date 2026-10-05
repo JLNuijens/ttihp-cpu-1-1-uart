@@ -45,11 +45,11 @@ Allnary. Any byte. The sites do not change with the coding.
 
 | | |
 |---|---|
-| Clock | 50 MHz. Stage steps on both edges. |
+| Clock | 50 MHz. The stack steps on the rise. |
 | Stack | 4×16 = 64 bases. 16 sites each. |
 | Pressed | `r7` = 128, `r14` = 4, `r15` = `0x4F4E4553`, every rise |
-| HOT | cycle + 1 and stride + 128, per base, per edge |
-| Rate | 64 × 2 × 50 MHz = 6.4 billion steps/s. 6.4 GB/s inside |
+| HOT | cycle + 1 and stride + 128, per base, per rise |
+| Rate | 64 × 50 MHz = 3.2 billion steps/s. 3.2 GB/s inside |
 | FIRE | one pulse on the rise. Base *k* folds `byte + k` |
 | Face | `uo[2]` ONES. `uo[4]`–`uo[7]` the mix, while the map is UART |
 | Word in | 8 bits. Any word. No fetch |
@@ -64,4 +64,4 @@ Leave the map at UART. Put the byte on `uio`. Pulse `ui[0]`. Read `uo[2]` and `u
 4. Map 10. SCL falls, SDA open-drain, STOP, SCL idle high.
 5. Drive 8N1 on `ui[2]` with map 00. `uo[3]` GOT.
 
-`N_BASES` is 64. Four stacks of the 16. Each base steps on both edges, so a 50 MHz wave is two steps. The face mix is a tree, six deep. The UART line does not change.
+`N_BASES` is 64. Four stacks of the 16. The step is the rise. The fall stays the UART bit at count 1. The face mix is a tree, six deep. The UART line does not change.

@@ -91,8 +91,8 @@ async def reset_dut(dut):
 
 
 @cocotb.test()
-async def test_both_edge_steps(dut):
-    """Four clocks, both edges. The base must step twice per oscillation."""
+async def test_rise_steps(dut):
+    """Four clocks. One step on the rise. The fall is the UART bit, not a second step."""
     task = await reset_dut(dut)
     try:
         base = dut.user_project.bases[0].u_cpu
@@ -104,8 +104,8 @@ async def test_both_edge_steps(dut):
         await Timer(1, unit="ns")
         c1 = int(base.cyc_o.value)
         s1 = int(base.stride.value)
-        assert c1 - c0 == 8, f"steps {c1 - c0}"
-        assert s1 - s0 == 8 * 128, f"stride {s1 - s0}"
+        assert c1 - c0 == 4, f"steps {c1 - c0}"
+        assert s1 - s0 == 4 * 128, f"stride {s1 - s0}"
     finally:
         task.cancel()
 
