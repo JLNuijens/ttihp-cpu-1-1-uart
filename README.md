@@ -24,16 +24,9 @@ Jane Street asked for flexibility, not a UART block plus an SPI block plus an I2
 
 ## Preloaded
 
-Universal UART. The stage is already loaded.
+Any word. Same sites. x86 and ARM64 are not the limit.
 
-## Available
-
-Two ordinary machines. x86 and ARM64. Same preload.
-
-- Windows PE — i386, x86-64, and Windows-on-ARM
-- Mac Mach-O — x86-64 and ARM64
-- Linux ELF
-- WASM, Java class, Android DEX, UTF-8, and the other measured codings — same preload
+Windows PE, Mac Mach-O, Linux ELF, Android DEX, Java, WASM, UTF-8, and a GPU file all take the same FIRE. The list is not a whitelist. A byte the list does not name still folds.
 
 Joshua Luke Nuijens / Axiom 1 Technology, LLC
 

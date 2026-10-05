@@ -20,14 +20,11 @@ Not three protocol blocks. The map selects the walk. The byte is any word. The c
 
 Preloaded Universal UART. The stage is already loaded. The clock is the stage. 50 MHz oscillator. Data is RX/TX, not the power. FIRE. Pads. Clock count is the range.
 
-## Available
+## Preloaded
 
-Two ordinary machines. x86 and ARM64. Same preload.
+Any word. Same sites. x86 and ARM64 are not the limit.
 
-- Windows PE — i386, x86-64, and Windows-on-ARM
-- Mac Mach-O — x86-64 and ARM64
-- Linux ELF
-- WASM, Java class, Android DEX, UTF-8, and the other measured codings — same preload
+Windows PE, Mac Mach-O, Linux ELF, Android DEX, Java, WASM, UTF-8, and a GPU file all take the same FIRE. The list is not a whitelist. A byte the list does not name still folds.
 
 UART, SPI, and I2C are the same walk on different pins. Stretch is low-speed USB NRZI and 10 Mbit Manchester — bit cells, not a USB stack or an Ethernet MAC. Nothing is pasted from OpenCores.
 
