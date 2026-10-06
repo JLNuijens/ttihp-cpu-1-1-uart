@@ -73,7 +73,7 @@ Allnary. Any byte. The sites do not change with the coding. 32 bases, 16 sites e
 
 | Site | At reset | While the clock holds |
 |---|---|---|
-| r1 | 0 | cycle + 1 each rise |
+| r1 | 0 | cycle + 1 each rise. The previous cycle is the flop in front of it. The weight of the flip is added on the way out. r6 stays the FIRE weight |
 | r2 | the lane | stride + 128 each rise |
 | r4 | `0x020A0000` | sig0 of the FIRE word |
 | r5 | 0 | sig1 of the FIRE word |

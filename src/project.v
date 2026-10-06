@@ -57,6 +57,7 @@ module tt_um_jlnuijens_one11_uart #(
   wire [31:0] sl [0:N_BASES-1];
   wire [31:0] ss [0:N_BASES-1];
   wire [31:0] cc [0:N_BASES-1];
+  wire [5:0]  step_w [0:N_BASES-1];
   wire [1:0]  st [0:N_BASES-1];
   wire [31:0] px [0:N_BASES-1];
 
@@ -180,6 +181,7 @@ module tt_um_jlnuijens_one11_uart #(
         .last_seq  (sl[k]),
         .stride    (ss[k]),
         .cyc_o     (cc[k]),
+        .step_w    (step_w[k]),
         .status    (st[k]),
         .pad_xor   (px[k])
       );
@@ -240,7 +242,7 @@ module tt_um_jlnuijens_one11_uart #(
 
   // Eight bits of the mix. One nibble per rise. The clock is not data,
   // so the clock tree still builds.
-  wire [3:0] face_rise = {wt_all[3] ^ px_all[0] ^ cy_all, wt_all[2:0]};
+  wire [3:0] face_rise = {wt_all[3] ^ px_all[0] ^ cy_all, wt_all[2:1], wt_all[0] ^ step_w[0][0]};
   wire [3:0] face_fall = wt_all[7:4];
   reg        face_ph;
   reg  [3:0] face;

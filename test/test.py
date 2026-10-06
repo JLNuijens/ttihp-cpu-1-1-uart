@@ -111,6 +111,33 @@ async def test_rise_steps(dut):
 
 
 @cocotb.test()
+async def test_cycle_pair(dut):
+    """The cycle and the one before it. Weight is how many bits flipped."""
+    task = await reset_dut(dut)
+    try:
+        base = dut.user_project.bases[0].u_cpu
+        await Timer(1, unit="ns")
+        cur = int(base.cyc_o.value)
+        prev = int(base.cyc_prev.value)
+        assert cur - prev == 1, f"pair {prev} {cur}"
+        assert int(base.step_w.value) == bin(cur ^ prev).count("1")
+        assert int(base.rf[6].value) == 1, "FIRE weight still held"
+        seen = False
+        for _ in range(8):
+            await RisingEdge(dut.clk)
+            await Timer(1, unit="ns")
+            cur = int(base.cyc_o.value)
+            prev = int(base.cyc_prev.value)
+            assert cur - prev == 1
+            if int(base.step_w.value) == 3 and (cur ^ prev) == 7:
+                seen = True
+        assert seen, "carry of 3 never weighed"
+        assert ones_ok(dut) == 1
+    finally:
+        task.cancel()
+
+
+@cocotb.test()
 async def test_face_both_edges(dut):
     task = await reset_dut(dut)
     try:
