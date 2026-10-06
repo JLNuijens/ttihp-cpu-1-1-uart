@@ -111,27 +111,21 @@ async def test_rise_steps(dut):
 
 
 @cocotb.test()
-async def test_cycle_pair(dut):
-    """The cycle and the one before it. Weight is how many bits flipped."""
+async def test_sent_against_read(dut):
+    """The byte that went out against the byte that came back. The face is the count."""
     task = await reset_dut(dut)
     try:
-        base = dut.user_project.bases[0].u_cpu
+        await fire_byte(dut, 0x55)
+        await drive_rx(dut, 0x55)
+        await ClockCycles(dut.clk, 4)
         await Timer(1, unit="ns")
-        cur = int(base.cyc_o.value)
-        prev = int(base.cyc_prev.value)
-        assert cur - prev == 1, f"pair {prev} {cur}"
-        assert int(base.step_w.value) == bin(cur ^ prev).count("1")
-        assert int(base.rf[6].value) == 1, "FIRE weight still held"
-        seen = False
-        for _ in range(8):
-            await RisingEdge(dut.clk)
-            await Timer(1, unit="ns")
-            cur = int(base.cyc_o.value)
-            prev = int(base.cyc_prev.value)
-            assert cur - prev == 1
-            if int(base.step_w.value) == 3 and (cur ^ prev) == 7:
-                seen = True
-        assert seen, "carry of 3 never weighed"
+        assert int(dut.user_project.u_uart.have.value) == 1
+        assert ((int(dut.uo_out.value) >> 4) & 0xF) == 0, "same byte weighs 0"
+        await fire_byte(dut, 0x55)
+        await drive_rx(dut, 0x54)
+        await ClockCycles(dut.clk, 4)
+        await Timer(1, unit="ns")
+        assert ((int(dut.uo_out.value) >> 4) & 0xF) == 1, "one bit differs"
         assert ones_ok(dut) == 1
     finally:
         task.cancel()

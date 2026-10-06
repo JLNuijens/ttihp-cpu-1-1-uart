@@ -18,7 +18,6 @@ module one_cpu11 #(
   output wire [31:0] last_seq,
   output wire [31:0] stride,
   output wire [31:0] cyc_o,
-  output wire [5:0]  step_w,
   output wire [1:0]  status,
   output wire [31:0] pad_xor
 );
@@ -32,7 +31,6 @@ module one_cpu11 #(
 
   (* keep *) reg [31:0] rf [0:15];
   (* keep *) reg [31:0] cyc;
-  (* keep *) reg [31:0] cyc_prev;
   (* keep *) reg [31:0] str;
   (* keep *) reg [31:0] latched;
   (* keep *) reg [1:0]  st;
@@ -55,18 +53,16 @@ module one_cpu11 #(
       rf[13] <= 32'd0;
       rf[14] <= 32'd4;
       rf[15] <= 32'h4F4E4553;
-      cyc      <= 32'd0;
-      cyc_prev <= 32'd0;
-      str      <= LANE;
+      cyc    <= 32'd0;
+      str    <= LANE;
       latched<= 32'd0;
       st     <= 2'd2;
     end else begin
       if (run_hot) begin
-        cyc_prev <= cyc;
-        cyc      <= cyc + 32'd1;
-        str      <= str + 32'd128;
-        rf[1]    <= cyc + 32'd1;
-        rf[2]    <= str + 32'd128;
+        cyc   <= cyc + 32'd1;
+        str   <= str + 32'd128;
+        rf[1] <= cyc + 32'd1;
+        rf[2] <= str + 32'd128;
       end
       rf[7]  <= 32'd128;
       rf[14] <= 32'd4;
@@ -89,33 +85,19 @@ module one_cpu11 #(
     end
   end
 
-  function [5:0] pop8;
-    input [7:0] x;
-    integer i;
-    begin
-      pop8 = 6'd0;
-      for (i = 0; i < 8; i = i + 1)
-        pop8 = pop8 + x[i];
-    end
-  endfunction
-
-  // A +1 step flips a short run from bit 0. Eight bits cover that run.
-  wire [31:0] step_delta = cyc ^ cyc_prev;
-  assign step_w   = pop8(step_delta[7:0]);
   assign sig0     = rf[4];
   assign sig1     = rf[5];
-  assign wt       = rf[6] + {26'd0, step_w};
+  assign wt       = rf[6];
   assign last_seq = latched;
   assign stride   = str;
   assign cyc_o    = cyc;
   assign status   = st;
 
-  // The pair stays in the wave. r6 itself is still the FIRE weight.
   assign pad_xor = rf[0]  ^ rf[1]  ^ rf[2]  ^ rf[3]  ^
                    rf[4]  ^ rf[5]  ^ rf[6]  ^ rf[7]  ^
                    rf[8]  ^ rf[9]  ^ rf[10] ^ rf[11] ^
                    rf[12] ^ rf[13] ^ rf[14] ^ rf[15] ^
-                   cyc ^ cyc_prev ^ str ^ latched;
+                   cyc ^ str ^ latched;
 endmodule
 
 module one_cpu11_fold (

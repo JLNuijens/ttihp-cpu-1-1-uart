@@ -57,13 +57,13 @@ module tt_um_jlnuijens_one11_uart #(
   wire [31:0] sl [0:N_BASES-1];
   wire [31:0] ss [0:N_BASES-1];
   wire [31:0] cc [0:N_BASES-1];
-  wire [5:0]  step_w [0:N_BASES-1];
   wire [1:0]  st [0:N_BASES-1];
   wire [31:0] px [0:N_BASES-1];
 
-  wire        uart_tx, uart_busy, uart_rxb, uart_got;
+  wire        uart_tx, uart_busy, uart_rxb, uart_got, uart_have;
   wire [31:0] r15_ones;
   wire [7:0]  uart_byte;
+  wire [3:0]  uart_diff;
 
   js_uart_fire u_uart (
     .clk      (clk),
@@ -77,7 +77,9 @@ module tt_um_jlnuijens_one11_uart #(
     .tx_busy  (uart_busy),
     .rx_byte  (uart_byte),
     .rx_busy  (uart_rxb),
-    .rx_got   (uart_got)
+    .rx_got   (uart_got),
+    .diff     (uart_diff),
+    .have     (uart_have)
   );
 
   wire spi_mosi, spi_sclk, spi_csn, spi_busy, spi_got;
@@ -181,7 +183,6 @@ module tt_um_jlnuijens_one11_uart #(
         .last_seq  (sl[k]),
         .stride    (ss[k]),
         .cyc_o     (cc[k]),
-        .step_w    (step_w[k]),
         .status    (st[k]),
         .pad_xor   (px[k])
       );
@@ -242,8 +243,9 @@ module tt_um_jlnuijens_one11_uart #(
 
   // Eight bits of the mix. One nibble per rise. The clock is not data,
   // so the clock tree still builds.
-  wire [3:0] face_rise = {wt_all[3] ^ px_all[0] ^ cy_all, wt_all[2:1], wt_all[0] ^ step_w[0][0]};
-  wire [3:0] face_fall = wt_all[7:4];
+  wire [3:0] mix_rise = {wt_all[3] ^ px_all[0] ^ cy_all, wt_all[2:0]};
+  wire [3:0] face_rise = (map == 2'd0 && uart_have) ? uart_diff : mix_rise;
+  wire [3:0] face_fall = (map == 2'd0 && uart_have) ? uart_diff : wt_all[7:4];
   reg        face_ph;
   reg  [3:0] face;
   always @(posedge clk or negedge rst_n) begin

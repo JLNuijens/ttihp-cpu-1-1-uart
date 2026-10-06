@@ -27,7 +27,7 @@ Jane Street asked for flexibility, not a UART block plus an SPI block plus an I2
 | | |
 |---|---|
 | Bases | 32, 16 sites each |
-| Step | rise. The previous cycle is kept one flop deep. The bits that flipped are the weight, added on the way out |
+| Step | rise. cycle +1, stride +128. A finished read weighs the byte that came back against the byte that was fired. The face shows that count until the next FIRE |
 | Inside | 1.6 GB/s |
 | In | one byte per FIRE |
 | Out | ONES on `uo[2]`. Four pins, eight bits of the mix, one nibble each rise, 200 Mbit/s |
