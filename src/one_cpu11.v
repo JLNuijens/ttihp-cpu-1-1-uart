@@ -89,18 +89,19 @@ module one_cpu11 #(
     end
   end
 
-  function [5:0] pop32;
-    input [31:0] x;
+  function [5:0] pop8;
+    input [7:0] x;
     integer i;
     begin
-      pop32 = 6'd0;
-      for (i = 0; i < 32; i = i + 1)
-        pop32 = pop32 + x[i];
+      pop8 = 6'd0;
+      for (i = 0; i < 8; i = i + 1)
+        pop8 = pop8 + x[i];
     end
   endfunction
 
+  // A +1 step flips a short run from bit 0. Eight bits cover that run.
   wire [31:0] step_delta = cyc ^ cyc_prev;
-  assign step_w   = pop32(step_delta);
+  assign step_w   = pop8(step_delta[7:0]);
   assign sig0     = rf[4];
   assign sig1     = rf[5];
   assign wt       = rf[6] + {26'd0, step_w};
