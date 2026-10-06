@@ -18,7 +18,7 @@ That name is the UART. Thirty-two bases, same sites, same FIRE, same pads. The r
 | `uio[7:0]` | the byte | base *k* folds byte + *k* |
 | `uo[0]` | TX · 100 Mbit/s | low byte of that word |
 | `uo[2]` | ONES | `r15` is `0x4F4E4553` |
-| `uo[4:7]` | SPI / I2C / stretch, or the face | rise nibble, fall nibble, 400 Mbit/s |
+| `uo[4:7]` | SPI / I2C / stretch, or the face | low nibble, then the next four, one rise each |
 
 Jane Street asked for flexibility, not a UART block plus an SPI block plus an I2C block. This die does not take a new program after fabrication. The clock holds the stage while the tile is enabled. The map picks the walk: UART, SPI mode 0, I2C, or hook `11`. On hook `11` the count slot picks Manchester, a real JTAG bit-bang, a real SWD header, a PS/2 device frame at 12.5 kHz, USB low-speed, or a CAN bit cell. The byte on the pads is any word.
 
@@ -30,7 +30,7 @@ Jane Street asked for flexibility, not a UART block plus an SPI block plus an I2
 | Step | rise. cycle +1, stride +128 |
 | Inside | 1.6 GB/s |
 | In | one byte per FIRE |
-| Out | ONES on `uo[2]`. Four pins, both edges, 8 bits of the mix, 400 Mbit/s |
+| Out | ONES on `uo[2]`. Four pins, eight bits of the mix, one nibble each rise, 200 Mbit/s |
 | Pressed | r7 = 128, r14 = 4, r15 = `0x4F4E4553` |
 | FIRE | r4 sig0, r5 sig1, r6 weight, r9 the word. Base k folds byte + k |
 | RX | the finished byte lands in r8 |

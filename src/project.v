@@ -238,19 +238,21 @@ module tt_um_jlnuijens_one11_uart #(
   assign cy_all = c4[0] ^ c4[1];
   assign px_all = p4[0] ^ p4[1];
 
-  // Same four pins. Rise is the low nibble. Fall is the next four. 400 Mbit/s.
+  // Eight bits of the mix. One nibble per rise. The clock is not data,
+  // so the clock tree still builds.
   wire [3:0] face_rise = {wt_all[3] ^ px_all[0] ^ cy_all, wt_all[2:0]};
   wire [3:0] face_fall = wt_all[7:4];
-  reg  [3:0] rise_q, fall_q;
+  reg        face_ph;
+  reg  [3:0] face;
   always @(posedge clk or negedge rst_n) begin
-    if (!rst_n) rise_q <= 4'd0;
-    else        rise_q <= face_rise;
+    if (!rst_n) begin
+      face_ph <= 1'b0;
+      face    <= 4'd0;
+    end else begin
+      face_ph <= ~face_ph;
+      face    <= face_ph ? face_fall : face_rise;
+    end
   end
-  always @(negedge clk or negedge rst_n) begin
-    if (!rst_n) fall_q <= 4'd0;
-    else        fall_q <= face_fall;
-  end
-  wire [3:0] face = clk ? rise_q : fall_q;
 
   assign uo_out[0] = (map == 2'd0) ? uart_tx :
                      (on_tap && (tap_kind == 2'd3)) ? tap_can :
