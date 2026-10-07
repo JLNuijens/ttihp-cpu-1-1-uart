@@ -363,11 +363,11 @@ async def test_can_bit(dut):
 
 @cocotb.test()
 async def test_oam_holds(dut):
-    """Second CPU 1.1. Count stays off. The live face is the input. The clock holds the map."""
+    """Fall CPU. Same clock. It takes the rise output one half-cycle later and holds it."""
     task = await reset_dut(dut)
     try:
         live = dut.user_project.bases[0].u_cpu
-        hold = dut.user_project.u_hold
+        hold = dut.user_project.oam[0].u_hold
         await RisingEdge(dut.clk)
         await Timer(1, unit="ns")
         c0 = int(live.cyc_o.value)
@@ -380,10 +380,12 @@ async def test_oam_holds(dut):
         assert int(hold.stride.value) == 0, "hold stride stays the lane"
 
         await fire_byte(dut, 0x55)
+        await FallingEdge(dut.clk)
+        await Timer(1, unit="ns")
         assert int(live.last_seq.value) == 0x55
         assert int(live.sig0.value) == 0x104F0055
-        assert int(hold.last_seq.value) == 0, "staged the low byte that was already on the face"
-        assert int(hold.sig0.value) == 0x020A0000, "same fold the walker uses on a zero byte"
+        assert int(hold.last_seq.value) == 0x55, "fall took the rise output"
+        assert int(hold.sig0.value) == 0x104F0055, "same fold, other phase"
         assert int(hold.cyc_o.value) == 0
         held = int(hold.sig0.value)
         await ClockCycles(dut.clk, 6)
@@ -393,9 +395,11 @@ async def test_oam_holds(dut):
         assert int(live.cyc_o.value) > c0 + 8
 
         await fire_byte(dut, 0x01)
+        await FallingEdge(dut.clk)
+        await Timer(1, unit="ns")
         assert int(live.sig0.value) == 0x020A0001
-        assert int(hold.last_seq.value) == 0x55, "staged the low byte of the last face"
-        assert int(hold.sig0.value) == 0x104F0055, "same fold the walker uses on 0x55"
+        assert int(hold.last_seq.value) == 0x01, "fall took the new rise output"
+        assert int(hold.sig0.value) == 0x020A0001, "same fold the walker uses on 0x01"
         assert int(hold.cyc_o.value) == 0
         assert int(hold.stride.value) == 0
     finally:

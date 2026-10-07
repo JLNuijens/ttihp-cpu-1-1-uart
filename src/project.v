@@ -7,9 +7,9 @@
  * UART / SPI / I2C walks. Stretch USB LS + 10 Mbit Manchester.
  * 2 stacks, 32 bases. 16 pad/register sites. UART walk is one copy.
  * Bank: 128 fired bytes, 128 received bytes, same clock.
- * OAM: the same CPU, 8 bases. The walker stays 32.
- * Clock is the power. The input is the first CPU's output.
- * Stride is 128, so these 8 still reach 512. The count is off. It holds the cycle.
+ * OAM: the same CPU on the fall. The walker stays on the rise.
+ * Same clock. The fall takes the rise output, one half-cycle later.
+ * Eight bases. The count is off. It holds that cycle.
  */
 `default_nettype none
 
@@ -65,9 +65,12 @@ module tt_um_jlnuijens_one11_uart #(
   wire [31:0] px [0:N_BASES-1];
 
   wire [31:0] hs0 [0:7];
-  wire [31:0] hsw [0:7];
-  wire [31:0] hcc [0:7];
-  wire [31:0] hpx [0:7];
+
+  reg fire_fall;
+  always @(negedge clk or negedge rst_n) begin
+    if (!rst_n) fire_fall <= 1'b0;
+    else        fire_fall <= fire;
+  end
 
   wire        uart_tx, uart_busy, uart_rxb, uart_got, uart_have;
   wire [31:0] r15_ones;
@@ -223,26 +226,26 @@ module tt_um_jlnuijens_one11_uart #(
     end
   endgenerate
 
-  // Same CPU, 8 bases. 32 are the walker. Stride is 128, so 8 still reach 512.
-  // Clock is the power. Input is the first CPU's output. Count is off.
+  // Same CPU, the other phase. Eight bases. Same clock, fall edge.
+  // The input is the rise output. The count is off, so the fall holds it.
   generate
     for (k = 0; k < 8; k = k + 1) begin : oam
-      one_cpu11 #(.LANE(k)) u_hold (
+      one_cpu11 #(.LANE(k), .FALL(1)) u_hold (
         .clk       (clk),
         .rst_n     (rst_n),
         .run_hot   (1'b0),
-        .fire      (fire),
+        .fire      (fire_fall),
         .seq       ({24'd0, s0[k][7:0]}),
         .rx_strobe (1'b0),
         .rx_data   (8'd0),
         .sig0      (hs0[k]),
         .sig1      (),
-        .wt        (hsw[k]),
+        .wt        (),
         .last_seq  (),
         .stride    (),
-        .cyc_o     (hcc[k]),
+        .cyc_o     (),
         .status    (),
-        .pad_xor   (hpx[k])
+        .pad_xor   ()
       );
     end
   endgenerate
@@ -270,15 +273,9 @@ module tt_um_jlnuijens_one11_uart #(
   genvar m;
   generate
     for (m = 0; m < 32; m = m + 1) begin : lv0
-      if (m < 8) begin
-        assign w0[m] = sw[m][7:0] ^ hsw[m][7:0];
-        assign c0[m] = cc[m][16] ^ hcc[m][16];
-        assign p0[m] = px[m] ^ hpx[m];
-      end else begin
-        assign w0[m] = sw[m][7:0];
-        assign c0[m] = cc[m][16];
-        assign p0[m] = px[m];
-      end
+      assign w0[m] = sw[m][7:0];
+      assign c0[m] = cc[m][16];
+      assign p0[m] = px[m];
     end
     for (m = 0; m < 16; m = m + 1) begin : lv1
       assign w1[m] = w0[2*m] ^ w0[2*m+1];
@@ -305,12 +302,13 @@ module tt_um_jlnuijens_one11_uart #(
   assign cy_all = c4[0] ^ c4[1];
   assign px_all = p4[0] ^ p4[1];
 
-  // Same mix as the walker. The hold is already in it. No second tree.
+  wire [7:0] held_b = hs0[0][7:0] ^ hs0[1][7:0] ^ hs0[2][7:0] ^ hs0[3][7:0]
+                    ^ hs0[4][7:0] ^ hs0[5][7:0] ^ hs0[6][7:0] ^ hs0[7][7:0];
   wire [3:0] mix_rise = {wt_all[3] ^ px_all[0] ^ cy_all, wt_all[2:0]};
   wire [3:0] face_rise = replay ? bank_look[3:0] :
                          (map == 2'd0 && uart_have) ? frame_w[3:0] : mix_rise;
   wire [3:0] face_fall = replay ? bank_look[7:4] :
-                         (map == 2'd0 && uart_have) ? frame_w[3:0] : wt_all[7:4];
+                         (map == 2'd0 && uart_have) ? frame_w[3:0] : held_b[7:4];
   reg        face_ph;
   reg  [3:0] face;
   always @(posedge clk or negedge rst_n) begin
