@@ -6,6 +6,8 @@
  * One oscillator. FIRE. Pads. Clock count is the range.
  * UART / SPI / I2C walks. Stretch USB LS + 10 Mbit Manchester.
  * 2 stacks, 32 bases. 16 pad/register sites. UART walk is one copy.
+ * Bank: 128 fired bytes, 128 received bytes, same clock.
+ * Operational memory: a second CPU 1.1. Count off. Live face is its input.
  */
 `default_nettype none
 
@@ -59,6 +61,15 @@ module tt_um_jlnuijens_one11_uart #(
   wire [31:0] cc [0:N_BASES-1];
   wire [1:0]  st [0:N_BASES-1];
   wire [31:0] px [0:N_BASES-1];
+
+  wire [31:0] os0 [0:N_BASES-1];
+  wire [31:0] os1 [0:N_BASES-1];
+  wire [31:0] osw [0:N_BASES-1];
+  wire [31:0] osl [0:N_BASES-1];
+  wire [31:0] oss [0:N_BASES-1];
+  wire [31:0] occ [0:N_BASES-1];
+  wire [1:0]  ost [0:N_BASES-1];
+  wire [31:0] opx [0:N_BASES-1];
 
   wire        uart_tx, uart_busy, uart_rxb, uart_got, uart_have;
   wire [31:0] r15_ones;
@@ -214,6 +225,32 @@ module tt_um_jlnuijens_one11_uart #(
     end
   endgenerate
 
+  // Operational memory. Same CPU 1.1, count off.
+  // The input is the live face, not the pad. FIRE maps it.
+  // The next rises do not add. The clock holds that map.
+  generate
+    for (k = 0; k < N_BASES; k = k + 1) begin : oam
+      one_cpu11 #(.LANE(k)) u_hold (
+        .clk       (clk),
+        .rst_n     (rst_n),
+        .run_hot   (1'b0),
+        .fire      (fire),
+        .seq       (s0[k]),
+        .rx_strobe (1'b0),
+        .rx_data   (8'd0),
+        .sig0      (os0[k]),
+        .sig1      (os1[k]),
+        .wt        (osw[k]),
+        .last_seq  (osl[k]),
+        .stride    (oss[k]),
+        .cyc_o     (occ[k]),
+        .status    (ost[k]),
+        .pad_xor   (opx[k])
+      );
+    end
+  endgenerate
+
+  // Pairwise mix. Same XOR as a chain, five deep instead of 32.
   wire [7:0]  w0 [0:31];
   wire        c0 [0:31];
   wire [31:0] p0 [0:31];
@@ -265,7 +302,38 @@ module tt_um_jlnuijens_one11_uart #(
   assign cy_all = c4[0] ^ c4[1];
   assign px_all = p4[0] ^ p4[1];
 
-  wire [3:0] mix_rise = {wt_all[3] ^ px_all[0] ^ cy_all, wt_all[2:0]};
+  // Collapse of the hold. Every site bit is in it, so the stage stays.
+  wire [31:0] q0 [0:31];
+  wire [31:0] q1 [0:15];
+  wire [31:0] q2 [0:7];
+  wire [31:0] q3 [0:3];
+  wire [31:0] q4 [0:1];
+  wire [31:0] held;
+
+  genvar h;
+  generate
+    for (h = 0; h < 32; h = h + 1) begin : hv0
+      assign q0[h] = opx[h];
+    end
+    for (h = 0; h < 16; h = h + 1) begin : hv1
+      assign q1[h] = q0[2*h] ^ q0[2*h+1];
+    end
+    for (h = 0; h < 8; h = h + 1) begin : hv2
+      assign q2[h] = q1[2*h] ^ q1[2*h+1];
+    end
+    for (h = 0; h < 4; h = h + 1) begin : hv3
+      assign q3[h] = q2[2*h] ^ q2[2*h+1];
+    end
+    for (h = 0; h < 2; h = h + 1) begin : hv4
+      assign q4[h] = q3[2*h] ^ q3[2*h+1];
+    end
+  endgenerate
+  assign held = q4[0] ^ q4[1];
+  wire held_b = ^held;
+
+  // Eight bits of the mix. One nibble per rise. The clock is not data,
+  // so the clock tree still builds. held_b is the memory collapse.
+  wire [3:0] mix_rise = {wt_all[3] ^ px_all[0] ^ cy_all ^ held_b, wt_all[2:0]};
   wire [3:0] face_rise = replay ? bank_look[3:0] :
                          (map == 2'd0 && uart_have) ? frame_w[3:0] : mix_rise;
   wire [3:0] face_fall = replay ? bank_look[7:4] :
@@ -300,5 +368,5 @@ module tt_um_jlnuijens_one11_uart #(
   assign uio_out = {6'd0, tap_clk_od, (map == 2'd2) ? i2c_sda : tap_dio};
   assign uio_oe  = {6'd0, on_tap & tap_clk_oe, ((map == 2'd2) & i2c_oe) | (on_tap & tap_oe)};
 
-  wire _unused = &{ena, s0[0], s1[0], sl[0], ss[0], st[0], i2c_ack, n_saved, frame_w, 1'b0};
+  wire _unused = &{ena, s0[0], s1[0], sl[0], ss[0], st[0], os1[0], osw[0], oss[0], occ[0], ost[0], i2c_ack, n_saved, frame_w, 1'b0};
 endmodule

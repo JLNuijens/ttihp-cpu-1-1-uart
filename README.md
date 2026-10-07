@@ -4,14 +4,14 @@
 
 Jane Street protocol-emulator ASIC. Tiny Tapeout IHP CMOS5L, 6×4. Joshua Luke Nuijens / Axiom 1 Technology.
 
-That name is the UART. Thirty-two bases, same sites, same FIRE, same pads. The rise is 1.6 GB/s inside. The wire is 8N1, both edges at count 1, 100 Mbit/s. Layout used 40% of the tile. GDS built.
+That name is the UART. Thirty-two bases, same sites, same FIRE, same pads. The rise is 1.6 GB/s inside. The wire is 8N1, both edges at count 1, 100 Mbit/s. A second CPU 1.1 holds the map: count off, live face in, same clock. The UART log keeps 128 fired bytes and 128 received bytes.
 
 ## Pin layout
 
 | Pad | UART | ONE CPU 1.1 32 · 1.6 GB/s |
 |---|---|---|
 | `ui[0]` | FIRE | same pulse, all 32 bases |
-| `ui[1]` | HOT | clock holds the stage |
+| `ui[1]` | HOT | clock holds the stage. On the UART map it replays the bank |
 | `ui[2]` | RX | finished byte lands in `r8` |
 | `ui[4:3]` | UART, SPI, I2C, stretch | `00` keeps the face on `uo[4:7]` |
 | `ui[7:5]` | count 1…434 | does not change the face |
@@ -27,8 +27,8 @@ Jane Street asked for flexibility, not a UART block plus an SPI block plus an I2
 | | |
 |---|---|
 | Bases | 32, 16 sites each |
-| Step | rise. cycle +1, stride +128. A finished read weighs the byte that came back against the byte that was fired. The face shows that count until the next FIRE |
-| Inside | 1.6 GB/s |
+| Step | rise. cycle +1, stride +128. The second CPU 1.1 does not step. It holds the last face |
+| Inside | 1.6 GB/s. One cycle is 32 bytes. The hold sites are 2048 bytes |
 | In | one byte per FIRE |
 | Out | ONES on `uo[2]`. Four pins, eight bits of the mix, one nibble each rise, 200 Mbit/s |
 | Pressed | r7 = 128, r14 = 4, r15 = `0x4F4E4553` |
@@ -72,7 +72,7 @@ This is not a Quartus project. Quartus is the Nano / CPU 1.1 processor path.
 | pin | role |
 |---|---|
 | `ui[0]` | FIRE |
-| `ui[1]` | HOT. The clock holds the stage |
+| `ui[1]` | HOT. The clock holds the stage. On the UART map it replays the bank |
 | `ui[2]` | UART RX, SPI MISO, JTAG TDO, CAN RX. Idle high. UART watches it only on map `00` |
 | `ui[4:3]` | `00` UART, `01` SPI, `10` I2C, `11` the other walks |
 | `ui[7:5]` | count 1, 4, 5, 8, 16, 33, 125, 434. On hook `11` the slot picks the walk |

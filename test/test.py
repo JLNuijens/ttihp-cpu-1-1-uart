@@ -127,6 +127,16 @@ async def test_sent_against_read(dut):
         await Timer(1, unit="ns")
         assert ((int(dut.uo_out.value) >> 4) & 0xF) == 1, "one bit differs"
         assert ones_ok(dut) == 1
+        bank = dut.user_project.u_bank
+        assert int(bank.n_saved.value) == 2
+        assert int(bank.sent[0].value) == 0x55
+        assert int(bank.gotb[0].value) == 0x55
+        assert int(bank.gotb[1].value) == 0x54
+        assert int(bank.frame_w.value) == 1
+        dut.ui_in.value = 0x06  # HOT, UART map, RX idle. Replay the bank.
+        await ClockCycles(dut.clk, 2)
+        await Timer(1, unit="ns")
+        assert ((int(dut.uo_out.value) >> 4) & 0xF) == 0x5, "replay low nibble of 0x55"
     finally:
         task.cancel()
 
@@ -347,5 +357,46 @@ async def test_can_bit(dut):
                 break
         assert tx_busy(dut) == 0
         assert ones_ok(dut) == 1
+    finally:
+        task.cancel()
+
+
+@cocotb.test()
+async def test_oam_holds(dut):
+    """Second CPU 1.1. Count stays off. The live face is the input. The clock holds the map."""
+    task = await reset_dut(dut)
+    try:
+        live = dut.user_project.bases[0].u_cpu
+        hold = dut.user_project.oam[0].u_hold
+        await RisingEdge(dut.clk)
+        await Timer(1, unit="ns")
+        c0 = int(live.cyc_o.value)
+        assert int(hold.cyc_o.value) == 0
+        assert int(hold.stride.value) == 0
+        await ClockCycles(dut.clk, 8)
+        await Timer(1, unit="ns")
+        assert int(live.cyc_o.value) - c0 == 8, "live still steps"
+        assert int(hold.cyc_o.value) == 0, "hold does not count"
+        assert int(hold.stride.value) == 0, "hold stride stays the lane"
+
+        await fire_byte(dut, 0x55)
+        assert int(live.last_seq.value) == 0x55
+        assert int(live.sig0.value) == 0x104F0055
+        assert int(hold.last_seq.value) == 0x020A0000, "staged the face that was already there"
+        assert int(hold.sig0.value) == 0x104F0C00, "that face mapped"
+        assert int(hold.cyc_o.value) == 0
+        held = int(hold.sig0.value)
+        await ClockCycles(dut.clk, 6)
+        await Timer(1, unit="ns")
+        assert int(hold.cyc_o.value) == 0
+        assert int(hold.sig0.value) == held, "clock held the map"
+        assert int(live.cyc_o.value) > c0 + 8
+
+        await fire_byte(dut, 0x01)
+        assert int(live.sig0.value) == 0x020A0001
+        assert int(hold.last_seq.value) == 0x104F0055, "staged the last live face"
+        assert int(hold.sig0.value) == 0x104F5F55, "mapped that face"
+        assert int(hold.cyc_o.value) == 0
+        assert int(hold.stride.value) == 0
     finally:
         task.cancel()
