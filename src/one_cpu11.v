@@ -36,7 +36,7 @@ module one_cpu11 #(
   reg [31:0] latched;
   reg [1:0]  st;
 
-generate
+  generate
     if (FALL == 0) begin : rise
       always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
