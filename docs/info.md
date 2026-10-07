@@ -88,7 +88,7 @@ Allnary. Any byte. The sites do not change with the coding. 32 bases, 16 sites e
 
 The same CPU 1.1, again. Count off. Not a second fold of the 32-bit signature.
 
-The walker takes a byte. The top 24 bits of that word are zero, and that is the machine on the die. OAM takes the low byte of the live face the same way. Same FIRE. Same clock. The count does not step. The face mix takes the held byte and the held weight, the same eight bits the walker already uses. It does not take every site. The clock holds that byte until the next FIRE.
+The same CPU, one copy. Clock is the power. The input is the first CPU's output, the low byte, top 24 bits zero. The count does not step. It holds the last cycle. The face takes that held byte. Not another row of bases.
 
 ## Bank
 

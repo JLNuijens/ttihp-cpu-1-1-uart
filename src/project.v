@@ -7,8 +7,8 @@
  * UART / SPI / I2C walks. Stretch USB LS + 10 Mbit Manchester.
  * 2 stacks, 32 bases. 16 pad/register sites. UART walk is one copy.
  * Bank: 128 fired bytes, 128 received bytes, same clock.
- * OAM: the same CPU 1.1 again. Count off. The input is the low byte
- * of the live face, top 24 bits zero, same as the pad byte.
+ * OAM: one copy of the same CPU. Clock is the power. The input is the
+ * first CPU's output. It holds the last cycle.
  */
 `default_nettype none
 
@@ -63,14 +63,7 @@ module tt_um_jlnuijens_one11_uart #(
   wire [1:0]  st [0:N_BASES-1];
   wire [31:0] px [0:N_BASES-1];
 
-  wire [31:0] os0 [0:N_BASES-1];
-  wire [31:0] os1 [0:N_BASES-1];
-  wire [31:0] osw [0:N_BASES-1];
-  wire [31:0] osl [0:N_BASES-1];
-  wire [31:0] oss [0:N_BASES-1];
-  wire [31:0] occ [0:N_BASES-1];
-  wire [1:0]  ost [0:N_BASES-1];
-  wire [31:0] opx [0:N_BASES-1];
+  wire [31:0] h_sig, h_wt;
 
   wire        uart_tx, uart_busy, uart_rxb, uart_got, uart_have;
   wire [31:0] r15_ones;
@@ -226,29 +219,25 @@ module tt_um_jlnuijens_one11_uart #(
     end
   endgenerate
 
-  // OAM. The same CPU 1.1. Count off. The live face byte is the input,
-  // top 24 bits zero, same shape as the pad. FIRE maps it. The clock holds it.
-  generate
-    for (k = 0; k < N_BASES; k = k + 1) begin : oam
-      one_cpu11 #(.LANE(k)) u_hold (
-        .clk       (clk),
-        .rst_n     (rst_n),
-        .run_hot   (1'b0),
-        .fire      (fire),
-        .seq       ({24'd0, s0[k][7:0]}),
-        .rx_strobe (1'b0),
-        .rx_data   (8'd0),
-        .sig0      (os0[k]),
-        .sig1      (os1[k]),
-        .wt        (osw[k]),
-        .last_seq  (osl[k]),
-        .stride    (oss[k]),
-        .cyc_o     (occ[k]),
-        .status    (ost[k]),
-        .pad_xor   (opx[k])
-      );
-    end
-  endgenerate
+  // One copy of the CPU on the tile. Clock is the power.
+  // The input is the first CPU's output. The count stays off, so it holds the last cycle.
+  one_cpu11 #(.LANE(0)) u_hold (
+    .clk       (clk),
+    .rst_n     (rst_n),
+    .run_hot   (1'b0),
+    .fire      (fire),
+    .seq       ({24'd0, s0[0][7:0]}),
+    .rx_strobe (1'b0),
+    .rx_data   (8'd0),
+    .sig0      (h_sig),
+    .sig1      (),
+    .wt        (h_wt),
+    .last_seq  (),
+    .stride    (),
+    .cyc_o     (),
+    .status    (),
+    .pad_xor   ()
+  );
 
   // Pairwise mix. Same XOR as a chain, five deep instead of 32.
   wire [7:0]  w0 [0:31];
@@ -273,7 +262,7 @@ module tt_um_jlnuijens_one11_uart #(
   genvar m;
   generate
     for (m = 0; m < 32; m = m + 1) begin : lv0
-      assign w0[m] = sw[m][7:0] ^ osw[m][7:0] ^ os0[m][7:0];
+      assign w0[m] = sw[m][7:0];
       assign c0[m] = cc[m][16];
       assign p0[m] = px[m];
     end
@@ -298,7 +287,7 @@ module tt_um_jlnuijens_one11_uart #(
       assign p4[m] = p3[2*m] ^ p3[2*m+1];
     end
   endgenerate
-  assign wt_all = w4[0] ^ w4[1];
+  assign wt_all = w4[0] ^ w4[1] ^ h_wt[7:0] ^ h_sig[7:0];
   assign cy_all = c4[0] ^ c4[1];
   assign px_all = p4[0] ^ p4[1];
 
@@ -338,5 +327,5 @@ module tt_um_jlnuijens_one11_uart #(
   assign uio_out = {6'd0, tap_clk_od, (map == 2'd2) ? i2c_sda : tap_dio};
   assign uio_oe  = {6'd0, on_tap & tap_clk_oe, ((map == 2'd2) & i2c_oe) | (on_tap & tap_oe)};
 
-  wire _unused = &{ena, s0[0], s1[0], sl[0], ss[0], st[0], os1[0], osw[0], oss[0], occ[0], ost[0], i2c_ack, n_saved, frame_w, 1'b0};
+  wire _unused = &{ena, s0[0], s1[0], sl[0], ss[0], st[0], i2c_ack, n_saved, frame_w, 1'b0};
 endmodule

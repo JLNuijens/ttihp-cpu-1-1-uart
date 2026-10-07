@@ -367,7 +367,7 @@ async def test_oam_holds(dut):
     task = await reset_dut(dut)
     try:
         live = dut.user_project.bases[0].u_cpu
-        hold = dut.user_project.oam[0].u_hold
+        hold = dut.user_project.u_hold
         await RisingEdge(dut.clk)
         await Timer(1, unit="ns")
         c0 = int(live.cyc_o.value)
