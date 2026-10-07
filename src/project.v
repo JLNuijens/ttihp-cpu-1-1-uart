@@ -65,6 +65,31 @@ module tt_um_jlnuijens_one11_uart #(
   wire [7:0]  uart_byte;
   wire [3:0]  uart_diff;
 
+  reg         uart_got_d;
+  always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) uart_got_d <= 1'b0;
+    else        uart_got_d <= uart_got;
+  end
+  wire uart_rx_we = uart_got & ~uart_got_d;
+
+  wire [7:0]  bank_look;
+  wire [13:0] frame_w;
+  wire [9:0]  n_saved;
+  wire        replay = hot_pin & (map == 2'd0);
+
+  js_bank u_bank (
+    .clk     (clk),
+    .rst_n   (rst_n),
+    .fire_we (uart_f),
+    .fire_b  (uio_in),
+    .rx_we   (uart_rx_we),
+    .rx_b    (uart_byte),
+    .replay  (replay),
+    .look    (bank_look),
+    .frame_w (frame_w),
+    .n_saved (n_saved)
+  );
+
   js_uart_fire u_uart (
     .clk      (clk),
     .rst_n    (rst_n),
@@ -189,7 +214,6 @@ module tt_um_jlnuijens_one11_uart #(
     end
   endgenerate
 
-  // Pairwise mix. Same XOR as a chain, five deep instead of 32.
   wire [7:0]  w0 [0:31];
   wire        c0 [0:31];
   wire [31:0] p0 [0:31];
@@ -241,11 +265,11 @@ module tt_um_jlnuijens_one11_uart #(
   assign cy_all = c4[0] ^ c4[1];
   assign px_all = p4[0] ^ p4[1];
 
-  // Eight bits of the mix. One nibble per rise. The clock is not data,
-  // so the clock tree still builds.
   wire [3:0] mix_rise = {wt_all[3] ^ px_all[0] ^ cy_all, wt_all[2:0]};
-  wire [3:0] face_rise = (map == 2'd0 && uart_have) ? uart_diff : mix_rise;
-  wire [3:0] face_fall = (map == 2'd0 && uart_have) ? uart_diff : wt_all[7:4];
+  wire [3:0] face_rise = replay ? bank_look[3:0] :
+                         (map == 2'd0 && uart_have) ? frame_w[3:0] : mix_rise;
+  wire [3:0] face_fall = replay ? bank_look[7:4] :
+                         (map == 2'd0 && uart_have) ? frame_w[3:0] : wt_all[7:4];
   reg        face_ph;
   reg  [3:0] face;
   always @(posedge clk or negedge rst_n) begin
@@ -276,5 +300,5 @@ module tt_um_jlnuijens_one11_uart #(
   assign uio_out = {6'd0, tap_clk_od, (map == 2'd2) ? i2c_sda : tap_dio};
   assign uio_oe  = {6'd0, on_tap & tap_clk_oe, ((map == 2'd2) & i2c_oe) | (on_tap & tap_oe)};
 
-  wire _unused = &{ena, s0[0], s1[0], sl[0], ss[0], st[0], i2c_ack, 1'b0};
+  wire _unused = &{ena, s0[0], s1[0], sl[0], ss[0], st[0], i2c_ack, n_saved, frame_w, 1'b0};
 endmodule
