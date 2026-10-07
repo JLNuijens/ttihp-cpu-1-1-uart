@@ -4,7 +4,7 @@ project:
   title:        "CPU 1.1 UART"
   author:       "Joshua Luke Nuijens / Axiom 1 Technology, LLC"
   discord:      ""
-  description:  "ONE CPU 1.1 32. UART, SPI, I2C. Hook 11: Manchester, USB LS, JTAG bit-bang, SWD header, PS/2 at 12.5 kHz, CAN bit cell."
+  description:  "ONE CPU 1.1 32. UART, SPI, I2C. On-chip bank, 1024 sent and 1024 received. Hook 11: Manchester, USB LS, JTAG, SWD, PS/2, CAN bit."
   language:     "Verilog"
   clock_hz:     50000000
 
@@ -23,6 +23,7 @@ project:
     - "js_i2c_fire.v"
     - "js_line_fire.v"
     - "js_tap_fire.v"
+    - "js_bank.v"
 
 pinout:
   ui[0]: "FIRE"
