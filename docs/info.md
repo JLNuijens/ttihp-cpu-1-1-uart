@@ -88,7 +88,7 @@ Allnary. Any byte. The sites do not change with the coding. 32 bases, 16 sites e
 
 The same CPU 1.1, again. Count off. Not a second fold of the 32-bit signature.
 
-The same CPU, one copy. Clock is the power. The input is the first CPU's output, the low byte, top 24 bits zero. The count does not step. It holds the last cycle. The face takes that held byte. Not another row of bases.
+The walker is 32 bases. The memory is the same CPU, 8 bases. Stride is 128, so those 8 still reach 512. The clock is the power. The input is the first CPU's output. The count on the copy is off, so it holds the last cycle.
 
 ## Bank
 
