@@ -3,8 +3,7 @@
 `default_nettype none
 
 module one_cpu11 #(
-  parameter [31:0] LANE = 32'd0,
-  parameter FALL = 0
+  parameter [31:0] LANE = 32'd0
 ) (
   input  wire        clk,
   input  wire        rst_n,
@@ -30,115 +29,61 @@ module one_cpu11 #(
     .wt   (f_wt)
   );
 
-  reg [31:0] rf [0:15];
-  reg [31:0] cyc;
-  reg [31:0] str;
-  reg [31:0] latched;
-  reg [1:0]  st;
+  (* keep *) reg [31:0] rf [0:15];
+  (* keep *) reg [31:0] cyc;
+  (* keep *) reg [31:0] str;
+  (* keep *) reg [31:0] latched;
+  (* keep *) reg [1:0]  st;
 
-  generate
-    if (FALL == 0) begin : rise
-      always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-          rf[0]  <= 32'd0;
-          rf[1]  <= 32'd0;
-          rf[2]  <= 32'd0;
-          rf[3]  <= 32'd0;
-          rf[4]  <= 32'h020A0000;
-          rf[5]  <= 32'd0;
-          rf[6]  <= 32'd1;
-          rf[7]  <= 32'd128;
-          rf[8]  <= 32'd0;
-          rf[9]  <= 32'd0;
-          rf[10] <= 32'd0;
-          rf[11] <= 32'd0;
-          rf[12] <= 32'd0;
-          rf[13] <= 32'd0;
-          rf[14] <= 32'd4;
-          rf[15] <= 32'h4F4E4553;
-          cyc    <= 32'd0;
-          str    <= LANE;
-          latched<= 32'd0;
-          st     <= 2'd2;
-        end else begin
-          if (run_hot) begin
-            cyc   <= cyc + 32'd1;
-            str   <= str + 32'd128;
-            rf[1] <= cyc + 32'd1;
-            rf[2] <= str + 32'd128;
-          end
-          rf[7]  <= 32'd128;
-          rf[14] <= 32'd4;
-          rf[15] <= 32'h4F4E4553;
-          if (fire) begin
-            latched <= seq;
-            rf[4]   <= f_sig0;
-            rf[5]   <= f_sig1;
-            rf[6]   <= f_wt;
-            rf[9]   <= seq;
-            st      <= 2'd2;
-          end else if (rx_strobe) begin
-            rf[8] <= {24'd0, rx_data};
-            st    <= 2'd2;
-          end else if (run_hot) begin
-            st <= 2'd1;
-          end else begin
-            st <= 2'd2;
-          end
-        end
+  always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+      rf[0]  <= 32'd0;
+      rf[1]  <= 32'd0;
+      rf[2]  <= 32'd0;
+      rf[3]  <= 32'd0;
+      rf[4]  <= 32'h020A0000;
+      rf[5]  <= 32'd0;
+      rf[6]  <= 32'd1;
+      rf[7]  <= 32'd128;
+      rf[8]  <= 32'd0;
+      rf[9]  <= 32'd0;
+      rf[10] <= 32'd0;
+      rf[11] <= 32'd0;
+      rf[12] <= 32'd0;
+      rf[13] <= 32'd0;
+      rf[14] <= 32'd4;
+      rf[15] <= 32'h4F4E4553;
+      cyc    <= 32'd0;
+      str    <= LANE;
+      latched<= 32'd0;
+      st     <= 2'd2;
+    end else begin
+      if (run_hot) begin
+        cyc   <= cyc + 32'd1;
+        str   <= str + 32'd128;
+        rf[1] <= cyc + 32'd1;
+        rf[2] <= str + 32'd128;
       end
-    end else begin : fall
-      always @(negedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-          rf[0]  <= 32'd0;
-          rf[1]  <= 32'd0;
-          rf[2]  <= 32'd0;
-          rf[3]  <= 32'd0;
-          rf[4]  <= 32'h020A0000;
-          rf[5]  <= 32'd0;
-          rf[6]  <= 32'd1;
-          rf[7]  <= 32'd128;
-          rf[8]  <= 32'd0;
-          rf[9]  <= 32'd0;
-          rf[10] <= 32'd0;
-          rf[11] <= 32'd0;
-          rf[12] <= 32'd0;
-          rf[13] <= 32'd0;
-          rf[14] <= 32'd4;
-          rf[15] <= 32'h4F4E4553;
-          cyc    <= 32'd0;
-          str    <= LANE;
-          latched<= 32'd0;
-          st     <= 2'd2;
-        end else begin
-          if (run_hot) begin
-            cyc   <= cyc + 32'd1;
-            str   <= str + 32'd128;
-            rf[1] <= cyc + 32'd1;
-            rf[2] <= str + 32'd128;
-          end
-          rf[7]  <= 32'd128;
-          rf[14] <= 32'd4;
-          rf[15] <= 32'h4F4E4553;
-          if (fire) begin
-            latched <= seq;
-            rf[4]   <= f_sig0;
-            rf[5]   <= f_sig1;
-            rf[6]   <= f_wt;
-            rf[9]   <= seq;
-            st      <= 2'd2;
-          end else if (rx_strobe) begin
-            rf[8] <= {24'd0, rx_data};
-            st    <= 2'd2;
-          end else if (run_hot) begin
-            st <= 2'd1;
-          end else begin
-            st <= 2'd2;
-          end
-        end
+      rf[7]  <= 32'd128;
+      rf[14] <= 32'd4;
+      rf[15] <= 32'h4F4E4553;
+      if (fire) begin
+        latched <= seq;
+        rf[4]   <= f_sig0;
+        rf[5]   <= f_sig1;
+        rf[6]   <= f_wt;
+        rf[9]   <= seq;
+        st      <= 2'd2;
+      end else if (rx_strobe) begin
+        rf[8] <= {24'd0, rx_data};
+        st    <= 2'd2;
+      end else if (run_hot) begin
+        st <= 2'd1;
+      end else begin
+        st <= 2'd2;
       end
     end
-  endgenerate
+  end
 
   assign sig0     = rf[4];
   assign sig1     = rf[5];

@@ -363,29 +363,27 @@ async def test_can_bit(dut):
 
 @cocotb.test()
 async def test_oam_holds(dut):
-    """Fall CPU. Same clock. It takes the rise output one half-cycle later and holds it."""
+    """Bases 0-15 walk. Bases 16-31 are the same CPU with the count off. They hold the walker output."""
     task = await reset_dut(dut)
     try:
         live = dut.user_project.bases[0].u_cpu
-        hold = dut.user_project.u_hold
+        hold = dut.user_project.bases[16].u_cpu
         await RisingEdge(dut.clk)
         await Timer(1, unit="ns")
         c0 = int(live.cyc_o.value)
         assert int(hold.cyc_o.value) == 0
-        assert int(hold.stride.value) == 0
+        assert int(hold.stride.value) == 16
         await ClockCycles(dut.clk, 8)
         await Timer(1, unit="ns")
-        assert int(live.cyc_o.value) - c0 == 8, "live still steps"
-        assert int(hold.cyc_o.value) == 0, "hold does not count"
-        assert int(hold.stride.value) == 0, "hold stride stays the lane"
+        assert int(live.cyc_o.value) - c0 == 8, "walker still steps"
+        assert int(hold.cyc_o.value) == 0, "hold half does not count"
+        assert int(hold.stride.value) == 16, "hold stride stays its lane"
 
         await fire_byte(dut, 0x55)
-        await FallingEdge(dut.clk)
-        await Timer(1, unit="ns")
         assert int(live.last_seq.value) == 0x55
         assert int(live.sig0.value) == 0x104F0055
-        assert int(hold.last_seq.value) == 0x55, "fall took the rise output"
-        assert int(hold.sig0.value) == 0x104F0055, "same fold, other phase"
+        assert int(hold.last_seq.value) == 0, "held the low byte that was already on the walker"
+        assert int(hold.sig0.value) == 0x020A0000, "same fold the walker uses on a zero byte"
         assert int(hold.cyc_o.value) == 0
         held = int(hold.sig0.value)
         await ClockCycles(dut.clk, 6)
@@ -395,12 +393,10 @@ async def test_oam_holds(dut):
         assert int(live.cyc_o.value) > c0 + 8
 
         await fire_byte(dut, 0x01)
-        await FallingEdge(dut.clk)
-        await Timer(1, unit="ns")
         assert int(live.sig0.value) == 0x020A0001
-        assert int(hold.last_seq.value) == 0x01, "fall took the new rise output"
-        assert int(hold.sig0.value) == 0x020A0001, "same fold the walker uses on 0x01"
+        assert int(hold.last_seq.value) == 0x55, "held the low byte of the last walker face"
+        assert int(hold.sig0.value) == 0x104F0055, "same fold the walker uses on 0x55"
         assert int(hold.cyc_o.value) == 0
-        assert int(hold.stride.value) == 0
+        assert int(hold.stride.value) == 16
     finally:
         task.cancel()

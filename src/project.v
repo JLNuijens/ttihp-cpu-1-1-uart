@@ -7,8 +7,8 @@
  * UART / SPI / I2C walks. Stretch USB LS + 10 Mbit Manchester.
  * 2 stacks, 32 bases. 16 pad/register sites. UART walk is one copy.
  * Bank: 128 fired bytes, 128 received bytes, same clock.
- * OAM: one base, the fall. The walker stays 32, on the rise.
- * Same clock. The fall takes that one rise output and holds it.
+ * The 32 stay one CPU. Bases 0-15 walk. Bases 16-31 hold.
+ * The hold input is the walker output. The count on that half is off.
  */
 `default_nettype none
 
@@ -62,14 +62,6 @@ module tt_um_jlnuijens_one11_uart #(
   wire [31:0] cc [0:N_BASES-1];
   wire [1:0]  st [0:N_BASES-1];
   wire [31:0] px [0:N_BASES-1];
-
-  wire [31:0] hs0;
-
-  reg fire_fall;
-  always @(negedge clk or negedge rst_n) begin
-    if (!rst_n) fire_fall <= 1'b0;
-    else        fire_fall <= fire;
-  end
 
   wire        uart_tx, uart_busy, uart_rxb, uart_got, uart_have;
   wire [31:0] r15_ones;
@@ -204,14 +196,21 @@ module tt_um_jlnuijens_one11_uart #(
   genvar k;
   generate
     for (k = 0; k < N_BASES; k = k + 1) begin : bases
-      wire [31:0] seq_k = seq + k;
+      wire [31:0] seq_k;
+      if (k < 16) begin
+        assign seq_k = seq + k;
+      end else begin
+        assign seq_k = {24'd0, s0[k - 16][7:0]};
+      end
+      wire hot_k = (k < 16) & hot;
+      wire rx_k  = (k < 16) & rx_strobe;
       one_cpu11 #(.LANE(k)) u_cpu (
         .clk       (clk),
         .rst_n     (rst_n),
-        .run_hot   (hot),
+        .run_hot   (hot_k),
         .fire      (fire),
         .seq       (seq_k),
-        .rx_strobe (rx_strobe),
+        .rx_strobe (rx_k),
         .rx_data   (rx_byte),
         .sig0      (s0[k]),
         .sig1      (s1[k]),
@@ -224,26 +223,6 @@ module tt_um_jlnuijens_one11_uart #(
       );
     end
   endgenerate
-
-  // One base, the other phase. Same clock. The input is rise base 0.
-  // The count is off. The sites are not marked keep, so unused ones can drop.
-  one_cpu11 #(.LANE(0), .FALL(1)) u_hold (
-    .clk       (clk),
-    .rst_n     (rst_n),
-    .run_hot   (1'b0),
-    .fire      (fire_fall),
-    .seq       ({24'd0, s0[0][7:0]}),
-    .rx_strobe (1'b0),
-    .rx_data   (8'd0),
-    .sig0      (hs0),
-    .sig1      (),
-    .wt        (),
-    .last_seq  (),
-    .stride    (),
-    .cyc_o     (),
-    .status    (),
-    .pad_xor   ()
-  );
 
   // Pairwise mix. Same XOR as a chain, five deep instead of 32.
   wire [7:0]  w0 [0:31];
@@ -297,12 +276,11 @@ module tt_um_jlnuijens_one11_uart #(
   assign cy_all = c4[0] ^ c4[1];
   assign px_all = p4[0] ^ p4[1];
 
-  wire [7:0] held_b = hs0[7:0];
   wire [3:0] mix_rise = {wt_all[3] ^ px_all[0] ^ cy_all, wt_all[2:0]};
   wire [3:0] face_rise = replay ? bank_look[3:0] :
                          (map == 2'd0 && uart_have) ? frame_w[3:0] : mix_rise;
   wire [3:0] face_fall = replay ? bank_look[7:4] :
-                         (map == 2'd0 && uart_have) ? frame_w[3:0] : held_b[7:4];
+                         (map == 2'd0 && uart_have) ? frame_w[3:0] : wt_all[7:4];
   reg        face_ph;
   reg  [3:0] face;
   always @(posedge clk or negedge rst_n) begin

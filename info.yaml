@@ -4,7 +4,7 @@ project:
   title:        "CPU 1.1 UART"
   author:       "Joshua Luke Nuijens / Axiom 1 Technology, LLC"
   discord:      ""
-  description:  "ONE CPU 1.1 32. UART, SPI, I2C. OAM is one base on the fall. Same clock. It holds the rise output. UART log, 128 sent and 128 received."
+  description:  "ONE CPU 1.1 32. Bases 0-15 walk. Bases 16-31 hold the walker output. Same CPU. UART log, 128 sent and 128 received."
   language:     "Verilog"
   clock_hz:     50000000
 
