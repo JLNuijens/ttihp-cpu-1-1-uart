@@ -273,9 +273,9 @@ module tt_um_jlnuijens_one11_uart #(
   genvar m;
   generate
     for (m = 0; m < 32; m = m + 1) begin : lv0
-      assign w0[m] = sw[m][7:0] ^ osw[m][7:0];
+      assign w0[m] = sw[m][7:0] ^ osw[m][7:0] ^ os0[m][7:0];
       assign c0[m] = cc[m][16];
-      assign p0[m] = px[m] ^ opx[m];
+      assign p0[m] = px[m];
     end
     for (m = 0; m < 16; m = m + 1) begin : lv1
       assign w1[m] = w0[2*m] ^ w0[2*m+1];
