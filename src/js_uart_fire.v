@@ -16,9 +16,7 @@ module js_uart_fire (
   output wire        tx_busy,
   output reg  [7:0]  rx_byte,
   output wire        rx_busy,
-  output reg         rx_got,
-  output reg  [3:0]  diff,
-  output reg         have
+  output reg         rx_got
 );
   localparam [31:0] ONES = 32'h4F4E4553;
   assign r15 = ONES;
@@ -108,17 +106,6 @@ module js_uart_fire (
   reg        rx_fast;
   reg        rx_fall_bit;
   reg        rx_fall_d;
-  reg [7:0]  sent;
-
-  function [3:0] pop8;
-    input [7:0] x;
-    integer i;
-    begin
-      pop8 = 4'd0;
-      for (i = 0; i < 8; i = i + 1)
-        pop8 = pop8 + x[i];
-    end
-  endfunction
 
   assign rx_busy = rx_busy_r;
   wire rx_fall = rx_d & ~rx;
@@ -141,9 +128,6 @@ module js_uart_fire (
       rx_hold     <= 16'd1;
       rx_fast     <= 1'b0;
       rx_fall_d   <= 1'b1;
-      sent        <= 8'd0;
-      diff        <= 4'd0;
-      have        <= 1'b0;
     end else begin
       rx_d <= rx;
       rx_fall_d <= rx_fall_bit;
@@ -170,8 +154,6 @@ module js_uart_fire (
         rx_i               <= rx_i + 4'd2;
       end else if (rx_go && rx_fast && rx_i == 4'd7) begin
         rx_byte   <= {rx_fall_bit, rx_shift[6:0]};
-        diff      <= pop8({rx_fall_bit, rx_shift[6:0]} ^ sent);
-        have      <= 1'b1;
         rx_got    <= 1'b1;
         rx_go     <= 1'b0;
         rx_busy_r <= 1'b0;
@@ -188,8 +170,6 @@ module js_uart_fire (
             rx_i           <= rx_i + 4'd1;
           end else begin
             rx_byte   <= rx_shift;
-            diff      <= pop8(rx_shift ^ sent);
-            have      <= 1'b1;
             rx_got    <= 1'b1;
             rx_go     <= 1'b0;
             rx_busy_r <= 1'b0;
@@ -197,10 +177,6 @@ module js_uart_fire (
         end else begin
           rx_ck <= rx_ck + 16'd1;
         end
-      end
-      if (fire) begin
-        sent <= seq[7:0];
-        have <= 1'b0;
       end
     end
   end

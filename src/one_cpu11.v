@@ -93,6 +93,7 @@ module one_cpu11 #(
   assign cyc_o    = cyc;
   assign status   = st;
 
+  // Every site stays in the output cone so synth cannot eat the 16 pads.
   assign pad_xor = rf[0]  ^ rf[1]  ^ rf[2]  ^ rf[3]  ^
                    rf[4]  ^ rf[5]  ^ rf[6]  ^ rf[7]  ^
                    rf[8]  ^ rf[9]  ^ rf[10] ^ rf[11] ^

@@ -6,9 +6,6 @@
  * One oscillator. FIRE. Pads. Clock count is the range.
  * UART / SPI / I2C walks. Stretch USB LS + 10 Mbit Manchester.
  * 2 stacks, 32 bases. 16 pad/register sites. UART walk is one copy.
- * Bank: 128 fired bytes, 128 received bytes, same clock.
- * The 32 stay one CPU. Bases 0-15 walk. Bases 16-31 hold.
- * The hold input is the walker output. The count on that half is off.
  */
 `default_nettype none
 
@@ -45,14 +42,7 @@ module tt_um_jlnuijens_one11_uart #(
   wire uart_f = fire & (map == 2'd0);
   wire spi_f  = fire & (map == 2'd1);
   wire i2c_f  = fire & (map == 2'd2);
-  wire tap_sel = (rsel == 3'd1) || (rsel == 3'd3) || (rsel == 3'd4) || (rsel == 3'd6);
-  wire on_tap = (map == 2'd3) && tap_sel;
-  wire line_f = fire & (map == 2'd3) & ~tap_sel;
-  wire tap_f  = fire & (map == 2'd3) & tap_sel;
-  wire [1:0] tap_kind =
-      (rsel == 3'd1) ? 2'd0 :
-      (rsel == 3'd3) ? 2'd1 :
-      (rsel == 3'd4) ? 2'd2 : 2'd3;
+  wire line_f = fire & (map == 2'd3);
 
   wire [31:0] s0 [0:N_BASES-1];
   wire [31:0] s1 [0:N_BASES-1];
@@ -63,35 +53,9 @@ module tt_um_jlnuijens_one11_uart #(
   wire [1:0]  st [0:N_BASES-1];
   wire [31:0] px [0:N_BASES-1];
 
-  wire        uart_tx, uart_busy, uart_rxb, uart_got, uart_have;
+  wire        uart_tx, uart_busy, uart_rxb, uart_got;
   wire [31:0] r15_ones;
   wire [7:0]  uart_byte;
-  wire [3:0]  uart_diff;
-
-  reg         uart_got_d;
-  always @(posedge clk or negedge rst_n) begin
-    if (!rst_n) uart_got_d <= 1'b0;
-    else        uart_got_d <= uart_got;
-  end
-  wire uart_rx_we = uart_got & ~uart_got_d;
-
-  wire [7:0]  bank_look;
-  wire [13:0] frame_w;
-  wire [9:0]  n_saved;
-  wire        replay = hot_pin & (map == 2'd0);
-
-  js_bank u_bank (
-    .clk     (clk),
-    .rst_n   (rst_n),
-    .fire_we (uart_f),
-    .fire_b  (uio_in),
-    .rx_we   (uart_rx_we),
-    .rx_b    (uart_byte),
-    .replay  (replay),
-    .look    (bank_look),
-    .frame_w (frame_w),
-    .n_saved (n_saved)
-  );
 
   js_uart_fire u_uart (
     .clk      (clk),
@@ -99,15 +63,13 @@ module tt_um_jlnuijens_one11_uart #(
     .fire     (uart_f),
     .seq      (seq),
     .clks     (cpb),
-    .rx       (map == 2'd0 ? line_in : 1'b1),
+    .rx       (line_in),
     .tx       (uart_tx),
     .r15      (r15_ones),
     .tx_busy  (uart_busy),
     .rx_byte  (uart_byte),
     .rx_busy  (uart_rxb),
-    .rx_got   (uart_got),
-    .diff     (uart_diff),
-    .have     (uart_have)
+    .rx_got   (uart_got)
   );
 
   wire spi_mosi, spi_sclk, spi_csn, spi_busy, spi_got;
@@ -150,41 +112,17 @@ module tt_um_jlnuijens_one11_uart #(
     .fire      (line_f),
     .seq       (uio_in),
     .clks      (cpb),
-    .usb_n_eth ((rsel == 3'd5) || (rsel == 3'd7)),
+    .usb_n_eth (rsel >= 3'd3),
     .dm        (line_dm),
     .dp        (line_dp),
     .busy      (line_busy)
   );
 
-  wire tap_tck, tap_tms, tap_tdi, tap_dio, tap_oe, tap_clk_od, tap_clk_oe, tap_can, tap_busy, tap_got;
-  wire [7:0] tap_rx;
-  js_tap_fire u_tap (
-    .clk    (clk),
-    .rst_n  (rst_n),
-    .fire   (tap_f),
-    .seq    (uio_in),
-    .clks   (cpb),
-    .kind   (tap_kind),
-    .din    (line_in),
-    .tck    (tap_tck),
-    .tms    (tap_tms),
-    .tdi    (tap_tdi),
-    .dio    (tap_dio),
-    .dio_oe (tap_oe),
-    .clk_od (tap_clk_od),
-    .clk_oe (tap_clk_oe),
-    .can_tx (tap_can),
-    .rx_byte(tap_rx),
-    .rx_got (tap_got),
-    .busy   (tap_busy)
-  );
-
   wire [7:0] rx_byte =
       (map == 2'd1) ? spi_byte :
-      on_tap ? tap_rx :
       uart_byte;
-  wire got = uart_got | spi_got | i2c_got | tap_got;
-  wire busy = uart_busy | spi_busy | i2c_busy | line_busy | tap_busy | uart_rxb;
+  wire got = uart_got | spi_got | i2c_got;
+  wire busy = uart_busy | spi_busy | i2c_busy | line_busy | uart_rxb;
 
   reg got_d;
   always @(posedge clk or negedge rst_n) begin
@@ -196,21 +134,14 @@ module tt_um_jlnuijens_one11_uart #(
   genvar k;
   generate
     for (k = 0; k < N_BASES; k = k + 1) begin : bases
-      wire [31:0] seq_k;
-      if (k < 16) begin
-        assign seq_k = seq + k;
-      end else begin
-        assign seq_k = {24'd0, s0[k - 16][7:0]};
-      end
-      wire hot_k = (k < 16) & hot;
-      wire rx_k  = (k < 16) & rx_strobe;
+      wire [31:0] seq_k = seq + k;
       one_cpu11 #(.LANE(k)) u_cpu (
         .clk       (clk),
         .rst_n     (rst_n),
-        .run_hot   (hot_k),
+        .run_hot   (hot),
         .fire      (fire),
         .seq       (seq_k),
-        .rx_strobe (rx_k),
+        .rx_strobe (rx_strobe),
         .rx_data   (rx_byte),
         .sig0      (s0[k]),
         .sig1      (s1[k]),
@@ -225,29 +156,29 @@ module tt_um_jlnuijens_one11_uart #(
   endgenerate
 
   // Pairwise mix. Same XOR as a chain, five deep instead of 32.
-  wire [7:0]  w0 [0:31];
+  wire [3:0]  w0 [0:31];
   wire        c0 [0:31];
   wire [31:0] p0 [0:31];
-  wire [7:0]  w1 [0:15];
+  wire [3:0]  w1 [0:15];
   wire        c1 [0:15];
   wire [31:0] p1 [0:15];
-  wire [7:0]  w2 [0:7];
+  wire [3:0]  w2 [0:7];
   wire        c2 [0:7];
   wire [31:0] p2 [0:7];
-  wire [7:0]  w3 [0:3];
+  wire [3:0]  w3 [0:3];
   wire        c3 [0:3];
   wire [31:0] p3 [0:3];
-  wire [7:0]  w4 [0:1];
+  wire [3:0]  w4 [0:1];
   wire        c4 [0:1];
   wire [31:0] p4 [0:1];
-  wire [7:0]  wt_all;
+  wire [3:0]  wt_all;
   wire        cy_all;
   wire [31:0] px_all;
 
   genvar m;
   generate
     for (m = 0; m < 32; m = m + 1) begin : lv0
-      assign w0[m] = sw[m][7:0];
+      assign w0[m] = sw[m][3:0];
       assign c0[m] = cc[m][16];
       assign p0[m] = px[m];
     end
@@ -276,40 +207,17 @@ module tt_um_jlnuijens_one11_uart #(
   assign cy_all = c4[0] ^ c4[1];
   assign px_all = p4[0] ^ p4[1];
 
-  wire [3:0] mix_rise = {wt_all[3] ^ px_all[0] ^ cy_all, wt_all[2:0]};
-  wire [3:0] face_rise = replay ? bank_look[3:0] :
-                         (map == 2'd0 && uart_have) ? frame_w[3:0] : mix_rise;
-  wire [3:0] face_fall = replay ? bank_look[7:4] :
-                         (map == 2'd0 && uart_have) ? frame_w[3:0] : wt_all[7:4];
-  reg        face_ph;
-  reg  [3:0] face;
-  always @(posedge clk or negedge rst_n) begin
-    if (!rst_n) begin
-      face_ph <= 1'b0;
-      face    <= 4'd0;
-    end else begin
-      face_ph <= ~face_ph;
-      face    <= face_ph ? face_fall : face_rise;
-    end
-  end
-
-  assign uo_out[0] = (map == 2'd0) ? uart_tx :
-                     (on_tap && (tap_kind == 2'd3)) ? tap_can :
-                     (map == 2'd3 && !on_tap) ? line_dm : 1'b1;
+  assign uo_out[0] = (map == 2'd0) ? uart_tx : (map == 2'd3) ? line_dm : 1'b1;
   assign uo_out[1] = busy;
   assign uo_out[2] = (r15_ones == 32'h4F4E4553);
   assign uo_out[3] = (map == 2'd2) ? (got | ~i2c_ack) : (got | uart_rxb);
-  assign uo_out[4] = (map == 2'd1) ? spi_mosi :
-                     (map == 2'd2) ? i2c_scl :
-                     (on_tap && (tap_kind == 2'd0)) ? tap_tdi : face[0];
-  assign uo_out[5] = (map == 2'd1) ? spi_sclk :
-                     (on_tap && (tap_kind == 2'd0 || tap_kind == 2'd1)) ? tap_tck : face[1];
-  assign uo_out[6] = (map == 2'd1) ? spi_csn :
-                     (on_tap && (tap_kind == 2'd0)) ? tap_tms : face[2];
-  assign uo_out[7] = (map == 2'd3 && !on_tap) ? line_dp : face[3];
+  assign uo_out[4] = (map == 2'd1) ? spi_mosi : (map == 2'd2) ? i2c_scl : wt_all[0];
+  assign uo_out[5] = (map == 2'd1) ? spi_sclk : wt_all[1];
+  assign uo_out[6] = (map == 2'd1) ? spi_csn  : wt_all[2];
+  assign uo_out[7] = (map == 2'd3) ? line_dp : (wt_all[3] ^ px_all[0] ^ cy_all);
 
-  assign uio_out = {6'd0, tap_clk_od, (map == 2'd2) ? i2c_sda : tap_dio};
-  assign uio_oe  = {6'd0, on_tap & tap_clk_oe, ((map == 2'd2) & i2c_oe) | (on_tap & tap_oe)};
+  assign uio_out = {7'd0, i2c_sda};
+  assign uio_oe  = {7'd0, (map == 2'd2) & i2c_oe};
 
-  wire _unused = &{ena, s0[0], s1[0], sl[0], ss[0], st[0], i2c_ack, n_saved, frame_w, 1'b0};
+  wire _unused = &{ena, s0[0], s1[0], sl[0], ss[0], st[0], i2c_ack, 1'b0};
 endmodule

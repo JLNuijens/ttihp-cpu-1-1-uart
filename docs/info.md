@@ -1,30 +1,15 @@
-# ONE CPU 1.1 32 · 1.6 GB/s
-
-That is the UART. Thirty-two bases on one FIRE. 1.6 GB/s inside on the rise. The line is 100 Mbit/s. A finished read weighs the byte that came back against the byte that was fired. The bank keeps 128 of each. The face holds the running count. HOT on the UART map replays the bank on the face.
-
-## Pin layout
-
-| Pad | UART | ONE CPU 1.1 32 · 1.6 GB/s |
-|---|---|---|
-| `ui[0]` | FIRE | same pulse, all 32 bases |
-| `ui[1]` | HOT | clock holds the stage. On the UART map it also replays the bank |
-| `ui[2]` | RX | finished byte lands in `r8` |
-| `ui[4:3]` | UART, SPI, I2C, stretch | `00` keeps the face on `uo[4:7]` |
-| `ui[7:5]` | count 1…434 | does not change the face |
-| `uio[7:0]` | the byte | base *k* folds byte + *k* |
-| `uo[0]` | TX · 100 Mbit/s | low byte of that word |
-| `uo[2]` | ONES | `r15` is `0x4F4E4553` |
-| `uo[4:7]` | SPI / I2C / stretch, or the face | low nibble, then the next four, one rise each |
-
-Not three protocol blocks. The map selects the walk. The byte is any word. The clock holds the stage while the tile is enabled. No fetch after fabrication.
+# CPU 1.1 UART
 
 Preloaded Universal UART. The stage is already loaded. The clock is the stage. 50 MHz oscillator. Data is RX/TX, not the power. FIRE. Pads. Clock count is the range.
 
-## Preloaded
+## Available
 
-Any word. Same sites. x86 and ARM64 are not the limit.
+Two ordinary machines. x86 and ARM64. Same preload.
 
-Windows PE, Mac Mach-O, Linux ELF, Android DEX, Java, WASM, UTF-8, and a GPU file all take the same FIRE. The list is not a whitelist. A byte the list does not name still folds.
+- Windows PE — i386, x86-64, and Windows-on-ARM
+- Mac Mach-O — x86-64 and ARM64
+- Linux ELF
+- WASM, Java class, Android DEX, UTF-8, and the other measured codings — same preload
 
 UART, SPI, and I2C are the same walk on different pins. Stretch is low-speed USB NRZI and 10 Mbit Manchester — bit cells, not a USB stack or an Ethernet MAC. Nothing is pasted from OpenCores.
 
@@ -35,70 +20,41 @@ UART, SPI, and I2C are the same walk on different pins. Stretch is low-speed USB
 | 00 | UART 8N1 RX/TX | `ui[2]` RX, `uo[0]` TX |
 | 01 | SPI mode 0, 8 bits | `uo[4]` MOSI, `uo[5]` SCLK, `uo[6]` CS_n, `ui[2]` MISO |
 | 10 | I2C START + byte + ACK + STOP | `uo[4]` SCL, `uio[0]` SDA open-drain |
-| 11 | stretch, and the other walks | see the count slot. Manchester and USB stay. JTAG, SWD, PS/2, and a CAN bit are the slots we took |
+| 11 | stretch | `uo[0]` DM/TX, `uo[7]` DP. Range 0–2 Manchester, 3–7 USB LS NRZI |
 
 ## Range (`ui[7:5]`)
 
-The clock is 50 MHz. One rise is the base, 20 ns. Count 1 uses both halves of that wave, 10 ns and 10 ns, so the line is 100 Mbit/s. Every larger count is that same rise, held. The count is the adjustable part. The clock is not. The three pins pick eight holds. Any other integer is the same mechanic. It is not on these three pins.
+Identity is **1**. That count uses both edges of the 50 MHz wave, so the cell is 10 ns and the line is 100 Mbit/s. Every larger count stays on the rising edge. 434 is still 115200.
 
-| sel | rises | what that hold is long enough to walk |
+| sel | clocks | at 50 MHz |
 |---|---|---|
-| 0 | 1 | both edges. UART / SPI at 100 Mbit. Hook: Manchester |
-| 1 | 4 | JTAG. FIRE the TMS byte, FIRE the TDI byte. Eight TCK. TDO comes back. TCK `uo[5]`, TMS `uo[6]`, TDI `uo[4]`, TDO `ui[2]` |
-| 2 | 5 | 10 Mbit cell. Hook: Manchester |
-| 3 | 8 | SWD. FIRE the request, FIRE the data byte. Header, turnaround, ACK, one data byte. SWCLK `uo[5]`, SWDIO `uio[0]` |
-| 4 | 16 | PS/2 device frame. Start, byte, odd parity, stop. The frame uses 4000 clocks a half, not 16. Clock `uio[1]`, data `uio[0]` |
-| 5 | 33 | USB low-speed bit cell, NRZI, on hook 11 |
-| 6 | 125 | I2C at 400 kHz. Hook: one CAN bit cell. Not a frame. `uo[0]`, RX `ui[2]` |
-| 7 | 434 | the long UART hold. Hook: USB NRZI at that same count |
-
-Hook `11` only. On UART, SPI, and I2C the same slots are still just the bit time.
-
-JTAG is a real bit-bang. The first FIRE stores TMS. The second FIRE clocks eight bits of TDI with that TMS, and samples TDO. SWD is a real header: start, APnDP, RnW, A2, A3, parity, stop, park, then the turnaround, the ACK, and one byte of the data phase. Not a 32-bit read. PS/2 is the device frame, open-drain, 4000 clocks a half-bit, 12.5 kHz. CAN on slot 6 is still eight bit cells, not a frame.
+| 0 | 1 | 100 Mbit, both edges |
+| 1 | 4 | USB FS bit |
+| 2 | 5 | 10 Mbit Ethernet |
+| 3 | 8 | |
+| 4 | 16 | |
+| 5 | 33 | USB LS ~1.5 Mbit |
+| 6 | 125 | I2C 400 kHz |
+| 7 | 434 | UART 115200 |
 
 Byte on `uio`. Pulse FIRE. Thirty-two bases take that FIRE, two stacks of 16. `r15` stays `0x4F4E4553`. The UART, SPI, and I2C walks are still one copy.
 
-## Processor · ONE CPU 1.1 32
+## Processor · same die
 
-Allnary. Any byte. The sites do not change with the coding. 32 bases, 16 sites each. The lane is the only difference.
+Allnary. Any byte. The sites do not change with the coding.
 
 | | |
 |---|---|
-| Clock | 50 MHz. The step is the rise. 20 ns. |
-| Stack | 32 bases. Not 128. |
-| Inside | 32 × 50 MHz = 1.6 billion steps/s = 1.6 GB/s |
-| Word in | 8 bits, one FIRE. Not one byte per clock. |
-| Face out | `uo[2]` plus four pins. This rise is the low nibble, the next rise is the next four. 200 Mbit/s. The clock is not used as data. The rest stays inside. |
-| Fetch | none. Already loaded. |
+| Clock | 50 MHz. The stack steps on the rise. |
+| Stack | 2×16 = 32 bases. 16 sites each. |
+| Pressed | `r7` = 128, `r14` = 4, `r15` = `0x4F4E4553`, every rise |
+| HOT | cycle + 1 and stride + 128, per base, per rise |
+| Rate | 32 × 50 MHz = 1.6 billion steps/s. 1.6 GB/s inside |
+| FIRE | one pulse on the rise. Base *k* folds `byte + k` |
+| Face | `uo[2]` ONES. `uo[4]`–`uo[7]` the mix, while the map is UART |
+| Word in | 8 bits. Any word. No fetch |
 
-| Site | At reset | While the clock holds |
-|---|---|---|
-| r1 | 0 | cycle + 1 each rise |
-| r2 | the lane | stride + 128 each rise |
-| r4 | `0x020A0000` | sig0 of the FIRE word |
-| r5 | 0 | sig1 of the FIRE word |
-| r6 | 1 | weight of the FIRE word |
-| r7 | 128 | held every rise |
-| r8 | 0 | last RX byte |
-| r9 | 0 | last FIRE word |
-| r14 | 4 | held every rise |
-| r15 | `0x4F4E4553` | ONES, held every rise |
-
-## OAM
-
-The same CPU 1.1, again. Count off. Not a second fold of the 32-bit signature.
-
-The 32 bases stay one CPU. Bases 0 to 15 walk. Bases 16 to 31 hold. The hold input is the walker output. The count on that half is off. The module is the same one.
-
-## Bank
-
-128 bytes of what you fired. 128 bytes of what came back. That is the UART log, not the operational memory. Flops. One clock. Write only when that byte finishes. No write, the pattern stays. Power off, it is gone. `frame_w` is the weigh across the stretch, not only the last byte. `ui[1]` HOT, map still UART, and the face replays it: sent byte, then the received byte, then the next.
-
-The count is the adjustable part. The clock stays 50 MHz. The eight pin choices are 1, 4, 5, 8, 16, 33, 125, 434 rises. Any byte. The log does not care what the byte was.
-
-r0, r3, and r10 through r13 stay 0. Base k starts its stride at k. FIRE gives that base `byte + k`. A finished RX byte lands in r8 of every base. The count does not change the face.
-
-Leave the map at UART. Put the byte on `uio`. Pulse `ui[0]`. Read `uo[2]` and `uo[4]` through `uo[7]`.
+Leave the map at UART. Put the byte on `uio`. Pulse `ui[0]`. Read `uo[2]` and `uo[4]` through `uo[7]`. A finished RX byte lands in `r8` of every base. The full face stays inside. The pins are four bits wide.
 
 ## How to test
 
@@ -108,4 +64,4 @@ Leave the map at UART. Put the byte on `uio`. Pulse `ui[0]`. Read `uo[2]` and `u
 4. Map 10. SCL falls, SDA open-drain, STOP, SCL idle high.
 5. Drive 8N1 on `ui[2]` with map 00. `uo[3]` GOT.
 
-`N_BASES` is 32. OAM is the same 32 with the count off. The input is the face byte, not a wider word. The step is the rise. The fall stays the UART bit at count 1.
+`N_BASES` is 32. Two stacks of the 16. Four stacks measured 77% of the core and detailed placement failed, so they do not fit this tile. The step is the rise. The fall stays the UART bit at count 1.

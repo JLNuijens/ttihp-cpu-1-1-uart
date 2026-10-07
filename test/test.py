@@ -111,53 +111,6 @@ async def test_rise_steps(dut):
 
 
 @cocotb.test()
-async def test_sent_against_read(dut):
-    """The byte that went out against the byte that came back. The face is the count."""
-    task = await reset_dut(dut)
-    try:
-        await fire_byte(dut, 0x55)
-        await drive_rx(dut, 0x55)
-        await ClockCycles(dut.clk, 4)
-        await Timer(1, unit="ns")
-        assert int(dut.user_project.u_uart.have.value) == 1
-        assert ((int(dut.uo_out.value) >> 4) & 0xF) == 0, "same byte weighs 0"
-        await fire_byte(dut, 0x55)
-        await drive_rx(dut, 0x54)
-        await ClockCycles(dut.clk, 4)
-        await Timer(1, unit="ns")
-        assert ((int(dut.uo_out.value) >> 4) & 0xF) == 1, "one bit differs"
-        assert ones_ok(dut) == 1
-        bank = dut.user_project.u_bank
-        assert int(bank.n_saved.value) == 2
-        assert int(bank.sent[0].value) == 0x55
-        assert int(bank.gotb[0].value) == 0x55
-        assert int(bank.gotb[1].value) == 0x54
-        assert int(bank.frame_w.value) == 1
-        dut.ui_in.value = 0x06  # HOT, UART map, RX idle. Replay the bank.
-        await ClockCycles(dut.clk, 2)
-        await Timer(1, unit="ns")
-        assert ((int(dut.uo_out.value) >> 4) & 0xF) == 0x5, "replay low nibble of 0x55"
-    finally:
-        task.cancel()
-
-
-@cocotb.test()
-async def test_face_both_edges(dut):
-    task = await reset_dut(dut)
-    try:
-        await RisingEdge(dut.clk)
-        await Timer(1, unit="ns")
-        rise = (int(dut.uo_out.value) >> 4) & 0xF
-        await FallingEdge(dut.clk)
-        await Timer(1, unit="ns")
-        fall = (int(dut.uo_out.value) >> 4) & 0xF
-        assert ones_ok(dut) == 1
-        assert rise <= 0xF and fall <= 0xF
-    finally:
-        task.cancel()
-
-
-@cocotb.test()
 async def test_idle_ones(dut):
     task = await reset_dut(dut)
     try:
@@ -219,10 +172,9 @@ def mosi(dut):
 async def fire_map(dut, byte, map_bits, range_bits=0):
     dut.uio_in.value = byte
     await RisingEdge(dut.clk)
-    # Bit 2 stays high so a UART start is not a side effect of the hook.
-    dut.ui_in.value = 0x05 | map_bits | (range_bits << 5)
+    dut.ui_in.value = 0x01 | map_bits | (range_bits << 5)
     await RisingEdge(dut.clk)
-    dut.ui_in.value = 0x04 | map_bits | (range_bits << 5)
+    dut.ui_in.value = map_bits | (range_bits << 5)
     await Timer(1, unit="ns")
 
 
@@ -275,128 +227,5 @@ async def test_eth_manchester(dut):
                 break
         assert tx_busy(dut) == 0
         assert ones_ok(dut) == 1
-    finally:
-        task.cancel()
-
-
-def pin(dut, bit):
-    return (int(dut.uo_out.value) >> bit) & 1
-
-
-@cocotb.test()
-async def test_jtag_shift(dut):
-    task = await reset_dut(dut)
-    try:
-        await fire_map(dut, 0x80, 0x18, 1)
-        await RisingEdge(dut.clk)
-        assert tx_busy(dut) == 0, "TMS latches, no TCK yet"
-        await fire_map(dut, 0x80, 0x18, 1)
-        await Timer(1, unit="ns")
-        assert tx_busy(dut) == 1
-        assert pin(dut, 4) == 1, "TDI MSB"
-        assert pin(dut, 6) == 1, "TMS MSB"
-        assert pin(dut, 5) == 0, "TCK starts low"
-        for _ in range(200):
-            await RisingEdge(dut.clk)
-            if tx_busy(dut) == 0:
-                break
-        assert tx_busy(dut) == 0
-        assert ones_ok(dut) == 1
-    finally:
-        task.cancel()
-
-
-@cocotb.test()
-async def test_swd_header(dut):
-    task = await reset_dut(dut)
-    try:
-        await fire_map(dut, 0x02, 0x18, 3)
-        await RisingEdge(dut.clk)
-        assert tx_busy(dut) == 0, "request latches"
-        await fire_map(dut, 0x00, 0x18, 3)
-        await Timer(1, unit="ns")
-        assert tx_busy(dut) == 1
-        assert (int(dut.uio_oe.value) & 1) == 1, "SWDIO driven"
-        assert (int(dut.uio_out.value) & 1) == 1, "start bit"
-        assert pin(dut, 5) == 0, "SWCLK starts low"
-        for _ in range(800):
-            await RisingEdge(dut.clk)
-            if tx_busy(dut) == 0:
-                break
-        assert tx_busy(dut) == 0
-        assert ones_ok(dut) == 1
-    finally:
-        task.cancel()
-
-
-@cocotb.test()
-async def test_ps2_start(dut):
-    task = await reset_dut(dut)
-    try:
-        await fire_map(dut, 0x16, 0x18, 4)
-        await Timer(1, unit="ns")
-        assert tx_busy(dut) == 1
-        assert (int(dut.uio_oe.value) & 1) == 1, "start bit pulled"
-        assert (int(dut.uio_out.value) & 1) == 0
-        assert ones_ok(dut) == 1
-    finally:
-        task.cancel()
-
-
-@cocotb.test()
-async def test_can_bit(dut):
-    task = await reset_dut(dut)
-    try:
-        await fire_map(dut, 0x80, 0x18, 6)
-        await Timer(1, unit="ns")
-        assert tx_busy(dut) == 1
-        assert pin(dut, 0) == 1, "recessive MSB"
-        for _ in range(1600):
-            await RisingEdge(dut.clk)
-            if tx_busy(dut) == 0:
-                break
-        assert tx_busy(dut) == 0
-        assert ones_ok(dut) == 1
-    finally:
-        task.cancel()
-
-
-@cocotb.test()
-async def test_oam_holds(dut):
-    """Bases 0-15 walk. Bases 16-31 are the same CPU with the count off. They hold the walker output."""
-    task = await reset_dut(dut)
-    try:
-        live = dut.user_project.bases[0].u_cpu
-        hold = dut.user_project.bases[16].u_cpu
-        await RisingEdge(dut.clk)
-        await Timer(1, unit="ns")
-        c0 = int(live.cyc_o.value)
-        assert int(hold.cyc_o.value) == 0
-        assert int(hold.stride.value) == 16
-        await ClockCycles(dut.clk, 8)
-        await Timer(1, unit="ns")
-        assert int(live.cyc_o.value) - c0 == 8, "walker still steps"
-        assert int(hold.cyc_o.value) == 0, "hold half does not count"
-        assert int(hold.stride.value) == 16, "hold stride stays its lane"
-
-        await fire_byte(dut, 0x55)
-        assert int(live.last_seq.value) == 0x55
-        assert int(live.sig0.value) == 0x104F0055
-        assert int(hold.last_seq.value) == 0, "held the low byte that was already on the walker"
-        assert int(hold.sig0.value) == 0x020A0000, "same fold the walker uses on a zero byte"
-        assert int(hold.cyc_o.value) == 0
-        held = int(hold.sig0.value)
-        await ClockCycles(dut.clk, 6)
-        await Timer(1, unit="ns")
-        assert int(hold.cyc_o.value) == 0
-        assert int(hold.sig0.value) == held, "clock held the map"
-        assert int(live.cyc_o.value) > c0 + 8
-
-        await fire_byte(dut, 0x01)
-        assert int(live.sig0.value) == 0x020A0001
-        assert int(hold.last_seq.value) == 0x55, "held the low byte of the last walker face"
-        assert int(hold.sig0.value) == 0x104F0055, "same fold the walker uses on 0x55"
-        assert int(hold.cyc_o.value) == 0
-        assert int(hold.stride.value) == 16
     finally:
         task.cancel()
