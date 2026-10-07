@@ -4,7 +4,7 @@
 
 Jane Street protocol-emulator ASIC. Tiny Tapeout IHP CMOS5L, 6×4. Joshua Luke Nuijens / Axiom 1 Technology.
 
-That name is the UART. Thirty-two bases, same sites, same FIRE, same pads. The rise is 1.6 GB/s inside. The wire is 8N1, both edges at count 1, 100 Mbit/s. OAM is that same CPU on the fall, 8 bases. Same clock. The fall takes the rise output one half-cycle later and holds it. The UART log keeps 128 fired bytes and 128 received bytes.
+That name is the UART. Thirty-two bases, same sites, same FIRE, same pads. The rise is 1.6 GB/s inside. The wire is 8N1, both edges at count 1, 100 Mbit/s. OAM is one base of that CPU on the fall. Same clock. It holds the rise output. The site keep is off. The UART log keeps 128 fired bytes and 128 received bytes.
 
 ## Pin layout
 

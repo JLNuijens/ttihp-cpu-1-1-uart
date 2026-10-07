@@ -30,13 +30,13 @@ module one_cpu11 #(
     .wt   (f_wt)
   );
 
-  (* keep *) reg [31:0] rf [0:15];
-  (* keep *) reg [31:0] cyc;
-  (* keep *) reg [31:0] str;
-  (* keep *) reg [31:0] latched;
-  (* keep *) reg [1:0]  st;
+  reg [31:0] rf [0:15];
+  reg [31:0] cyc;
+  reg [31:0] str;
+  reg [31:0] latched;
+  reg [1:0]  st;
 
-  generate
+generate
     if (FALL == 0) begin : rise
       always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin

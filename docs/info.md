@@ -88,7 +88,7 @@ Allnary. Any byte. The sites do not change with the coding. 32 bases, 16 sites e
 
 The same CPU 1.1, again. Count off. Not a second fold of the 32-bit signature.
 
-The walker stays on the rise. The memory is the same CPU on the fall, 8 bases. Same clock. The fall takes the rise output one half-cycle later. The count on the fall is off, so it holds that cycle. The sites are not tied across the phase.
+The walker stays on the rise, 32 bases. The memory is one base on the fall. Same clock. It takes that rise output and holds it. The site keep is off, so a site nothing reads can drop.
 
 ## Bank
 
