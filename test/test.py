@@ -382,8 +382,8 @@ async def test_oam_holds(dut):
         await fire_byte(dut, 0x55)
         assert int(live.last_seq.value) == 0x55
         assert int(live.sig0.value) == 0x104F0055
-        assert int(hold.last_seq.value) == 0x020A0000, "staged the face that was already there"
-        assert int(hold.sig0.value) == 0x104F0C00, "that face mapped"
+        assert int(hold.last_seq.value) == 0, "staged the low byte that was already on the face"
+        assert int(hold.sig0.value) == 0x020A0000, "same fold the walker uses on a zero byte"
         assert int(hold.cyc_o.value) == 0
         held = int(hold.sig0.value)
         await ClockCycles(dut.clk, 6)
@@ -394,8 +394,8 @@ async def test_oam_holds(dut):
 
         await fire_byte(dut, 0x01)
         assert int(live.sig0.value) == 0x020A0001
-        assert int(hold.last_seq.value) == 0x104F0055, "staged the last live face"
-        assert int(hold.sig0.value) == 0x104F5F55, "mapped that face"
+        assert int(hold.last_seq.value) == 0x55, "staged the low byte of the last face"
+        assert int(hold.sig0.value) == 0x104F0055, "same fold the walker uses on 0x55"
         assert int(hold.cyc_o.value) == 0
         assert int(hold.stride.value) == 0
     finally:

@@ -86,11 +86,9 @@ Allnary. Any byte. The sites do not change with the coding. 32 bases, 16 sites e
 
 ## OAM
 
-Operation access memory. Not a RAM, and not the 128-byte UART log. A second CPU 1.1 with the count off. Same clock. The input is the live face (`sig0`), not the pad. One FIRE deep.
+The same CPU 1.1, again. Count off. Not a second fold of the 32-bit signature.
 
-The bank is 2048 bytes, 32 bases × 16 sites × 4. One FIRE brings in 128 bytes, 32 faces × 4. It writes 640 bytes: latch, r9, r4, r5, r6 on each base. The other 11 sites stay the preload. A rise that is not FIRE writes nothing new. Power off, it is gone.
-
-A standard machine calls a one-operation hold a staging latch and spends the result word on it, 4 bytes, or 128 if it kept every face. It does not build a second processor. OAM is the site map with the count off, so the hold is the CPU.
+The walker takes a byte. The top 24 bits of that word are zero, and that is the machine on the die. OAM takes the low byte of the live face the same way. Same FIRE. Same clock. The count does not step, so the adder is not in this one. The clock holds the map until the next FIRE.
 
 ## Bank
 
@@ -110,4 +108,4 @@ Leave the map at UART. Put the byte on `uio`. Pulse `ui[0]`. Read `uo[2]` and `u
 4. Map 10. SCL falls, SDA open-drain, STOP, SCL idle high.
 5. Drive 8N1 on `ui[2]` with map 00. `uo[3]` GOT.
 
-`N_BASES` is 32. OAM is the same 32 with the count off, one FIRE deep. The step is the rise. The fall stays the UART bit at count 1.
+`N_BASES` is 32. OAM is the same 32 with the count off. The input is the face byte, not a wider word. The step is the rise. The fall stays the UART bit at count 1.

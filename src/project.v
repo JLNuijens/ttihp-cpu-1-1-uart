@@ -7,8 +7,8 @@
  * UART / SPI / I2C walks. Stretch USB LS + 10 Mbit Manchester.
  * 2 stacks, 32 bases. 16 pad/register sites. UART walk is one copy.
  * Bank: 128 fired bytes, 128 received bytes, same clock.
- * Operational memory: OAM. Operation access memory.
- * A second CPU 1.1. Count off. One FIRE deep. Live face is its input.
+ * OAM: the same CPU 1.1 again. Count off. The input is the low byte
+ * of the live face, top 24 bits zero, same as the pad byte.
  */
 `default_nettype none
 
@@ -226,9 +226,8 @@ module tt_um_jlnuijens_one11_uart #(
     end
   endgenerate
 
-  // OAM. Operation access memory. Same CPU 1.1, count off. One FIRE deep.
-  // The input is the live face, not the pad. FIRE maps it.
-  // The next rises do not add. The clock holds that map.
+  // OAM. The same CPU 1.1. Count off. The live face byte is the input,
+  // top 24 bits zero, same shape as the pad. FIRE maps it. The clock holds it.
   generate
     for (k = 0; k < N_BASES; k = k + 1) begin : oam
       one_cpu11 #(.LANE(k)) u_hold (
@@ -236,7 +235,7 @@ module tt_um_jlnuijens_one11_uart #(
         .rst_n     (rst_n),
         .run_hot   (1'b0),
         .fire      (fire),
-        .seq       (s0[k]),
+        .seq       ({24'd0, s0[k][7:0]}),
         .rx_strobe (1'b0),
         .rx_data   (8'd0),
         .sig0      (os0[k]),
@@ -274,9 +273,9 @@ module tt_um_jlnuijens_one11_uart #(
   genvar m;
   generate
     for (m = 0; m < 32; m = m + 1) begin : lv0
-      assign w0[m] = sw[m][7:0];
+      assign w0[m] = sw[m][7:0] ^ osw[m][7:0];
       assign c0[m] = cc[m][16];
-      assign p0[m] = px[m];
+      assign p0[m] = px[m] ^ opx[m];
     end
     for (m = 0; m < 16; m = m + 1) begin : lv1
       assign w1[m] = w0[2*m] ^ w0[2*m+1];
@@ -303,38 +302,8 @@ module tt_um_jlnuijens_one11_uart #(
   assign cy_all = c4[0] ^ c4[1];
   assign px_all = p4[0] ^ p4[1];
 
-  // Collapse of the hold. Every site bit is in it, so the stage stays.
-  wire [31:0] q0 [0:31];
-  wire [31:0] q1 [0:15];
-  wire [31:0] q2 [0:7];
-  wire [31:0] q3 [0:3];
-  wire [31:0] q4 [0:1];
-  wire [31:0] held;
-
-  genvar h;
-  generate
-    for (h = 0; h < 32; h = h + 1) begin : hv0
-      assign q0[h] = opx[h];
-    end
-    for (h = 0; h < 16; h = h + 1) begin : hv1
-      assign q1[h] = q0[2*h] ^ q0[2*h+1];
-    end
-    for (h = 0; h < 8; h = h + 1) begin : hv2
-      assign q2[h] = q1[2*h] ^ q1[2*h+1];
-    end
-    for (h = 0; h < 4; h = h + 1) begin : hv3
-      assign q3[h] = q2[2*h] ^ q2[2*h+1];
-    end
-    for (h = 0; h < 2; h = h + 1) begin : hv4
-      assign q4[h] = q3[2*h] ^ q3[2*h+1];
-    end
-  endgenerate
-  assign held = q4[0] ^ q4[1];
-  wire held_b = ^held;
-
-  // Eight bits of the mix. One nibble per rise. The clock is not data,
-  // so the clock tree still builds. held_b is the memory collapse.
-  wire [3:0] mix_rise = {wt_all[3] ^ px_all[0] ^ cy_all ^ held_b, wt_all[2:0]};
+  // Same mix as the walker. The hold is already in it. No second tree.
+  wire [3:0] mix_rise = {wt_all[3] ^ px_all[0] ^ cy_all, wt_all[2:0]};
   wire [3:0] face_rise = replay ? bank_look[3:0] :
                          (map == 2'd0 && uart_have) ? frame_w[3:0] : mix_rise;
   wire [3:0] face_fall = replay ? bank_look[7:4] :
