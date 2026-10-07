@@ -7,7 +7,8 @@
  * UART / SPI / I2C walks. Stretch USB LS + 10 Mbit Manchester.
  * 2 stacks, 32 bases. 16 pad/register sites. UART walk is one copy.
  * Bank: 128 fired bytes, 128 received bytes, same clock.
- * Operational memory: a second CPU 1.1. Count off. Live face is its input.
+ * Operational memory: OAM. Operation access memory.
+ * A second CPU 1.1. Count off. One FIRE deep. Live face is its input.
  */
 `default_nettype none
 
@@ -225,7 +226,7 @@ module tt_um_jlnuijens_one11_uart #(
     end
   endgenerate
 
-  // Operational memory. Same CPU 1.1, count off.
+  // OAM. Operation access memory. Same CPU 1.1, count off. One FIRE deep.
   // The input is the live face, not the pad. FIRE maps it.
   // The next rises do not add. The clock holds that map.
   generate

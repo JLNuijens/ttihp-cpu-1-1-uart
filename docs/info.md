@@ -84,11 +84,13 @@ Allnary. Any byte. The sites do not change with the coding. 32 bases, 16 sites e
 | r14 | 4 | held every rise |
 | r15 | `0x4F4E4553` | ONES, held every rise |
 
-## Operational memory
+## OAM
 
-A second CPU 1.1. Not the 128-byte log. The count is off, so it is not another walker. Same clock as the live stack. The input is the live face (`sig0`), not the pad. FIRE maps that face into the sites. The next rises do not add. The clock holds the map until the next FIRE.
+Operation access memory. Not a RAM, and not the 128-byte UART log. A second CPU 1.1 with the count off. Same clock. The input is the live face (`sig0`), not the pad. One FIRE deep.
 
-One cycle of the live stack is 32 bytes, one per base. The sites that hold the map are 32 bases × 16 × 4 = 2048 bytes. The 32 bytes are the operation. The 2048 are the places it sits. Power off, it is gone.
+The bank is 2048 bytes, 32 bases × 16 sites × 4. One FIRE brings in 128 bytes, 32 faces × 4. It writes 640 bytes: latch, r9, r4, r5, r6 on each base. The other 11 sites stay the preload. A rise that is not FIRE writes nothing new. Power off, it is gone.
+
+A standard machine calls a one-operation hold a staging latch and spends the result word on it, 4 bytes, or 128 if it kept every face. It does not build a second processor. OAM is the site map with the count off, so the hold is the CPU.
 
 ## Bank
 
@@ -108,4 +110,4 @@ Leave the map at UART. Put the byte on `uio`. Pulse `ui[0]`. Read `uo[2]` and `u
 4. Map 10. SCL falls, SDA open-drain, STOP, SCL idle high.
 5. Drive 8N1 on `ui[2]` with map 00. `uo[3]` GOT.
 
-`N_BASES` is 32. The hold is the same 32 with the count off. The step is the rise. The fall stays the UART bit at count 1.
+`N_BASES` is 32. OAM is the same 32 with the count off, one FIRE deep. The step is the rise. The fall stays the UART bit at count 1.

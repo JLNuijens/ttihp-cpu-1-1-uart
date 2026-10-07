@@ -4,7 +4,7 @@ project:
   title:        "CPU 1.1 UART"
   author:       "Joshua Luke Nuijens / Axiom 1 Technology, LLC"
   discord:      ""
-  description:  "ONE CPU 1.1 32. UART, SPI, I2C. Second CPU 1.1 holds the face, count off. UART log, 128 sent and 128 received. Hook 11: Manchester, USB LS, JTAG, SWD, PS/2, CAN bit."
+  description:  "ONE CPU 1.1 32. UART, SPI, I2C. OAM: operation access memory, second CPU 1.1, count off, one FIRE deep. UART log, 128 sent and 128 received."
   language:     "Verilog"
   clock_hz:     50000000
 
