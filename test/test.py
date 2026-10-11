@@ -331,8 +331,8 @@ async def test_can_bit(dut):
 
 
 @cocotb.test()
-async def test_sram_four(dut):
-    """Four macros. The cycle count is the address. Word 0 holds the reset site."""
+async def test_sram_two(dut):
+    """Two macros. The cycle count is the address. Word 0 holds the reset site."""
     task = await reset_dut(dut)
     try:
         await ClockCycles(dut.clk, 2)
@@ -344,3 +344,4 @@ async def test_sram_four(dut):
         assert int(dut.uo_out.value) == (int(dut.user_project.mem_q.value) & 0xFF)
     finally:
         task.cancel()
+

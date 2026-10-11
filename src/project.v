@@ -5,7 +5,7 @@
  * Tiny Tapeout 6x4 — CPU 1.1 UART
  * One oscillator. FIRE. Pads. Clock count is the range.
  * UART / SPI / I2C walks. Stretch USB LS + 10 Mbit Manchester.
- * 2 stacks, 32 bases. 16 pad/register sites. UART walk is one copy.
+ * 2 stacks, 32 bases, plus 4 bases set apart. 16 pad/register sites. UART walk is one copy.
  */
 `default_nettype none
 
@@ -238,42 +238,64 @@ module tt_um_jlnuijens_one11_uart #(
   assign cy_all = c4[0] ^ c4[1];
   assign px_all = p4[0] ^ p4[1];
 
-  // Four 512x32 macros. 8 KB. The cycle count is the address.
-  // Even cycle writes four site words. Odd cycle reads them back.
-  // Hook range 0 shows the read. UART, SPI, I2C, and the other walks do not move.
+  // Four bases, set apart from the 32. Step is 4.
+  // 32 bases at 50 MHz are 1.6 GB/s. These four are 0.2 GB/s.
+  // They are not in the 32-wide mix.
+  wire [31:0] sep_s0 [0:3];
+  wire [31:0] sep_s1 [0:3];
+  wire [31:0] sep_sw [0:3];
+  wire [31:0] sep_sl [0:3];
+  wire [31:0] sep_ss [0:3];
+  wire [31:0] sep_cc [0:3];
+  wire [1:0]  sep_st [0:3];
+  wire [31:0] sep_px [0:3];
+  genvar s;
+  generate
+    for (s = 0; s < 4; s = s + 1) begin : sep
+      wire [31:0] seq_s = seq + (s * 32'd4);
+      one_cpu11 #(.LANE(32 + s)) u_cpu (
+        .clk       (clk),
+        .rst_n     (rst_n),
+        .run_hot   (hot),
+        .fire      (fire),
+        .seq       (seq_s),
+        .rx_strobe (rx_strobe),
+        .rx_data   (rx_byte),
+        .sig0      (sep_s0[s]),
+        .sig1      (sep_s1[s]),
+        .wt        (sep_sw[s]),
+        .last_seq  (sep_sl[s]),
+        .stride    (sep_ss[s]),
+        .cyc_o     (sep_cc[s]),
+        .status    (sep_st[s]),
+        .pad_xor   (sep_px[s])
+      );
+    end
+  endgenerate
+
+  // Two 512x32 macros. 4 KB. The main cycle count is the address.
+  // The separated bases are what gets stored. UART and the other walks do not move.
   wire        mem_on   = rst_n;
   wire        mem_wr   = ~cc[0][0];
   wire [8:0]  mem_addr = cc[0][9:1];
   wire [31:0] mem_bm   = 32'hffffffff;
-  wire [31:0] dout0, dout1, dout2, dout3;
+  wire [31:0] dout0, dout1;
   RM_IHPSG13_1P_512x32_c2_bm_bist u_sram0 (
     .A_CLK(clk), .A_MEN(mem_on), .A_WEN(mem_wr), .A_REN(~mem_wr),
-    .A_ADDR(mem_addr), .A_DIN(s0[0]), .A_DLY(1'b1), .A_DOUT(dout0), .A_BM(mem_bm),
+    .A_ADDR(mem_addr), .A_DIN(sep_s0[0]), .A_DLY(1'b1), .A_DOUT(dout0), .A_BM(mem_bm),
     .A_BIST_CLK(1'b0), .A_BIST_EN(1'b0), .A_BIST_MEN(1'b0), .A_BIST_WEN(1'b0),
     .A_BIST_REN(1'b0), .A_BIST_ADDR(9'd0), .A_BIST_DIN(32'd0), .A_BIST_BM(32'd0)
   );
   RM_IHPSG13_1P_512x32_c2_bm_bist u_sram1 (
     .A_CLK(clk), .A_MEN(mem_on), .A_WEN(mem_wr), .A_REN(~mem_wr),
-    .A_ADDR(mem_addr), .A_DIN(s0[1]), .A_DLY(1'b1), .A_DOUT(dout1), .A_BM(mem_bm),
-    .A_BIST_CLK(1'b0), .A_BIST_EN(1'b0), .A_BIST_MEN(1'b0), .A_BIST_WEN(1'b0),
-    .A_BIST_REN(1'b0), .A_BIST_ADDR(9'd0), .A_BIST_DIN(32'd0), .A_BIST_BM(32'd0)
-  );
-  RM_IHPSG13_1P_512x32_c2_bm_bist u_sram2 (
-    .A_CLK(clk), .A_MEN(mem_on), .A_WEN(mem_wr), .A_REN(~mem_wr),
-    .A_ADDR(mem_addr), .A_DIN(s0[2]), .A_DLY(1'b1), .A_DOUT(dout2), .A_BM(mem_bm),
-    .A_BIST_CLK(1'b0), .A_BIST_EN(1'b0), .A_BIST_MEN(1'b0), .A_BIST_WEN(1'b0),
-    .A_BIST_REN(1'b0), .A_BIST_ADDR(9'd0), .A_BIST_DIN(32'd0), .A_BIST_BM(32'd0)
-  );
-  RM_IHPSG13_1P_512x32_c2_bm_bist u_sram3 (
-    .A_CLK(clk), .A_MEN(mem_on), .A_WEN(mem_wr), .A_REN(~mem_wr),
-    .A_ADDR(mem_addr), .A_DIN(s0[3]), .A_DLY(1'b1), .A_DOUT(dout3), .A_BM(mem_bm),
+    .A_ADDR(mem_addr), .A_DIN(sep_s0[1]), .A_DLY(1'b1), .A_DOUT(dout1), .A_BM(mem_bm),
     .A_BIST_CLK(1'b0), .A_BIST_EN(1'b0), .A_BIST_MEN(1'b0), .A_BIST_WEN(1'b0),
     .A_BIST_REN(1'b0), .A_BIST_ADDR(9'd0), .A_BIST_DIN(32'd0), .A_BIST_BM(32'd0)
   );
   reg [31:0] mem_q;
   always @(posedge clk or negedge rst_n) begin
     if (!rst_n) mem_q <= 32'd0;
-    else        mem_q <= dout0 ^ dout1 ^ dout2 ^ dout3;
+    else        mem_q <= dout0 ^ dout1 ^ sep_px[0] ^ sep_px[1] ^ sep_px[2] ^ sep_px[3];
   end
   wire mem_face = (map == 2'd3) && (rsel == 3'd0);
 
@@ -313,5 +335,10 @@ module tt_um_jlnuijens_one11_uart #(
   assign uio_out = {6'd0, tap_clk_od, (map == 2'd2) ? i2c_sda : tap_dio};
   assign uio_oe  = {6'd0, on_tap & tap_clk_oe, ((map == 2'd2) & i2c_oe) | (on_tap & tap_oe)};
 
-  wire _unused = &{ena, s0[0], s1[0], sl[0], ss[0], st[0], i2c_ack, 1'b0};
+  wire _unused = &{ena, s0[0], s1[0], sl[0], ss[0], st[0], i2c_ack,
+                  sep_s1[0], sep_sw[0], sep_sl[0], sep_ss[0], sep_cc[0], sep_st[0],
+                  sep_s1[1], sep_sw[1], sep_sl[1], sep_ss[1], sep_cc[1], sep_st[1],
+                  sep_s1[2], sep_sw[2], sep_sl[2], sep_ss[2], sep_cc[2], sep_st[2],
+                  sep_s1[3], sep_sw[3], sep_sl[3], sep_ss[3], sep_cc[3], sep_st[3],
+                  1'b0};
 endmodule

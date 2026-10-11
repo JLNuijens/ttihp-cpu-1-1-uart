@@ -1,6 +1,6 @@
 # ONE CPU 1.1 32 · 1.6 GB/s
 
-That is the UART. Thirty-two bases on one FIRE. 1.6 GB/s inside on the rise. The line is 100 Mbit/s. Layout 40% of the 6×4. GDS built. Four `512×32` foundry macros sit beside it. 8 KB. The 8×4 template is not in the flow yet.
+That is the UART. Thirty-two bases on one FIRE. 1.6 GB/s inside on the rise. Four more bases are set apart, step 4, 0.2 GB/s, and they are what the memory stores. The line is 100 Mbit/s. Two `512×32` foundry macros sit beside it. 4 KB. The 8×4 template is not in the flow yet.
 
 ## SRAM
 
