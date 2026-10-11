@@ -68,6 +68,7 @@
 
   "//": "Don't generate power rings",
   "FP_PDN_MULTILAYER": 0,
+  "PDN_CFG": "dir::pdn_cfg.tcl",
 
   "//": "MAGIC_DEF_LABELS may cause issues with LVS",
   "MAGIC_DEF_LABELS": 0,
