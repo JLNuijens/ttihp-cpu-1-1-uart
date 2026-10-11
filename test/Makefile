@@ -5,7 +5,7 @@ SIM ?= icarus
 FST ?= -fst
 TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
-PROJECT_SOURCES = project.v one_cpu11.v js_uart_fire.v js_range.v js_spi_fire.v js_i2c_fire.v js_line_fire.v js_tap_fire.v
+PROJECT_SOURCES = project.v one_cpu11.v js_uart_fire.v js_range.v js_spi_fire.v js_i2c_fire.v js_line_fire.v js_tap_fire.v sram_512x32.v
 
 ifneq ($(GATES),yes)
 
@@ -25,6 +25,7 @@ VERILOG_SOURCES += $(PWD)/gate_level_netlist.v
 endif
 
 COMPILE_ARGS 		+= -I$(SRC_DIR)
+COMPILE_ARGS 		+= -DCOCOTB_SIM
 
 VERILOG_SOURCES += $(PWD)/tb.v
 TOPLEVEL = tb

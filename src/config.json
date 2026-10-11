@@ -58,8 +58,10 @@
   "FP_IO_HLENGTH": 2,
   "FP_IO_VLENGTH": 2,
 
-  "FP_PDN_VPITCH": 50.0,
+  "FP_PDN_VPITCH": 44.96,
   "FP_PDN_VWIDTH": 2.1,
+  "FP_PDN_VSPACING": 3.52,
+  "FP_PDN_VOFFSET": 6.15,
 
   "//": "Clock",
   "RUN_CTS": 1,
@@ -71,5 +73,50 @@
   "MAGIC_DEF_LABELS": 0,
 
   "//": "Only export pin area in LEF (without any connected nets)",
-  "MAGIC_WRITE_LEF_PINONLY": 1
+  "MAGIC_WRITE_LEF_PINONLY": 1,
+
+  "MACROS": {
+    "RM_IHPSG13_1P_512x32_c2_bm_bist": {
+      "gds": ["pdk_dir::libs.ref/sg13cmos5l_sram/gds/RM_IHPSG13_1P_512x32_c2_bm_bist.gds"],
+      "lef": ["pdk_dir::libs.ref/sg13cmos5l_sram/lef/RM_IHPSG13_1P_512x32_c2_bm_bist.lef"],
+      "spice": ["pdk_dir::libs.ref/sg13cmos5l_sram/cdl/RM_IHPSG13_1P_512x32_c2_bm_bist.cdl"],
+      "nl": [],
+      "spef": {},
+      "lib": {
+        "nom_typ_1p20V_25C": ["pdk_dir::libs.ref/sg13cmos5l_sram/lib/RM_IHPSG13_1P_512x32_c2_bm_bist_typ_1p20V_25C.lib"],
+        "nom_fast_1p32V_m40C": ["pdk_dir::libs.ref/sg13cmos5l_sram/lib/RM_IHPSG13_1P_512x32_c2_bm_bist_fast_1p32V_m55C.lib"],
+        "nom_slow_1p08V_125C": ["pdk_dir::libs.ref/sg13cmos5l_sram/lib/RM_IHPSG13_1P_512x32_c2_bm_bist_slow_1p08V_125C.lib"]
+      },
+      "instances": {
+        "u_sram0": {"location": [8.0, 8.0], "orientation": "N"},
+        "u_sram1": {"location": [8.0, 207.34], "orientation": "FS"},
+        "u_sram2": {"location": [432.64, 8.0], "orientation": "N"},
+        "u_sram3": {"location": [432.64, 207.34], "orientation": "FS"}
+      }
+    }
+  },
+  "PDN_MACRO_CONNECTIONS": [
+    "u_sram0 VPWR VGND VDD! VSS!",
+    "u_sram0 VPWR VGND VDDARRAY! VSS!",
+    "u_sram1 VPWR VGND VDD! VSS!",
+    "u_sram1 VPWR VGND VDDARRAY! VSS!",
+    "u_sram2 VPWR VGND VDD! VSS!",
+    "u_sram2 VPWR VGND VDDARRAY! VSS!",
+    "u_sram3 VPWR VGND VDD! VSS!",
+    "u_sram3 VPWR VGND VDDARRAY! VSS!"
+  ],
+  "ROUTING_OBSTRUCTIONS": [
+    "Metal2 8.0 8.0 424.64 199.34",
+    "Metal3 8.0 8.0 424.64 199.34",
+    "Metal4 8.0 8.0 424.64 199.34",
+    "Metal2 8.0 207.34 424.64 398.68",
+    "Metal3 8.0 207.34 424.64 398.68",
+    "Metal4 8.0 207.34 424.64 398.68",
+    "Metal2 432.64 8.0 849.28 199.34",
+    "Metal3 432.64 8.0 849.28 199.34",
+    "Metal4 432.64 8.0 849.28 199.34",
+    "Metal2 432.64 207.34 849.28 398.68",
+    "Metal3 432.64 207.34 849.28 398.68",
+    "Metal4 432.64 207.34 849.28 398.68"
+  ]
 }

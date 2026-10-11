@@ -238,6 +238,45 @@ module tt_um_jlnuijens_one11_uart #(
   assign cy_all = c4[0] ^ c4[1];
   assign px_all = p4[0] ^ p4[1];
 
+  // Four 512x32 macros. 8 KB. The cycle count is the address.
+  // Even cycle writes four site words. Odd cycle reads them back.
+  // Hook range 0 shows the read. UART, SPI, I2C, and the other walks do not move.
+  wire        mem_on   = rst_n;
+  wire        mem_wr   = ~cc[0][0];
+  wire [8:0]  mem_addr = cc[0][9:1];
+  wire [31:0] mem_bm   = 32'hffffffff;
+  wire [31:0] dout0, dout1, dout2, dout3;
+  RM_IHPSG13_1P_512x32_c2_bm_bist u_sram0 (
+    .A_CLK(clk), .A_MEN(mem_on), .A_WEN(mem_wr), .A_REN(~mem_wr),
+    .A_ADDR(mem_addr), .A_DIN(s0[0]), .A_DLY(1'b1), .A_DOUT(dout0), .A_BM(mem_bm),
+    .A_BIST_CLK(1'b0), .A_BIST_EN(1'b0), .A_BIST_MEN(1'b0), .A_BIST_WEN(1'b0),
+    .A_BIST_REN(1'b0), .A_BIST_ADDR(9'd0), .A_BIST_DIN(32'd0), .A_BIST_BM(32'd0)
+  );
+  RM_IHPSG13_1P_512x32_c2_bm_bist u_sram1 (
+    .A_CLK(clk), .A_MEN(mem_on), .A_WEN(mem_wr), .A_REN(~mem_wr),
+    .A_ADDR(mem_addr), .A_DIN(s0[1]), .A_DLY(1'b1), .A_DOUT(dout1), .A_BM(mem_bm),
+    .A_BIST_CLK(1'b0), .A_BIST_EN(1'b0), .A_BIST_MEN(1'b0), .A_BIST_WEN(1'b0),
+    .A_BIST_REN(1'b0), .A_BIST_ADDR(9'd0), .A_BIST_DIN(32'd0), .A_BIST_BM(32'd0)
+  );
+  RM_IHPSG13_1P_512x32_c2_bm_bist u_sram2 (
+    .A_CLK(clk), .A_MEN(mem_on), .A_WEN(mem_wr), .A_REN(~mem_wr),
+    .A_ADDR(mem_addr), .A_DIN(s0[2]), .A_DLY(1'b1), .A_DOUT(dout2), .A_BM(mem_bm),
+    .A_BIST_CLK(1'b0), .A_BIST_EN(1'b0), .A_BIST_MEN(1'b0), .A_BIST_WEN(1'b0),
+    .A_BIST_REN(1'b0), .A_BIST_ADDR(9'd0), .A_BIST_DIN(32'd0), .A_BIST_BM(32'd0)
+  );
+  RM_IHPSG13_1P_512x32_c2_bm_bist u_sram3 (
+    .A_CLK(clk), .A_MEN(mem_on), .A_WEN(mem_wr), .A_REN(~mem_wr),
+    .A_ADDR(mem_addr), .A_DIN(s0[3]), .A_DLY(1'b1), .A_DOUT(dout3), .A_BM(mem_bm),
+    .A_BIST_CLK(1'b0), .A_BIST_EN(1'b0), .A_BIST_MEN(1'b0), .A_BIST_WEN(1'b0),
+    .A_BIST_REN(1'b0), .A_BIST_ADDR(9'd0), .A_BIST_DIN(32'd0), .A_BIST_BM(32'd0)
+  );
+  reg [31:0] mem_q;
+  always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) mem_q <= 32'd0;
+    else        mem_q <= dout0 ^ dout1 ^ dout2 ^ dout3;
+  end
+  wire mem_face = (map == 2'd3) && (rsel == 3'd0);
+
   // Eight bits of the mix. One nibble per rise. The clock is not data,
   // so the clock tree still builds.
   wire [3:0] face_rise = {wt_all[3] ^ px_all[0] ^ cy_all, wt_all[2:0]};
@@ -254,20 +293,22 @@ module tt_um_jlnuijens_one11_uart #(
     end
   end
 
-  assign uo_out[0] = (map == 2'd0) ? uart_tx :
+  wire [7:0] uo_walk;
+  assign uo_walk[0] = (map == 2'd0) ? uart_tx :
                      (on_tap && (tap_kind == 2'd3)) ? tap_can :
                      (map == 2'd3 && !on_tap) ? line_dm : 1'b1;
-  assign uo_out[1] = busy;
-  assign uo_out[2] = (r15_ones == 32'h4F4E4553);
-  assign uo_out[3] = (map == 2'd2) ? (got | ~i2c_ack) : (got | uart_rxb);
-  assign uo_out[4] = (map == 2'd1) ? spi_mosi :
+  assign uo_walk[1] = busy;
+  assign uo_walk[2] = (r15_ones == 32'h4F4E4553);
+  assign uo_walk[3] = (map == 2'd2) ? (got | ~i2c_ack) : (got | uart_rxb);
+  assign uo_walk[4] = (map == 2'd1) ? spi_mosi :
                      (map == 2'd2) ? i2c_scl :
                      (on_tap && (tap_kind == 2'd0)) ? tap_tdi : face[0];
-  assign uo_out[5] = (map == 2'd1) ? spi_sclk :
+  assign uo_walk[5] = (map == 2'd1) ? spi_sclk :
                      (on_tap && (tap_kind == 2'd0 || tap_kind == 2'd1)) ? tap_tck : face[1];
-  assign uo_out[6] = (map == 2'd1) ? spi_csn :
+  assign uo_walk[6] = (map == 2'd1) ? spi_csn :
                      (on_tap && (tap_kind == 2'd0)) ? tap_tms : face[2];
-  assign uo_out[7] = (map == 2'd3 && !on_tap) ? line_dp : face[3];
+  assign uo_walk[7] = (map == 2'd3 && !on_tap) ? line_dp : face[3];
+  assign uo_out = mem_face ? mem_q[7:0] : uo_walk;
 
   assign uio_out = {6'd0, tap_clk_od, (map == 2'd2) ? i2c_sda : tap_dio};
   assign uio_oe  = {6'd0, on_tap & tap_clk_oe, ((map == 2'd2) & i2c_oe) | (on_tap & tap_oe)};

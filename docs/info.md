@@ -1,6 +1,10 @@
 # ONE CPU 1.1 32 · 1.6 GB/s
 
-That is the UART. Thirty-two bases on one FIRE. 1.6 GB/s inside on the rise. The line is 100 Mbit/s. Layout 40% of the 6×4. GDS built.
+That is the UART. Thirty-two bases on one FIRE. 1.6 GB/s inside on the rise. The line is 100 Mbit/s. Layout 40% of the 6×4. GDS built. Four `512×32` foundry macros sit beside it. 8 KB. The 8×4 template is not in the flow yet.
+
+## SRAM
+
+Four copies of `RM_IHPSG13_1P_512x32_c2_bm_bist`. 512 words, 32 bits, 2 KB each. 8 KB on the die. One port. The address is the CPU cycle count, `cyc[9:1]`. An even cycle writes site words 0 through 3, one macro each. The odd cycle reads them back. Hook map `11`, range `000`, puts that read on `uo[7:0]`. UART, SPI, I2C, and the other hook walks keep their pins.
 
 ## Pin layout
 
