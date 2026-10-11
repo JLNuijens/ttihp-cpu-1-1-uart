@@ -4,7 +4,7 @@
 
 Jane Street protocol-emulator ASIC. Tiny Tapeout IHP CMOS5L, 6×4. Joshua Luke Nuijens / Axiom 1 Technology.
 
-That name is the UART. Thirty-two bases, same sites, same FIRE, same pads. The rise is 1.6 GB/s inside. The wire is 8N1, both edges at count 1, 100 Mbit/s. Layout used 40% of the tile before the memory. Two `512×32` SRAM macros are on the die with it. 4 KB. The address is the cycle count. Four bases sit apart from the 32: 0.2 GB/s, and those are what the memory holds. The 8×4 tile is not in the template yet, so this stays a 6×4.
+That name is the UART. Thirty-two bases, same sites, same FIRE, same pads. The rise is 1.6 GB/s inside. The wire is 8N1, both edges at count 1, 100 Mbit/s. Layout used 40% of the tile before the memory. Two `512×32` SRAM macros are on the die with it. 4 KB. The address is the cycle count. The 8×4 tile is not in the template yet, so this stays a 6×4.
 
 ## Pin layout
 
