@@ -1,5 +1,6 @@
 {
   "meta": {
+    "flow": "Classic",
     "substituting_steps": {
       "+OpenROAD.GeneratePDN": "Project.ExtendPowerStripes"
     }
