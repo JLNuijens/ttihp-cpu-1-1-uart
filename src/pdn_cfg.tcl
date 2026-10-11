@@ -1,3 +1,12 @@
+# Copy of LibreLane's scripts/openroad/common/pdn_cfg.tcl (identical in
+# 3.0.0rc1 and 3.0.2) without its per-macro grid.  This tile's PDN is a
+# single Metal4 stripe layer (PDN_MULTILAYER 0) and the CFGMEM/SRAM macros
+# are powered by Project.ExtendPowerStripes, which runs the tile stripes
+# across them after GeneratePDN; pdngen's "macro" grid therefore has no
+# shapes or vias, which an unpatched OpenROAD reports as PDN-0232 and then
+# fails with PDN-0233 "Failed to generate full power grid" (the CI).  The
+# development machines carried an OpenROAD patch that skipped that check.
+# Selected through PDN_CFG in src/config.json.
 # Copyright 2025 LibreLane Contributors
 #
 # Adapted from OpenLane
@@ -47,6 +56,7 @@ foreach vdd $::env(VDD_NETS) gnd $::env(GND_NETS) {
 
 set_voltage_domain -name CORE -power $::env(VDD_NET) -ground $::env(GND_NET) \
     -secondary_power $secondary
+
 
 
 if { $::env(PDN_MULTILAYER) == 1 } {
@@ -114,7 +124,6 @@ if { $::env(PDN_MULTILAYER) == 1 } {
         -offset $::env(PDN_VOFFSET) \
         -spacing $::env(PDN_VSPACING) \
         -starts_with POWER \
-        -number_of_straps 2 \
         {*}$arg_list
 }
 
@@ -140,8 +149,8 @@ if { $::env(PDN_CORE_RING) == 1 } {
         append_if_flag arg_list PDN_CORE_RING_CONNECT_TO_PADS -connect_to_pads
         append_if_equals arg_list PDN_EXTEND_TO "boundary" -extend_to_boundary
 
-        set pdn_core_vertical_layer $::env(PDN_CORE_VERTICAL_LAYER)
-        set pdn_core_horizontal_layer $::env(PDN_CORE_HORIZONTAL_LAYER)
+        set pdn_core_vertical_layer $::env(PDN_VERTICAL_LAYER)
+        set pdn_core_horizontal_layer $::env(PDN_HORIZONTAL_LAYER)
 
         if { [info exists ::env(PDN_CORE_VERTICAL_LAYER)] } {
             set pdn_core_vertical_layer $::env(PDN_CORE_VERTICAL_LAYER)
@@ -182,27 +191,3 @@ if { $::env(PDN_CORE_RING) == 1 } {
     }
 }
 
-
-# No per-macro grid. The default one is only a via between two strap layers.
-# With one strap layer it is empty, and OpenROAD quits (PDN-0233) before routing.
-# The tile straps already cross the core. These follow the SRAM pins on that
-# same layer so the macros are on the grid.
-if { ![info exists ::env(PDN_HORIZONTAL_HALO)] } {
-    set ::env(PDN_HORIZONTAL_HALO) 2
-}
-if { ![info exists ::env(PDN_VERTICAL_HALO)] } {
-    set ::env(PDN_VERTICAL_HALO) 2
-}
-
-define_pdn_grid \
-    -macro \
-    -default \
-    -name macro \
-    -starts_with POWER \
-    -halo "$::env(PDN_HORIZONTAL_HALO) $::env(PDN_VERTICAL_HALO)"
-
-add_pdn_stripe \
-    -grid macro \
-    -layer $::env(PDN_VERTICAL_LAYER) \
-    -width $::env(PDN_VWIDTH) \
-    -followpins
