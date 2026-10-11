@@ -332,15 +332,25 @@ async def test_can_bit(dut):
 
 @cocotb.test()
 async def test_sram_two(dut):
-    """Two macros. The cycle count is the address. Word 0 holds the reset site."""
+    """Address is the uio byte. FIRE stores the result. The same address reads it back."""
     task = await reset_dut(dut)
     try:
+        dut.ui_in.value = 0x18
+        dut.uio_in.value = 5
         await ClockCycles(dut.clk, 2)
-        word = int(dut.user_project.u_sram0.mem[0].value)
+        dut.ui_in.value = 0x19
+        await ClockCycles(dut.clk, 1)
+        dut.ui_in.value = 0x18
+        await ClockCycles(dut.clk, 2)
+        word = int(dut.user_project.u_sram0.mem[5].value)
         assert word == 0x020A0000, f"sram {word:08x}"
-        dut.ui_in.value = 0x04 | 0x18
+        dut.uio_in.value = 9
+        await ClockCycles(dut.clk, 2)
+        assert int(dut.user_project.u_sram0.mem[5].value) == 0x020A0000
+        dut.uio_in.value = 5
         await ClockCycles(dut.clk, 3)
         await Timer(1, unit="ns")
+        assert int(dut.user_project.dout0.value) == 0x020A0000
         assert int(dut.uo_out.value) == (int(dut.user_project.mem_q.value) & 0xFF)
     finally:
         task.cancel()

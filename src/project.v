@@ -162,12 +162,26 @@ module tt_um_jlnuijens_one11_uart #(
   end
   wire rx_strobe = got & ~got_d;
 
+  wire mem_face = (map == 2'd3) && (rsel == 3'd0);
+  // The pins pick the address. It stays there. FIRE writes the result next cycle.
+  reg [8:0] addr_q;
+  reg       wr_pend;
+  always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+      addr_q  <= 9'd0;
+      wr_pend <= 1'b0;
+    end else begin
+      wr_pend <= mem_face & fire;
+      if (mem_face && !fire) addr_q <= {1'b0, uio_in};
+    end
+  end
+
   genvar k;
   generate
     for (k = 0; k < N_BASES; k = k + 1) begin : bases
       wire [31:0] seq_k =
-          (mem_face && (k == 0)) ? dout0 :
-          (mem_face && (k == 1)) ? dout1 :
+          (mem_face && !wr_pend && (k == 0)) ? dout0 :
+          (mem_face && !wr_pend && (k == 1)) ? dout1 :
           (seq + k);
       one_cpu11 #(.LANE(k)) u_cpu (
         .clk       (clk),
@@ -241,12 +255,11 @@ module tt_um_jlnuijens_one11_uart #(
   assign cy_all = c4[0] ^ c4[1];
   assign px_all = p4[0] ^ p4[1];
 
-  // Two 512x32 macros. 4 KB. Even cycle writes the base. Odd cycle reads it back.
-  // On the memory face that read is the next input, so the kept number is used again.
-  // UART and the other walks stay on the pads.
-  wire        mem_on   = rst_n;
-  wire        mem_wr   = ~cc[0][0];
-  wire [8:0]  mem_addr = cc[0][9:1];
+  // Two 512x32 macros. The address is the byte on uio, not the clock.
+  // Read is the input. FIRE stores the result at that address. It stays until written again.
+  wire        mem_on   = rst_n & (mem_face | wr_pend);
+  wire        mem_wr   = wr_pend;
+  wire [8:0]  mem_addr = addr_q;
   wire [31:0] mem_bm   = 32'hffffffff;
   wire [31:0] dout0, dout1;
   RM_IHPSG13_1P_512x32_c2_bm_bist u_sram0 (
@@ -264,9 +277,8 @@ module tt_um_jlnuijens_one11_uart #(
   reg [31:0] mem_q;
   always @(posedge clk or negedge rst_n) begin
     if (!rst_n) mem_q <= 32'd0;
-    else        mem_q <= dout0 ^ dout1;
+    else        mem_q <= dout0;
   end
-  wire mem_face = (map == 2'd3) && (rsel == 3'd0);
 
   // Eight bits of the mix. One nibble per rise. The clock is not data,
   // so the clock tree still builds.
