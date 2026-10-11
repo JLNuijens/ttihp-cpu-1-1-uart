@@ -165,7 +165,10 @@ module tt_um_jlnuijens_one11_uart #(
   genvar k;
   generate
     for (k = 0; k < N_BASES; k = k + 1) begin : bases
-      wire [31:0] seq_k = seq + k;
+      wire [31:0] seq_k =
+          (mem_face && (k == 0)) ? dout0 :
+          (mem_face && (k == 1)) ? dout1 :
+          (seq + k);
       one_cpu11 #(.LANE(k)) u_cpu (
         .clk       (clk),
         .rst_n     (rst_n),
@@ -238,8 +241,9 @@ module tt_um_jlnuijens_one11_uart #(
   assign cy_all = c4[0] ^ c4[1];
   assign px_all = p4[0] ^ p4[1];
 
-  // Two 512x32 macros. 4 KB. The cycle count is the address.
-  // Bases 0 and 1 are what gets stored. UART and the other walks do not move.
+  // Two 512x32 macros. 4 KB. Even cycle writes the base. Odd cycle reads it back.
+  // On the memory face that read is the next input, so the kept number is used again.
+  // UART and the other walks stay on the pads.
   wire        mem_on   = rst_n;
   wire        mem_wr   = ~cc[0][0];
   wire [8:0]  mem_addr = cc[0][9:1];
