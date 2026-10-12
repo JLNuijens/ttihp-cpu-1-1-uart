@@ -330,5 +330,25 @@ module tt_um_jlnuijens_one11_uart #(
   assign uio_out = {6'd0, tap_clk_od, (map == 2'd2) ? i2c_sda : tap_dio};
   assign uio_oe  = {6'd0, on_tap & tap_clk_oe, ((map == 2'd2) & i2c_oe) | (on_tap & tap_oe)};
 
-  wire _unused = &{ena, s0[0], s1[0], sl[0], ss[0], st[0], i2c_ack, 1'b0};
+  // 512 stays on the processor. 720 picks the return up off the same clock.
+  // Pads: IN+ is the byte, IN- is the other input. The vector is base 0 against base 16.
+  wire signed [19:0] pick_sq;
+  wire signed [23:0] pick_deg8;
+  wire               pick_hit;
+  wire signed [19:0] vec_sq;
+  wire signed [23:0] vec_deg8;
+  wire               vec_hit;
+  range_front u_pick (
+    .clk(clk), .rst_n(rst_n), .hot(hot),
+    .inp({8'd0, uio_in}), .inn({8'd0, ui_in}), .count({2'b0, rsel}),
+    .squares(pick_sq), .deg8(pick_deg8), .caught(pick_hit)
+  );
+  range_front u_vec (
+    .clk(clk), .rst_n(rst_n), .hot(hot),
+    .inp(s0[0][15:0]), .inn(s0[16][15:0]), .count({2'b0, rsel}),
+    .squares(vec_sq), .deg8(vec_deg8), .caught(vec_hit)
+  );
+
+  wire _unused = &{ena, s0[0], s1[0], sl[0], ss[0], st[0], i2c_ack,
+                   pick_sq, pick_deg8, pick_hit, vec_sq, vec_deg8, vec_hit, 1'b0};
 endmodule

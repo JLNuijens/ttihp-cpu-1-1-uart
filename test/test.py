@@ -357,3 +357,29 @@ async def test_sram_two(dut):
     finally:
         task.cancel()
 
+
+@cocotb.test()
+async def test_range_front(dut):
+    """One intake on the stack of 128 sits at 4 squares and 5.625 degrees."""
+    task = await reset_dut(dut)
+    try:
+        dut.ui_in.value = 0
+        dut.uio_in.value = 1
+        await ClockCycles(dut.clk, 2)
+        await Timer(1, unit="ns")
+        sq = int(dut.user_project.pick_sq.value)
+        de = int(dut.user_project.pick_deg8.value)
+        if sq >= 2**19:
+            sq -= 2**20
+        if de >= 2**23:
+            de -= 2**24
+        assert sq == 4, f"squares {sq}"
+        assert de == 45, f"deg8 {de}"
+        assert int(dut.user_project.pick_hit.value) == 1
+        dut.uio_in.value = 0
+        await ClockCycles(dut.clk, 2)
+        await Timer(1, unit="ns")
+        assert int(dut.user_project.pick_sq.value) == 0, "stack adds no power"
+    finally:
+        task.cancel()
+

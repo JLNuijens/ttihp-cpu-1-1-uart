@@ -115,6 +115,20 @@ UART, SPI, I2C, and the other walks keep their own pins. The memory only takes t
 | RX | the finished byte lands in r8 |
 | Fetch | none |
 
+## Pickup
+
+The 512 stays on the processor. The 720 is the pickup. The stack is 128, and the clock stays hot. The intake is IN+ minus IN−. The stack does not add power to that.
+
+| | |
+|---|---|
+| Squares | intake × 512 / 128. One intake sits at 4 |
+| Degrees | intake × 720 / 128. One intake sits at 5.625° |
+| Ratio | 720 / 512 = 1.40625 |
+
+Count 0 is 1°. Each count doubles the units and halves the degree. The stack catches a count only when it can reach that count's units. Count 7 is 128 units, so the stack reaches it. Count 8 is 256, so it does not. You count the units inside a count before you move up. There is no last count.
+
+On this die, IN+ is the byte on `uio` and IN− is `ui`. The same pickup runs on the 1.6 GB/s vector, base 0 against base 16.
+
 r0, r3, and r10–r13 stay 0. The full site table is in [docs/info.md](docs/info.md).
 
 ## Preloaded

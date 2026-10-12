@@ -82,6 +82,12 @@ JTAG is a real bit-bang. The first FIRE stores TMS. The second FIRE clocks eight
 
 Byte on `uio`. Pulse FIRE. Thirty-two bases take that FIRE, two stacks of 16. `r15` stays `0x4F4E4553`. The UART, SPI, and I2C walks are still one copy.
 
+## Pickup
+
+The 512 stays on the processor. The 720 is the radar pickup. Stack is 128. The clock stays hot. Intake is IN+ minus IN−, and the stack adds no power.
+
+One intake is 4 on the 512 track and 5.625° on the 720 track. The ratio is 1.40625. Count 0 is 1°. Count 7 is 128 units, 0.0078125°. The stack reaches count 7 and does not reach count 8. Pads: `uio` is IN+, `ui` is IN−. The 1.6 GB/s vector is the same pickup, base 0 against base 16.
+
 ## Processor · ONE CPU 1.1 32
 
 Allnary. Any byte. The sites do not change with the coding. 32 bases, 16 sites each. The lane is the only difference.
