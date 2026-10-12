@@ -30,6 +30,8 @@
   "//": "Hold slack margin - Increase them in case you are getting hold violations.",
   "PL_RESIZER_HOLD_SLACK_MARGIN": 0,
   "GRT_RESIZER_HOLD_SLACK_MARGIN": 0,
+  "PL_RESIZER_HOLD_MAX_BUFFER_PERCENT": 0,
+  "GRT_RESIZER_HOLD_MAX_BUFFER_PERCENT": 5,
 
   "//": "RUN_LINTER, LINTER_INCLUDE_PDK_MODELS - Disabling the linter is not recommended!",
   "RUN_LINTER": 1,
