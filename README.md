@@ -22,6 +22,29 @@ That name is the UART. Thirty-two bases, same sites, same FIRE, same pads. The r
 
 Jane Street asked for flexibility, not a UART block plus an SPI block plus an I2C block. This die does not take a new program after fabrication. The clock holds the stage while the tile is enabled. The map picks the walk: UART, SPI mode 0, I2C, or hook `11`. On hook `11`, count 0 is the memory. The other count slots pick Manchester, a real JTAG bit-bang, a real SWD header, a PS/2 device frame at 12.5 kHz, USB low-speed, or a CAN bit cell. The byte on the pads is any word.
 
+## Universal, and the range
+
+Universal is the word, not a program you load later. Any byte. Same 32 bases. Same sites. FIRE folds it. The fold does not look the byte up in a format list. PE, ELF, Mach-O, DEX, WASM, UTF-8, a GPU file, or a byte with no name: same pulse, same sites. A few words have their own weight. Everything else falls through the popcount. That list is not a whitelist, and it is not an instruction set.
+
+The range is the other half of what they asked for. `ui[7:5]` is eight counts on the one 50 MHz clock.
+
+| sel | clocks | the line | hook `11` |
+|---|---|---|---|
+| 0 | 1 | 100 Mbit/s, both edges | the memory. `uio` is the address |
+| 1 | 4 | | JTAG bit-bang |
+| 2 | 5 | 10 Mbit/s | Manchester |
+| 3 | 8 | | SWD header |
+| 4 | 16 | | PS/2 device frame, 12.5 kHz |
+| 5 | 33 | USB low-speed | USB low-speed |
+| 6 | 125 | I2C 400 kHz | CAN bit cell |
+| 7 | 434 | UART 115200 | USB at that count |
+
+`ui[4:3]` picks which walk those counts time. Count 1 is both edges. Every larger count holds on the rising edge. You change protocol by changing those pins. You do not fetch a new walk.
+
+One FIRE does both things. The walk shifts the byte onto the pins at that count. The 32 bases fold the same byte on that same edge. The fold is not the UART shifter, and the walk is not a program. The face on `uo[4:7]`, ONES on `uo[2]`, and the word the memory keeps are the fold. The bit cell on the wire is the walk. Same clock, same pulse.
+
+That is the claim. It is not "a protocol that was never drawn." The walks on the die are the walks. The word is what is universal.
+
 ## SRAM
 
 Four copies of `RM_IHPSG13_1P_512x32_c2_bm_bist`. 512 words × 32 bits, one port. 2 KB each, 8 KB on the die. The two that passed precheck are still there. Two more sit beside them.

@@ -24,6 +24,14 @@ On map `11`, range `000`, `uio[7:0]` is the address. The top address bit stays 0
 
 Not three protocol blocks. The map selects the walk. The byte is any word. The clock holds the stage while the tile is enabled. No fetch after fabrication.
 
+## Universal, and the range
+
+Universal is the word. Any byte, same 32 bases, same sites, one FIRE. The fold does not look the byte up. A few words have their own weight. Everything else falls through the popcount. PE, ELF, Mach-O, DEX, WASM, UTF-8, a GPU file, or a byte with no name: same pulse. That is not a whitelist and not an instruction set.
+
+The range is `ui[7:5]`. Eight counts, one 50 MHz clock. The map `ui[4:3]` picks which walk those counts time. You change the walk by changing the pins. You do not fetch one.
+
+One FIRE does both. The walk shifts the byte onto the pins at that count. The 32 bases fold the same byte on that same edge. The fold is not the shifter. The walk is not a program. ONES, the face, and the word kept in the memory are the fold. The bit cell on the wire is the walk. The walks on the die are the walks. The word is what is universal.
+
 Preloaded Universal UART. The stage is already loaded. The clock is the stage. 50 MHz oscillator. Data is RX/TX, not the power. FIRE. Pads. Clock count is the range.
 
 ## Preloaded
