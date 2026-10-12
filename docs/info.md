@@ -26,11 +26,15 @@ Not three protocol blocks. The map selects the walk. The byte is any word. The c
 
 ## Universal, and the range
 
-Universal is the word. Any byte, same 32 bases, same sites, one FIRE. The fold does not look the byte up. A few words have their own weight. Everything else falls through the popcount. PE, ELF, Mach-O, DEX, WASM, UTF-8, a GPU file, or a byte with no name: same pulse. That is not a whitelist and not an instruction set.
+One oscillator. FIRE is one rising edge of `ui[0]`. Nothing is fetched. The whole die is that edge.
 
-The range is `ui[7:5]`. Eight counts, one 50 MHz clock. The map `ui[4:3]` picks which walk those counts time. You change the walk by changing the pins. You do not fetch one.
+The byte on `uio[7:0]` is the pattern. That edge loads it into the shift and into all 32 bases. Base *k* folds byte + *k*. UART, SPI, I2C, Manchester, NRZI, JTAG, SWD, PS/2, and the CAN cell all shift that same byte. Any of the 256. A named format is just bytes.
 
-One FIRE does both. The walk shifts the byte onto the pins at that count. The 32 bases fold the same byte on that same edge. The fold is not the shifter. The walk is not a program. ONES, the face, and the word kept in the memory are the fold. The bit cell on the wire is the walk. The walks on the die are the walks. The word is what is universal.
+The count on `ui[7:5]` is how many clocks the bit is held: 1, 4, 5, 8, 16, 33, 125, 434. Count 1 uses both edges. Every larger count holds on the rise. The fall is not a new bit. The count is the rate. It is not a program.
+
+The map on `ui[4:3]` chooses the pins. `00` is NRZ on TX. `01` is SPI mode 0. `10` is I2C, SCL driven and SDA open-drain. `11` lets the count pick the line: memory, JTAG, Manchester, SWD, PS/2, NRZI, or a CAN bit cell. The walks that were not selected do not get FIRE. They hold.
+
+After fabrication the protocol is those three inputs. Byte, count, map, FIRE. The cell that comes out is that byte, held for that many clocks, on those pins. The 32 bases fold the same byte on that same edge. There is not a second machine beside this one.
 
 Preloaded Universal UART. The stage is already loaded. The clock is the stage. 50 MHz oscillator. Data is RX/TX, not the power. FIRE. Pads. Clock count is the range.
 

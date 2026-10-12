@@ -24,26 +24,41 @@ Jane Street asked for flexibility, not a UART block plus an SPI block plus an I2
 
 ## Universal, and the range
 
-Universal is the word, not a program you load later. Any byte. Same 32 bases. Same sites. FIRE folds it. The fold does not look the byte up in a format list. PE, ELF, Mach-O, DEX, WASM, UTF-8, a GPU file, or a byte with no name: same pulse, same sites. A few words have their own weight. Everything else falls through the popcount. That list is not a whitelist, and it is not an instruction set.
+The whole die is the one machine. There is not a fold on the side and a protocol engine beside it.
 
-The range is the other half of what they asked for. `ui[7:5]` is eight counts on the one 50 MHz clock.
+One oscillator, 50 MHz. That clock is the only time. FIRE is the rising edge of `ui[0]`. One edge. Nothing is fetched.
 
-| sel | clocks | the line | hook `11` |
-|---|---|---|---|
-| 0 | 1 | 100 Mbit/s, both edges | the memory. `uio` is the address |
-| 1 | 4 | | JTAG bit-bang |
-| 2 | 5 | 10 Mbit/s | Manchester |
-| 3 | 8 | | SWD header |
-| 4 | 16 | | PS/2 device frame, 12.5 kHz |
-| 5 | 33 | USB low-speed | USB low-speed |
-| 6 | 125 | I2C 400 kHz | CAN bit cell |
-| 7 | 434 | UART 115200 | USB at that count |
+Three inputs are already on the pins when that edge arrives.
 
-`ui[4:3]` picks which walk those counts time. Count 1 is both edges. Every larger count holds on the rising edge. You change protocol by changing those pins. You do not fetch a new walk.
+The byte is `uio[7:0]`. It is the pattern. The same edge loads it into the shift and into all 32 bases. Base *k* folds byte + *k*. UART sends it as start, the eight bits, stop. SPI shifts it, mode 0. I2C shifts it between START and STOP. Manchester, NRZI, JTAG, SWD, PS/2, and the CAN cell shift it too. Any of the 256 bytes. A named file format is just bytes. A byte with no name is the same shift.
 
-One FIRE does both things. The walk shifts the byte onto the pins at that count. The 32 bases fold the same byte on that same edge. The fold is not the UART shifter, and the walk is not a program. The face on `uo[4:7]`, ONES on `uo[2]`, and the word the memory keeps are the fold. The bit cell on the wire is the walk. Same clock, same pulse.
+The count is `ui[7:5]`. It is not a mode switch stored in a program. It is how many clocks this oscillator holds the bit.
 
-That is the claim. It is not "a protocol that was never drawn." The walks on the die are the walks. The word is what is universal.
+| sel | clocks the bit is held | both edges or the rise |
+|---|---|---|
+| 0 | 1 | both edges. 10 ns. 100 Mbit/s |
+| 1 | 4 | rise |
+| 2 | 5 | rise. 10 Mbit/s |
+| 3 | 8 | rise |
+| 4 | 16 | rise |
+| 5 | 33 | rise. USB low-speed |
+| 6 | 125 | rise. I2C 400 kHz |
+| 7 | 434 | rise. UART 115200 |
+
+Count 1 writes a bit on the rise and the next bit on the fall. Every larger count writes the bit on the rise and holds it. The fall is not a new bit.
+
+The map is `ui[4:3]`. It does not load a machine. It chooses which pins that same shift comes out of.
+
+| map | the pins the byte walks out on |
+|---|---|
+| 00 | NRZ. `uo[0]` TX, `ui[2]` RX |
+| 01 | SPI mode 0. MOSI, SCLK, CS |
+| 10 | I2C. SCL driven, SDA open-drain |
+| 11 | the count picks the line. 0 is the memory. 1 JTAG. 2 Manchester. 3 SWD. 4 PS/2. 5 and 7 NRZI. 6 a CAN bit cell |
+
+The walks that were not selected do not get FIRE. They hold. One pulse, one walk, all 32 bases.
+
+After fabrication you do not add a module and you do not fetch. You put a byte on `uio`, a count on `ui[7:5]`, a map on `ui[4:3]`, and you pulse FIRE. The cell that comes out is that byte, held for that many clocks, on those pins. The 32 bases fold the same byte on that same edge. ONES, the face, and the word the memory keeps are that fold. That is the protocol. It is the inputs. It is already on the die.
 
 ## SRAM
 
