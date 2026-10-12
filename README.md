@@ -60,6 +60,21 @@ The walks that were not selected do not get FIRE. They hold. One pulse, one walk
 
 After fabrication you do not add a module and you do not fetch. You put a byte on `uio`, a count on `ui[7:5]`, a map on `ui[4:3]`, and you pulse FIRE. The cell that comes out is that byte, held for that many clocks, on those pins. The 32 bases fold the same byte on that same edge. ONES, the face, and the word the memory keeps are that fold. That is the protocol. It is the inputs. It is already on the die.
 
+The count is not owned by the name next to it. Allnary is already the byte: any of the 256, same sites. Crossing a count with a different map is a different cell. These ten were run on this die.
+
+| | map | count | byte | what came out |
+|---|---|---|---|---|
+| 1 | UART | 4 | `A5` | 8N1. Each bit held 4 clocks. 12.5 Mbit/s |
+| 2 | UART | 5 | `3C` | 8N1 at the 10 Mbit count. NRZ, not Manchester |
+| 3 | UART | 33 | `55` | 8N1 at the USB low-speed count |
+| 4 | SPI | 1 | `C3` | SPI at the fast hold. The byte finished |
+| 5 | SPI | 125 | `96` | SPI at the I2C hold. MSB stayed on MOSI |
+| 6 | SPI | 16 | `0F` | SPI. SCLK half-period was 16 clocks |
+| 7 | I2C | 1 | `A0` | I2C at the fast hold. SCL ran, then released |
+| 8 | I2C | 8 | `55` | I2C. SCL moved on the count-8 hold |
+| 9 | I2C | 33 | `42` | I2C. First SCL hold was 33 clocks |
+| 10 | UART | 125 | `81` | 8N1. Start bit held 125 clocks, the I2C count |
+
 ## SRAM
 
 Four copies of `RM_IHPSG13_1P_512x32_c2_bm_bist`. 512 words × 32 bits, one port. 2 KB each, 8 KB on the die. The two that passed precheck are still there. Two more sit beside them.
