@@ -1,12 +1,12 @@
 # ONE CPU 1.1 32 · 1.6 GB/s
 
-That is the UART. Thirty-two bases on one FIRE. 1.6 GB/s inside on the rise. The line is 100 Mbit/s. Two `512×32` foundry macros sit beside it. 4 KB. The 8×4 template is not in the flow yet.
+That is the UART. Thirty-two bases on one FIRE. 1.6 GB/s inside on the rise. The line is 100 Mbit/s. Four `512×32` foundry macros sit beside it. 8 KB. The 8×4 template is not in the flow yet.
 
 ## SRAM
 
-Two copies of `RM_IHPSG13_1P_512x32_c2_bm_bist`. 512 words, 32 bits, 2 KB each. 4 KB on the die. One port. The GDS passed precheck. LVS matched `u_sram0` and `u_sram1`. KLayout DRC was clean.
+Four copies of `RM_IHPSG13_1P_512x32_c2_bm_bist`. 512 words, 32 bits, 2 KB each. 8 KB on the die. One port. Two of them already passed precheck. The other two are the same macro, placed beside them.
 
-On map `11`, range `000`, `uio[7:0]` is the address. The top address bit stays 0, so 256 of the 512 words come out to the pins. Both macros use that same address. The read from `u_sram0` is the next input of base 0. The read from `u_sram1` is the next input of base 1. `uo[7:0]` is the low byte of the first word, and it replaces the walk pins while this map is selected. FIRE stores base 0's result and base 1's result at that address. The word stays until that address is written again. UART, SPI, I2C, and the other walks keep their pins.
+On map `11`, range `000`, `uio[7:0]` is the address. The top address bit stays 0, so 256 of the 512 words come out to the pins. All four macros use that same address. Bases 0 through 3 each read their own word. `uo[7:0]` is the low byte of the first word, and it replaces the walk pins while this map is selected. FIRE stores the four results at that address. The words stay until that address is written again. UART, SPI, I2C, and the other walks keep their pins.
 
 ## Pin layout
 

@@ -4,7 +4,7 @@
 
 Jane Street protocol-emulator ASIC. Tiny Tapeout IHP CMOS5L, 6×4. Joshua Luke Nuijens / Axiom 1 Technology.
 
-That name is the UART. Thirty-two bases, same sites, same FIRE, same pads. The rise is 1.6 GB/s inside. The wire is 8N1, both edges at count 1, 100 Mbit/s. The GDS passed precheck. Two `512×32` SRAM macros are in that file. 4 KB on the die. 256 addresses come out to the pins. The address is the byte on the bidirectional pins. Read is the next input. FIRE stores the result at that address, and it stays until written again. The 8×4 tile is not in the template yet, so this stays a 6×4.
+That name is the UART. Thirty-two bases, same sites, same FIRE, same pads. The rise is 1.6 GB/s inside. The wire is 8N1, both edges at count 1, 100 Mbit/s. The GDS that passed had two. This one has four, so the die holds more words. Four `512×32` SRAM macros. 8 KB on the die. 256 addresses come out to the pins, and each address keeps four words. The address is the byte on the bidirectional pins. Read is the next input of bases 0 through 3. FIRE stores those four results, and they stay until written again. The 8×4 tile is not in the template yet, so this stays a 6×4.
 
 ## Pin layout
 
@@ -24,15 +24,15 @@ Jane Street asked for flexibility, not a UART block plus an SPI block plus an I2
 
 ## SRAM
 
-Two copies of `RM_IHPSG13_1P_512x32_c2_bm_bist`. 512 words × 32 bits, one port. 2 KB each, 4 KB on the die. LVS matched `u_sram0` and `u_sram1`. KLayout DRC was clean. Precheck passed.
+Four copies of `RM_IHPSG13_1P_512x32_c2_bm_bist`. 512 words × 32 bits, one port. 2 KB each, 8 KB on the die. The two that passed precheck are still there. Two more sit beside them.
 
-Map `11`, count `000`. Then `uio[7:0]` is the address, not the byte. That is 256 of the 512 words. Both macros sit on the same address.
+Map `11`, count `000`. Then `uio[7:0]` is the address, not the byte. That is 256 of the 512 words. All four macros sit on the same address.
 
 | | |
 |---|---|
-| Read | The word in `u_sram0` is the next input of base 0. The word in `u_sram1` is the next input of base 1. `uo[7:0]` is the low byte of the first word. |
-| Write | FIRE stores base 0's result in `u_sram0` and base 1's result in `u_sram1`, at that address. |
-| Hold | Leave the address. The word stays. Come back to the same address and it is the input again. |
+| Read | Base 0 through base 3 each take the word from their own memory. `uo[7:0]` is the low byte of the first word. |
+| Write | FIRE stores each of those four results at that address. |
+| Hold | Leave the address. The four words stay. Come back and they are the inputs again. |
 
 UART, SPI, I2C, and the other walks keep their own pins. The memory only takes the pins on that one map.
 

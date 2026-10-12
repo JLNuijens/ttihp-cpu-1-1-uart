@@ -344,6 +344,8 @@ async def test_sram_two(dut):
         await ClockCycles(dut.clk, 2)
         word = int(dut.user_project.u_sram0.mem[5].value)
         assert word == 0x020A0000, f"sram {word:08x}"
+        assert int(dut.user_project.u_sram2.mem[5].value) == 0x020A0000
+        assert int(dut.user_project.u_sram3.mem[5].value) == 0x020A0000
         dut.uio_in.value = 9
         await ClockCycles(dut.clk, 2)
         assert int(dut.user_project.u_sram0.mem[5].value) == 0x020A0000
