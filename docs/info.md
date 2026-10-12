@@ -26,6 +26,10 @@ Not three protocol blocks. The map selects the walk. The byte is any word. The c
 
 ## Universal, and the range
 
+Jane Street asked if the chip can be pointed at something else after it is built. This die does that with the pins. Same clock. Same FIRE. Same 32 bases.
+
+`uio[7:0]` is the byte. Any of the 256. The sites do not change. `ui[7:5]` is how many clocks the bit is held. Eight counts. `ui[4:3]` is which pins that bit walks out on. Set those, pulse FIRE, and the cell is different. UART at the I2C hold is the same die. I2C at the USB count is the same die. SPI at the fast hold is the same die.
+
 One oscillator. FIRE is one rising edge of `ui[0]`. Nothing is fetched. The whole die is that edge.
 
 The byte on `uio[7:0]` is the pattern. That edge loads it into the shift and into all 32 bases. Base *k* folds byte + *k*. UART, SPI, I2C, Manchester, NRZI, JTAG, SWD, PS/2, and the CAN cell all shift that same byte. Any of the 256. A named format is just bytes.

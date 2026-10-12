@@ -24,6 +24,16 @@ Jane Street asked for flexibility, not a UART block plus an SPI block plus an I2
 
 ## Universal, and the range
 
+Jane Street asked if the chip can be pointed at something else after it is built. This die does that with the pins. Same clock. Same FIRE. Same 32 bases. Set the pins, and the cell is different.
+
+| Pin | What you change |
+|---|---|
+| `uio[7:0]` | the byte. Any of the 256. The sites do not change |
+| `ui[7:5]` | how many clocks the bit is held. Eight counts |
+| `ui[4:3]` | which pins that bit walks out on |
+
+UART at the I2C hold is not a new chip. I2C at the USB count is not a new chip. SPI at the fast hold is not a new chip. It is the same die, with the pins set to something else.
+
 The whole die is the one machine. There is not a fold on the side and a protocol engine beside it.
 
 One oscillator, 50 MHz. That clock is the only time. FIRE is the rising edge of `ui[0]`. One edge. Nothing is fetched.
