@@ -24,6 +24,7 @@ project:
     - "js_line_fire.v"
     - "js_tap_fire.v"
     - "sram_512x32.v"
+    - "range_front.v"
 
 pinout:
   ui[0]: "FIRE"
