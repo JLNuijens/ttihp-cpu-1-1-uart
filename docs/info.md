@@ -4,7 +4,9 @@ That is the UART. Thirty-two bases on one FIRE. 1.6 GB/s inside on the rise. The
 
 ## SRAM
 
-Two copies of `RM_IHPSG13_1P_512x32_c2_bm_bist`. 512 words, 32 bits, 2 KB each. 4 KB on the die. One port. On map `11`, range `000`, `uio[7:0]` is the address. The read is the next input of bases 0 and 1, and the low byte is on `uo[7:0]`. FIRE stores the result at that address. The word stays until that address is written again. UART, SPI, I2C, and the other walks keep their pins.
+Two copies of `RM_IHPSG13_1P_512x32_c2_bm_bist`. 512 words, 32 bits, 2 KB each. 4 KB on the die. One port. The GDS passed precheck. LVS matched `u_sram0` and `u_sram1`. KLayout DRC was clean.
+
+On map `11`, range `000`, `uio[7:0]` is the address. The top address bit stays 0, so 256 of the 512 words come out to the pins. Both macros use that same address. The read from `u_sram0` is the next input of base 0. The read from `u_sram1` is the next input of base 1. `uo[7:0]` is the low byte of the first word, and it replaces the walk pins while this map is selected. FIRE stores base 0's result and base 1's result at that address. The word stays until that address is written again. UART, SPI, I2C, and the other walks keep their pins.
 
 ## Pin layout
 
@@ -47,7 +49,7 @@ Identity is **1**. That count uses both edges of the 50 MHz wave, so the cell is
 
 | sel | clocks | UART / SPI / I2C | hook `11` |
 |---|---|---|---|
-| 0 | 1 | 100 Mbit, both edges | Manchester |
+| 0 | 1 | 100 Mbit, both edges | memory. `uio` is the address. `uo[7:0]` is the low byte of the kept word. Manchester is not on these pins |
 | 1 | 4 | | JTAG. FIRE the TMS byte, FIRE the TDI byte. Eight TCK. TDO comes back. TCK `uo[5]`, TMS `uo[6]`, TDI `uo[4]`, TDO `ui[2]` |
 | 2 | 5 | 10 Mbit | Manchester |
 | 3 | 8 | | SWD. FIRE the request, FIRE the data byte. Header, turnaround, ACK, one data byte. SWCLK `uo[5]`, SWDIO `uio[0]` |

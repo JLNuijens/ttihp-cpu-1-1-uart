@@ -4,7 +4,7 @@
 
 Jane Street protocol-emulator ASIC. Tiny Tapeout IHP CMOS5L, 6×4. Joshua Luke Nuijens / Axiom 1 Technology.
 
-That name is the UART. Thirty-two bases, same sites, same FIRE, same pads. The rise is 1.6 GB/s inside. The wire is 8N1, both edges at count 1, 100 Mbit/s. Layout used 40% of the tile before the memory. Two `512×32` SRAM macros are on the die with it. 4 KB. The address is the byte on the bidirectional pins. Read is the next input. FIRE stores the result at that address, and it stays until written again. The 8×4 tile is not in the template yet, so this stays a 6×4.
+That name is the UART. Thirty-two bases, same sites, same FIRE, same pads. The rise is 1.6 GB/s inside. The wire is 8N1, both edges at count 1, 100 Mbit/s. The GDS passed precheck. Two `512×32` SRAM macros are in that file. 4 KB on the die. 256 addresses come out to the pins. The address is the byte on the bidirectional pins. Read is the next input. FIRE stores the result at that address, and it stays until written again. The 8×4 tile is not in the template yet, so this stays a 6×4.
 
 ## Pin layout
 
@@ -20,7 +20,21 @@ That name is the UART. Thirty-two bases, same sites, same FIRE, same pads. The r
 | `uo[2]` | ONES | `r15` is `0x4F4E4553` |
 | `uo[4:7]` | SPI / I2C / stretch, or the face | low nibble, then the next four, one rise each |
 
-Jane Street asked for flexibility, not a UART block plus an SPI block plus an I2C block. This die does not take a new program after fabrication. The clock holds the stage while the tile is enabled. The map picks the walk: UART, SPI mode 0, I2C, or hook `11`. On hook `11` the count slot picks Manchester, a real JTAG bit-bang, a real SWD header, a PS/2 device frame at 12.5 kHz, USB low-speed, or a CAN bit cell. The byte on the pads is any word.
+Jane Street asked for flexibility, not a UART block plus an SPI block plus an I2C block. This die does not take a new program after fabrication. The clock holds the stage while the tile is enabled. The map picks the walk: UART, SPI mode 0, I2C, or hook `11`. On hook `11`, count 0 is the memory. The other count slots pick Manchester, a real JTAG bit-bang, a real SWD header, a PS/2 device frame at 12.5 kHz, USB low-speed, or a CAN bit cell. The byte on the pads is any word.
+
+## SRAM
+
+Two copies of `RM_IHPSG13_1P_512x32_c2_bm_bist`. 512 words × 32 bits, one port. 2 KB each, 4 KB on the die. LVS matched `u_sram0` and `u_sram1`. KLayout DRC was clean. Precheck passed.
+
+Map `11`, count `000`. Then `uio[7:0]` is the address, not the byte. That is 256 of the 512 words. Both macros sit on the same address.
+
+| | |
+|---|---|
+| Read | The word in `u_sram0` is the next input of base 0. The word in `u_sram1` is the next input of base 1. `uo[7:0]` is the low byte of the first word. |
+| Write | FIRE stores base 0's result in `u_sram0` and base 1's result in `u_sram1`, at that address. |
+| Hold | Leave the address. The word stays. Come back to the same address and it is the input again. |
+
+UART, SPI, I2C, and the other walks keep their own pins. The memory only takes the pins on that one map.
 
 ## ONE CPU 1.1 32
 
@@ -75,7 +89,7 @@ This is not a Quartus project. Quartus is the Nano / CPU 1.1 processor path.
 | `ui[1]` | HOT. The clock holds the stage |
 | `ui[2]` | UART RX, SPI MISO, JTAG TDO, CAN RX. Idle high. UART watches it only on map `00` |
 | `ui[4:3]` | `00` UART, `01` SPI, `10` I2C, `11` the other walks |
-| `ui[7:5]` | count 1, 4, 5, 8, 16, 33, 125, 434. On hook `11` the slot picks the walk |
+| `ui[7:5]` | count 1, 4, 5, 8, 16, 33, 125, 434. On hook `11`, count 0 is the memory. The other slots pick the walk |
 | `uio[7:0]` | the byte |
 | `uio[0]` | I2C SDA, SWDIO, or PS/2 data |
 | `uio[1]` | PS/2 clock |
