@@ -26,6 +26,8 @@ Not three protocol blocks. The map selects the walk. The byte is any word. The c
 
 ## Universal, and the range
 
+Jane Street wrote that the goal is not a UART block plus an SPI block plus an I2C block. The chip should be reprogrammable enough to support new protocols after fabrication, within its timing and its pins. The RP2040 PIO was the inspiration. This die does it differently. Nothing is loaded. The pins are the program.
+
 Jane Street asked if the chip can be pointed at something else after it is built. This die does that with the pins. Same clock. Same FIRE. Same 32 bases.
 
 `uio[7:0]` is the byte. Any of the 256. The sites do not change. `ui[7:5]` is how many clocks the bit is held. Eight counts. `ui[4:3]` is which pins that bit walks out on. Set those, pulse FIRE, and the cell is different. UART at the I2C hold is the same die. I2C at the USB count is the same die. SPI at the fast hold is the same die.

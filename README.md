@@ -24,7 +24,9 @@ Jane Street asked for flexibility, not a UART block plus an SPI block plus an I2
 
 ## Universal, and the range
 
-Jane Street asked if the chip can be pointed at something else after it is built. This die does that with the pins. Same clock. Same FIRE. Same 32 bases. Set the pins, and the cell is different.
+Jane Street wrote that the goal is not a UART block plus an SPI block plus an I2C block. The chip should be reprogrammable enough to support new protocols after fabrication, within its timing and its pins. They named the RP2040 PIO as inspiration, and said to consider doing it differently.
+
+This die does it differently. Nothing is loaded. The pins are the program. Same clock. Same FIRE. Same 32 bases. Set the pins, and the cell is different.
 
 | Pin | What you change |
 |---|---|
