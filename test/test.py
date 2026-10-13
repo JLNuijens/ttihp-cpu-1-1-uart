@@ -9,6 +9,24 @@ from cocotb.triggers import ClockCycles, FallingEdge, RisingEdge, Timer
 CPB = 1
 
 
+def _rtl(obj, name):
+    try:
+        return getattr(obj, name)
+    except AttributeError:
+        return None
+
+
+def read_bus(top, rtl, gl_name, width):
+    """RTL object, or the flattened bits the layout keeps."""
+    if rtl is not None:
+        return int(rtl.value)
+    value = 0
+    for i in range(width):
+        bit = top["\\" + f"{gl_name}[{i}]" + "\\"]
+        value |= int(bit.value) << i
+    return value
+
+
 def tx_bit(dut):
     return int(dut.uo_out.value) & 1
 
@@ -95,15 +113,23 @@ async def test_rise_steps(dut):
     """Four clocks. One step on the rise. The fall is the UART bit, not a second step."""
     task = await reset_dut(dut)
     try:
-        base = dut.user_project.bases[0].u_cpu
+        top = dut.user_project
+        base = _rtl(top, "bases")
+        if base is not None:
+            cpu = base[0].u_cpu
+            cyc_h, str_h = cpu.cyc_o, cpu.stride
+            cyc_n, str_n = None, None
+        else:
+            cyc_h, str_h = None, None
+            cyc_n, str_n = r"bases[0].u_cpu.cyc", r"bases[0].u_cpu.str"
         await RisingEdge(dut.clk)
         await Timer(1, unit="ns")
-        c0 = int(base.cyc_o.value)
-        s0 = int(base.stride.value)
+        c0 = read_bus(top, cyc_h, cyc_n, 32)
+        s0 = read_bus(top, str_h, str_n, 32)
         await ClockCycles(dut.clk, 4)
         await Timer(1, unit="ns")
-        c1 = int(base.cyc_o.value)
-        s1 = int(base.stride.value)
+        c1 = read_bus(top, cyc_h, cyc_n, 32)
+        s1 = read_bus(top, str_h, str_n, 32)
         assert c1 - c0 == 4, f"steps {c1 - c0}"
         assert s1 - s0 == 4 * 128, f"stride {s1 - s0}"
     finally:
@@ -351,8 +377,12 @@ async def test_sram_two(dut):
         dut.uio_in.value = 5
         await ClockCycles(dut.clk, 3)
         await Timer(1, unit="ns")
-        assert int(dut.user_project.dout0.value) == 0x020A0000
-        assert int(dut.uo_out.value) == (int(dut.user_project.mem_q.value) & 0xFF)
+        top = dut.user_project
+        dout = read_bus(top, _rtl(top, "dout0"), "dout0", 32)
+        assert dout == 0x020A0000
+        mem = _rtl(top, "mem_q")
+        low = int(mem.value) & 0xFF if mem is not None else read_bus(top, None, "mem_q", 8)
+        assert int(dut.uo_out.value) == low
     finally:
         task.cancel()
 
@@ -366,19 +396,21 @@ async def test_range_front(dut):
         dut.uio_in.value = 1
         await ClockCycles(dut.clk, 2)
         await Timer(1, unit="ns")
-        sq = int(dut.user_project.pick_sq.value)
-        de = int(dut.user_project.pick_deg8.value)
+        top = dut.user_project
+        sq = read_bus(top, _rtl(top, "pick_sq"), "pick_sq", 20)
+        de = read_bus(top, _rtl(top, "pick_deg8"), "pick_deg8", 24)
         if sq >= 2**19:
             sq -= 2**20
         if de >= 2**23:
             de -= 2**24
         assert sq == 4, f"squares {sq}"
         assert de == 45, f"deg8 {de}"
-        assert int(dut.user_project.pick_hit.value) == 1
+        hit = _rtl(top, "pick_hit")
+        assert int(hit.value if hit is not None else top["\\pick_hit\\"].value) == 1
         dut.uio_in.value = 0
         await ClockCycles(dut.clk, 2)
         await Timer(1, unit="ns")
-        assert int(dut.user_project.pick_sq.value) == 0, "stack adds no power"
+        assert read_bus(top, _rtl(top, "pick_sq"), "pick_sq", 20) == 0, "stack adds no power"
     finally:
         task.cancel()
 
