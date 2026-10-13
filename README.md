@@ -1,139 +1,186 @@
 ![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg)
 
-# ONE CPU 1.1 32 · 1.6 GB/s
+# ONE CPU 1.1 32
 
-Jane Street protocol-emulator ASIC. Tiny Tapeout IHP CMOS5L, 6×4. Joshua Luke Nuijens / Axiom 1 Technology.
+Jane Street protocol-emulator ASIC. Tiny Tapeout, IHP CMOS5L, tile 6×4.
 
-That name is the UART. Thirty-two bases, same sites, same FIRE, same pads. The rise is 1.6 GB/s inside. The wire is 8N1, both edges at count 1, 100 Mbit/s. The GDS that passed had two. This one has four, so the die holds more words. Four `512×32` SRAM macros. 8 KB on the die. 256 addresses come out to the pins, and each address keeps four words. The address is the byte on the bidirectional pins. Read is the next input of bases 0 through 3. FIRE stores those four results, and they stay until written again. The 8×4 tile is not in the template yet, so this stays a 6×4.
+Joshua Luke Nuijens / Axiom 1 Technology, LLC. Top module `tt_um_jlnuijens_one11_uart`.
 
-## Pin layout
+## Specification
 
-| Pad | UART | ONE CPU 1.1 32 · 1.6 GB/s |
-|---|---|---|
-| `ui[0]` | FIRE | same pulse, all 32 bases |
-| `ui[1]` | HOT | clock holds the stage |
-| `ui[2]` | RX | finished byte lands in `r8` |
-| `ui[4:3]` | UART, SPI, I2C, stretch | `00` keeps the face on `uo[4:7]` |
-| `ui[7:5]` | count 1…434 | does not change the face |
-| `uio[7:0]` | the byte | base *k* folds byte + *k* |
-| `uo[0]` | TX · 100 Mbit/s | low byte of that word |
-| `uo[2]` | ONES | `r15` is `0x4F4E4553` |
-| `uo[4:7]` | SPI / I2C / stretch, or the face | low nibble, then the next four, one rise each |
-
-Jane Street asked for flexibility, not a UART block plus an SPI block plus an I2C block. This die does not take a new program after fabrication. The clock holds the stage while the tile is enabled. The map picks the walk: UART, SPI mode 0, I2C, or hook `11`. On hook `11`, count 0 is the memory. The other count slots pick Manchester, a real JTAG bit-bang, a real SWD header, a PS/2 device frame at 12.5 kHz, USB low-speed, or a CAN bit cell. The byte on the pads is any word.
-
-## Universal, and the range
-
-Jane Street wrote that the goal is not a UART block plus an SPI block plus an I2C block. The chip should be reprogrammable enough to support new protocols after fabrication, within its timing and its pins. They named the RP2040 PIO as inspiration, and said to consider doing it differently.
-
-This die does it differently. Nothing is loaded. The pins are the program. Same clock. Same FIRE. Same 32 bases. Set the pins, and the cell is different.
-
-| Pin | What you change |
+| | |
 |---|---|
-| `uio[7:0]` | the byte. Any of the 256. The sites do not change |
-| `ui[7:5]` | how many clocks the bit is held. Eight counts |
-| `ui[4:3]` | which pins that bit walks out on |
+| Clock | 50 MHz. Period 20 ns. One oscillator. |
+| Bases | 32. Two stacks of 16. Base *k* takes byte + *k*. |
+| Internal rate | 32 × 50 MHz = 1.6 GB/s, on the rising edge. |
+| Word in | 8 bits, one FIRE. Not one byte per clock. |
+| Fetch | None. The stage is loaded. The clock holds it while the tile is enabled. |
+| Line | UART 8N1. Count 1 uses both edges: 10 ns, 100 Mbit/s. |
+| Memory | Four `RM_IHPSG13_1P_512x32_c2_bm_bist`. 512 × 32, one port. 8 KB. |
+| Address on the pins | `uio[7:0]`, 256 of 512 words. Four words at that address. |
+| Tile | 6×4. The 8×4 template is not in this flow. |
+| License | Apache-2.0 |
 
-UART at the I2C hold is not a new chip. I2C at the USB count is not a new chip. SPI at the fast hold is not a new chip. It is the same die, with the pins set to something else.
+Jane Street asked for a design that can be pointed at a new protocol after fabrication, within the timing and the pins, rather than a UART block plus an SPI block plus an I2C block. The RP2040 PIO was the reference. This die does not load a program. The pins are the configuration. The same clock, the same FIRE, and the same 32 bases produce the cell.
 
-The whole die is the one machine. There is not a fold on the side and a protocol engine beside it.
+## How to use
 
-One oscillator, 50 MHz. That clock is the only time. FIRE is the rising edge of `ui[0]`. One edge. Nothing is fetched.
+1. Drive `rst_n` low. Hold `ui[7:0]` and `uio[7:0]` at 0. Release `rst_n`. The difference is 0. `uo[7:0]` reads `00000101` (`uo[7]` on the left): TX idle, ONES set.
+2. Place the byte on `uio[7:0]`. Any of the 256 values. The sites do not change with the value.
+3. Set the hold on `ui[7:5]`. Eight values. This is the bit time, not a stored mode.
+4. Set the map on `ui[4:3]`. This selects which pins carry that bit.
+5. Pulse `ui[0]` high for one clock, then low. That rising edge is FIRE. One walk runs. The walks that were not selected hold.
+6. Read `uo[7:0]`. `uo[1]` is high while the walk is busy. `uo[0]` is the NRZ output when the map is UART.
 
-Three inputs are already on the pins when that edge arrives.
+`ui[1]` held high keeps the clock on the stage. The tile enable does the same while the tile is selected.
 
-The byte is `uio[7:0]`. It is the pattern. The same edge loads it into the shift and into all 32 bases. Base *k* folds byte + *k*. UART sends it as start, the eight bits, stop. SPI shifts it, mode 0. I2C shifts it between START and STOP. Manchester, NRZI, JTAG, SWD, PS/2, and the CAN cell shift it too. Any of the 256 bytes. A named file format is just bytes. A byte with no name is the same shift.
+## Pins
 
-The count is `ui[7:5]`. It is not a mode switch stored in a program. It is how many clocks this oscillator holds the bit.
+| Pin | Direction | Function | Use |
+|---|---|---|---|
+| `rst_n` | in | Reset, active low | Low, then high, with `ui` and `uio` at 0. Returns the stage to the ground. |
+| `clk` | in | 50 MHz | The only time base. |
+| `ena` | in | Tile enable | Holds the stage while the tile is selected. |
+| `ui[0]` | in | FIRE | Rising edge. One operation for all 32 bases and for the selected walk. |
+| `ui[1]` | in | HOT | High holds the stage. |
+| `ui[2]` | in | Line in | UART RX, SPI MISO, JTAG TDO, CAN RX. Idle high. Sampled on map `00`. |
+| `ui[3]` | in | Map bit 0 | With `ui[4]`, selects the walk. |
+| `ui[4]` | in | Map bit 1 | With `ui[3]`, selects the walk. |
+| `ui[5]` | in | Count bit 0 | With `ui[7:6]`, selects the hold. |
+| `ui[6]` | in | Count bit 1 | With `ui[7]` and `ui[5]`, selects the hold. |
+| `ui[7]` | in | Count bit 2 | With `ui[6:5]`, selects the hold. |
+| `uio[7:0]` | in | Byte, or address | The pattern on every map except memory. On map `11`, count `000`, this is the address. |
+| `uio[0]` | inout | SDA / SWDIO / PS/2 data | Driven only while that walk owns it. Open-drain on I2C and PS/2. |
+| `uio[1]` | inout | PS/2 clock | Driven only on the PS/2 slot. |
+| `uo[0]` | out | TX | UART TX, Manchester, USB DM, or the CAN cell. Idle high on UART. |
+| `uo[1]` | out | BUSY | High while the selected walk is running. |
+| `uo[2]` | out | ONES | High when `r15` is `0x4F4E4553`. |
+| `uo[3]` | out | GOT | High when a byte has been received, or while UART RX is busy. |
+| `uo[4]` | out | MOSI / SCL / TDI / face 0 | Selected by the map. Face bit when no walk owns the pin. |
+| `uo[5]` | out | SCLK / TCK / SWCLK / face 1 | Selected by the map. |
+| `uo[6]` | out | CS / TMS / face 2 | Selected by the map. SPI CS is active low. |
+| `uo[7]` | out | DP / face 3 | Manchester or USB DP, otherwise a face bit. |
 
-| sel | clocks the bit is held | both edges or the rise |
-|---|---|---|
-| 0 | 1 | both edges. 10 ns. 100 Mbit/s |
-| 1 | 4 | rise |
-| 2 | 5 | rise. 10 Mbit/s |
-| 3 | 8 | rise |
-| 4 | 16 | rise |
-| 5 | 33 | rise. USB low-speed |
-| 6 | 125 | rise. I2C 400 kHz |
-| 7 | 434 | rise. UART 115200 |
+## Count — `ui[7:5]`
 
-Count 1 writes a bit on the rise and the next bit on the fall. Every larger count writes the bit on the rise and holds it. The fall is not a new bit.
+The count is the number of clocks the bit is held. It is not owned by the protocol name in the right-hand column. Those names are the rate the hold matches. Map `00`, `01`, and `10` use the hold as bit time. Map `11` uses the same three bits to select the walk, except count `000`, which is the memory.
 
-The map is `ui[4:3]`. It does not load a machine. It chooses which pins that same shift comes out of.
-
-| map | the pins the byte walks out on |
-|---|---|
-| 00 | NRZ. `uo[0]` TX, `ui[2]` RX |
-| 01 | SPI mode 0. MOSI, SCLK, CS |
-| 10 | I2C. SCL driven, SDA open-drain |
-| 11 | the count picks the line. 0 is the memory. 1 JTAG. 2 Manchester. 3 SWD. 4 PS/2. 5 and 7 NRZI. 6 a CAN bit cell |
-
-The walks that were not selected do not get FIRE. They hold. One pulse, one walk, all 32 bases.
-
-After fabrication you do not add a module and you do not fetch. You put a byte on `uio`, a count on `ui[7:5]`, a map on `ui[4:3]`, and you pulse FIRE. The cell that comes out is that byte, held for that many clocks, on those pins. The 32 bases fold the same byte on that same edge. ONES, the face, and the word the memory keeps are that fold. That is the protocol. It is the inputs. It is already on the die.
-
-The count is not owned by the name next to it. Allnary is already the byte: any of the 256, same sites. Crossing a count with a different map is a different cell. These ten were run on this die.
-
-| | map | count | byte | what came out |
+| `ui[7:5]` | Clocks | Edge | Bit time | Rate this hold matches |
 |---|---|---|---|---|
-| 1 | UART | 4 | `A5` | 8N1. Each bit held 4 clocks. 12.5 Mbit/s |
-| 2 | UART | 5 | `3C` | 8N1 at the 10 Mbit count. NRZ, not Manchester |
-| 3 | UART | 33 | `55` | 8N1 at the USB low-speed count |
-| 4 | SPI | 1 | `C3` | SPI at the fast hold. The byte finished |
-| 5 | SPI | 125 | `96` | SPI at the I2C hold. MSB stayed on MOSI |
-| 6 | SPI | 16 | `0F` | SPI. SCLK half-period was 16 clocks |
-| 7 | I2C | 1 | `A0` | I2C at the fast hold. SCL ran, then released |
-| 8 | I2C | 8 | `55` | I2C. SCL moved on the count-8 hold |
-| 9 | I2C | 33 | `42` | I2C. First SCL hold was 33 clocks |
-| 10 | UART | 125 | `81` | 8N1. Start bit held 125 clocks, the I2C count |
+| `000` | 1 | Both edges | 10 ns | 100 Mbit/s |
+| `001` | 4 | Rising | 80 ns | |
+| `010` | 5 | Rising | 100 ns | 10 Mbit/s |
+| `011` | 8 | Rising | 160 ns | |
+| `100` | 16 | Rising | 320 ns | |
+| `101` | 33 | Rising | 660 ns | USB low-speed, about 1.5 Mbit/s |
+| `110` | 125 | Rising | 2.5 µs | I2C 400 kHz |
+| `111` | 434 | Rising | 8.68 µs | UART 115200 |
 
-## SRAM
+Count `000` writes one bit on the rising edge and the next bit on the falling edge. Every other count writes the bit on the rising edge and holds it. The falling edge is not a second bit.
 
-Four copies of `RM_IHPSG13_1P_512x32_c2_bm_bist`. 512 words × 32 bits, one port. 2 KB each, 8 KB on the die. The two that passed precheck are still there. Two more sit beside them.
+## Map — `ui[4:3]`
 
-Map `11`, count `000`. Then `uio[7:0]` is the address, not the byte. That is 256 of the 512 words. All four macros sit on the same address.
+| `ui[4:3]` | Walk | Output | Input |
+|---|---|---|---|
+| `00` | UART 8N1 | `uo[0]` TX. Start, eight data bits, LSB first, stop. | `ui[2]` RX |
+| `01` | SPI mode 0, 8 bits | `uo[4]` MOSI, `uo[5]` SCLK, `uo[6]` CS | `ui[2]` MISO |
+| `10` | I2C START, one byte, ACK, STOP | `uo[4]` SCL, driven | `uio[0]` SDA, open-drain |
+| `11` | Selected by the count | See the next table | See the next table |
 
-| | |
+On map `11` the count selects the line.
+
+| Count | Walk | Output |
+|---|---|---|
+| `000` | Memory | `uo[7:0]` is the low byte of the word at the address on `uio[7:0]`. |
+| `001` | JTAG bit-bang | First FIRE stores TMS. Second FIRE clocks eight TDI bits. `uo[5]` TCK, `uo[6]` TMS, `uo[4]` TDI. `ui[2]` is TDO. |
+| `010` | Manchester | `uo[0]`, `uo[7]`. |
+| `011` | SWD | FIRE the request, FIRE the data byte. Header, turnaround, ACK, one data byte. `uo[5]` SWCLK, `uio[0]` SWDIO. |
+| `100` | PS/2 device frame | 12.5 kHz. The half-bit is 4000 clocks, not the count-16 hold. Start, byte, odd parity, stop. `uio[1]` clock, `uio[0]` data. |
+| `101` | USB low-speed NRZI | Bit cell on `uo[0]` and `uo[7]`. Not a USB stack. |
+| `110` | CAN bit cell | Eight cells on `uo[0]`. Not a frame. `ui[2]` is RX. |
+| `111` | USB NRZI at the UART hold | Bit cell. Not a USB stack. |
+
+## Cells
+
+A cell is one byte, one hold, and one map. The output column is the pin waveform. These ten were simulated on this die.
+
+| | Map | Count | Byte | Output |
+|---|---|---|---|---|
+| 1 | `00` UART | 4 | `A5` | `uo[0]`, 8N1, NRZ. Each bit held 4 clocks, 80 ns. 12.5 Mbit/s. |
+| 2 | `00` UART | 5 | `3C` | `uo[0]`, 8N1, NRZ. Bit time 100 ns. 10 Mbit/s. Not Manchester. |
+| 3 | `00` UART | 33 | `55` | `uo[0]`, 8N1. Bit time 660 ns, the USB low-speed hold. |
+| 4 | `01` SPI | 1 | `C3` | `uo[4]` MOSI, `uo[5]` SCLK, `uo[6]` CS. Mode 0 at the 10 ns hold. The byte completes. |
+| 5 | `01` SPI | 125 | `96` | SPI mode 0 at the 2.5 µs hold. MSB remains on MOSI for that hold. |
+| 6 | `01` SPI | 16 | `0F` | SPI mode 0. SCLK half-period is 16 clocks, 320 ns. |
+| 7 | `10` I2C | 1 | `A0` | `uo[4]` SCL runs at the 10 ns hold, then releases. `uio[0]` SDA open-drain. |
+| 8 | `10` I2C | 8 | `55` | SCL moves on the 8-clock hold, 160 ns. |
+| 9 | `10` I2C | 33 | `42` | First SCL hold is 33 clocks, 660 ns. |
+| 10 | `00` UART | 125 | `81` | `uo[0]`, 8N1. Start bit held 125 clocks, 2.5 µs. |
+
+Crossing a count with a different map does not add a module. UART at the I2C hold is the same shift on `uo[0]`. SPI at count 1 is the same shift on MOSI and SCLK.
+
+## Memory
+
+Map `11`, count `000`. `uio[7:0]` is the address. The upper address bit stays 0, so the pins reach 256 of the 512 words. All four macros use that address.
+
+| Operation | Result |
 |---|---|
-| Read | Base 0 through base 3 each take the word from their own memory. `uo[7:0]` is the low byte of the first word. |
-| Write | FIRE stores each of those four results at that address. |
-| Hold | Leave the address. The four words stay. Come back and they are the inputs again. |
+| Read | Bases 0 through 3 each take the word from their own macro. `uo[7:0]` is the low byte of the first word. |
+| Write | FIRE stores the four results at that address. |
+| Hold | The words remain until that address is written again. |
 
-UART, SPI, I2C, and the other walks keep their own pins. The memory only takes the pins on that one map.
+UART, SPI, I2C, and the other walks keep their pins on the other maps.
 
-## ONE CPU 1.1 32
+## Processor
 
-| | |
-|---|---|
-| Bases | 32, 16 sites each |
-| Step | rise. cycle +1, stride +128 |
-| Inside | 1.6 GB/s |
-| In | one byte per FIRE |
-| Out | ONES on `uo[2]`. Four pins, eight bits of the mix, one nibble each rise, 200 Mbit/s |
-| Pressed | r7 = 128, r14 = 4, r15 = `0x4F4E4553` |
-| FIRE | r4 sig0, r5 sig1, r6 weight, r9 the word. Base k folds byte + k |
-| RX | the finished byte lands in r8 |
-| Fetch | none |
+| Site | At reset | While the clock holds |
+|---|---|---|
+| r1 | 0 | Cycle + 1 on each rising edge |
+| r2 | The lane | Stride + 128 on each rising edge |
+| r4 | `0x020A0000` | Signature 0 of the FIRE word |
+| r5 | 0 | Signature 1 of the FIRE word |
+| r6 | 1 | Weight of the FIRE word |
+| r7 | 128 | Held |
+| r8 | 0 | Last received byte |
+| r9 | 0 | Last FIRE word |
+| r14 | 4 | Held |
+| r15 | `0x4F4E4553` | ONES. `uo[2]` is high while this value holds |
+
+r0, r3, and r10 through r13 stay 0. FIRE loads base *k* with byte + *k*. A finished RX byte is written to r8 of every base. The count does not change the face.
+
+`uo[4:7]` carries the face when no walk owns those pins. One rising edge is the low nibble. The next rising edge is the next four bits. 200 Mbit/s. The clock is not used as data.
+
+There is no fetch. A byte the design was not shown still folds. PE, ELF, Mach-O, DEX, WASM, UTF-8, and a GPU file are bytes. The list is not a whitelist.
 
 ## Pickup
 
-The 512 stays on the processor. The 720 is the pickup. The stack is 128, and the clock stays hot. The intake is IN+ minus IN−. The stack does not add power to that.
+The 512 track stays on the processor. The 720 track is the second output of the same intake. The stack is 128. The clock stays hot. The stack is a divisor, not an added term. An intake of 0 is an output of 0.
 
-| | |
-|---|---|
-| Squares | intake × 512 / 128. One intake sits at 4 |
-| Degrees | intake × 720 / 128. One intake sits at 5.625° |
-| Ratio | 720 / 512 = 1.40625 |
+| Output | Definition | One intake |
+|---|---|---|
+| Squares | intake × 512 / 128 | 4 |
+| Degrees | intake × 720 / 128 | 5.625° |
+| Ratio | 720 / 512 | 1.40625 |
 
-Count 0 is 1°. Each count doubles the units and halves the degree. The stack catches a count only when it can reach that count's units. Count 7 is 128 units, so the stack reaches it. Count 8 is 256, so it does not. You count the units inside a count before you move up. There is no last count.
+Intake is `uio[7:0]` minus `ui[7:0]`, the pin values taken as unsigned bytes. The same function runs on the vector, base 0 against base 16.
 
-On this die, IN+ is the byte on `uio` and IN− is `ui`. The same pickup runs on the 1.6 GB/s vector, base 0 against base 16.
+Count 0 is 1°. Each count doubles the units and halves the degree. The stack reaches a count only when `2^count` is less than or equal to 128. Count 7 is 128 units, 0.0078125°. Count 8 is 256 units and is not reached. The units inside a count are counted before the count advances. The map does not end at count 16.
+
+| Count | Units | Degree of one unit |
+|---|---|---|
+| 0 | 1 | 1° |
+| 1 | 2 | 0.5° |
+| 7 | 128 | 0.0078125° |
+| 10 | 1,024 | 0.0009765625° |
+| 16 | 65,536 | 1/65536° |
 
 ## Ground
 
-Reset puts the stage back on the ground. Hold `rst_n` low with `ui` and `uio` at 0, then let it go. The difference is 0. `uo` comes back as `00000101`.
+Reset, then one pin. Hold `rst_n` low with both bytes at 0. Release `rst_n`. Difference 0. `uo[7:0]` is `00000101`.
 
-One pin after that is the whole map. Nothing is added. `ui` is the minus side. `uio` is the plus side. The same weight is the same seat. Weight 128 is the full 720. Weight 64 is the cut at 360. Weight 16 is 90. Weight 4 is 22.5, the close. Weight 1 is one seat, 5.625°.
+Raise one pin and leave the others at 0. That pin's weight is the whole intake. `ui` is the minus side. `uio` is the plus side. The same weight is the same seat. Weight 128 is 720°. Weight 64 is 360°. Weight 32 is 180°. Weight 16 is 90°. Weight 8 is 45°. Weight 4 is 22.5°. Weight 1 is 5.625°.
+
+`uo[7]` is the left-hand bit. Measured from a separate reset on each row.
 
 | Pin | Weight | Differential | 512 | 720 | `uo[7:0]` |
 |---|---|---|---|---|---|
@@ -155,73 +202,17 @@ One pin after that is the whole map. Nothing is added. `ui` is the minus side. `
 | `uio[6]` | 64 | +64 | 256 | 360° | `00001111` |
 | `uio[7]` | 128 | +128 | 512 | 720° | `00001111` |
 
-`uo` is `uo[7]` on the left. The `uio` rows sit at `00001111` because the line is low. They do not change from one `uio` bit to the next. Leave the pins stacked and the seats add. Reset is what keeps each pin on its own seat.
+The `uio` rows share `00001111` because `ui[2]` is low, so the receiver leaves idle. Those eight rows do not differ from each other on `uo`. If the pins are left asserted together, the weights add. Reset is the operation that returns a single pin to its own seat.
 
-That is the range Jane Street asked for. No new block. Any one pin, same two tracks, the sign is which side.
-
-r0, r3, and r10–r13 stay 0. The full site table is in [docs/info.md](docs/info.md).
-
-## Preloaded
-
-Any word. Same sites. x86 and ARM64 are not the limit.
-
-Windows PE, Mac Mach-O, Linux ELF, Android DEX, Java, WASM, UTF-8, and a GPU file all take the same FIRE. The list is not a whitelist. A byte the list does not name still folds.
-
-Joshua Luke Nuijens / Axiom 1 Technology, LLC
-
-- Docs: [docs/info.md](docs/info.md)
-- Challenge: [Jane Street — Can you design a chip?](https://blog.janestreet.com/protocol-emulator-asic-competition/)
-- Template: [TinyTapeout/ttihp-verilog-template @ cmos5l](https://github.com/TinyTapeout/ttihp-verilog-template/tree/cmos5l)
-
-## This is the GitHub they take
-
-Jane Street’s process is this tree, public, on GitHub:
-
-1. `info.yaml` — `tiles: "6x4"`, `top_module: tt_um_jlnuijens_one11_uart`, `clock_hz: 50000000`
-2. `src/` — `project.v`, `one_cpu11.v`, `js_uart_fire.v`, plus LibreLane `config.json` (20 ns = 50 MHz)
-3. `test/` — cocotb + Icarus. GitHub Action `test` runs `make` in `test/`
-4. `.github/workflows/gds.yaml` — `TinyTapeout/tt-gds-action@ihp-cmos5l` builds GDS
-
-Push to `main`. Actions run. Enable **Settings → Pages → GitHub Actions** so the GDS viewer deploys.
-
-Sign up for updates (not the tapeout): [Jane Street form](https://docs.google.com/forms/d/e/1FAIpQLSeF7fq756MegxZRQxotBwUJYZx-cL9MrGjxV0z4uD_J0sADxQ/viewform).
-
-Final submit is a second form they add closer to **January 18, 2027**. Paste this repo URL. They clone it. Winners go on the March 2027 CMOS5L shuttle.
-
-This is not a Quartus project. Quartus is the Nano / CPU 1.1 processor path.
-
-## Pins
-
-| pin | role |
-|---|---|
-| `ui[0]` | FIRE |
-| `ui[1]` | HOT. The clock holds the stage |
-| `ui[2]` | UART RX, SPI MISO, JTAG TDO, CAN RX. Idle high. UART watches it only on map `00` |
-| `ui[4:3]` | `00` UART, `01` SPI, `10` I2C, `11` the other walks |
-| `ui[7:5]` | count 1, 4, 5, 8, 16, 33, 125, 434. On hook `11`, count 0 is the memory. The other slots pick the walk |
-| `uio[7:0]` | the byte |
-| `uio[0]` | I2C SDA, SWDIO, or PS/2 data |
-| `uio[1]` | PS/2 clock |
-| `uo[0]` | UART TX, Manchester or USB DM, CAN bit |
-| `uo[1]` | BUSY |
-| `uo[2]` | ONES. `r15` is `0x4F4E4553` |
-| `uo[3]` | GOT |
-| `uo[4]` | SPI MOSI, I2C SCL, JTAG TDI, or face bit 0 |
-| `uo[5]` | SPI SCLK, JTAG TCK, SWCLK, or face bit 1 |
-| `uo[6]` | SPI CS, JTAG TMS, or face bit 2 |
-| `uo[7]` | Manchester or USB DP, or face bit 3 |
-
-The site table, the hook slots, and the walks are in [docs/info.md](docs/info.md).
-
-## Sim
+## Verify
 
 ```
 python3 test/sim_uart.py
 cd test && make
 ```
 
-`Range` is 1, 4, 5, 8, 16, 33, 125, 434. Count 1 is both edges, 100 Mbit/s. The rest are holds on the rising edge.
+## Submit
 
-## License
+Public GitHub tree. `info.yaml` sets `tiles: "6x4"`, `top_module: tt_um_jlnuijens_one11_uart`, `clock_hz: 50000000`. Push to `main` runs test, docs, and GDS. The submission form takes this repository URL. Deadline 18 January 2027. Selected designs are planned for the March 2027 CMOS5L shuttle.
 
-Apache-2.0.
+Pin-level detail is also in [docs/info.md](docs/info.md).
