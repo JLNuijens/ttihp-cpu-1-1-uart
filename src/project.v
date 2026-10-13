@@ -182,8 +182,6 @@ module tt_um_jlnuijens_one11_uart #(
       wire [31:0] seq_k =
           (mem_face && !wr_pend && (k == 0)) ? dout0 :
           (mem_face && !wr_pend && (k == 1)) ? dout1 :
-          (mem_face && !wr_pend && (k == 2)) ? dout2 :
-          (mem_face && !wr_pend && (k == 3)) ? dout3 :
           (seq + k);
       one_cpu11 #(.LANE(k)) u_cpu (
         .clk       (clk),
@@ -263,7 +261,7 @@ module tt_um_jlnuijens_one11_uart #(
   wire        mem_wr   = wr_pend;
   wire [8:0]  mem_addr = addr_q;
   wire [31:0] mem_bm   = 32'hffffffff;
-  wire [31:0] dout0, dout1, dout2, dout3;
+  wire [31:0] dout0, dout1;
   RM_IHPSG13_1P_512x32_c2_bm_bist u_sram0 (
     .A_CLK(clk), .A_MEN(mem_on), .A_WEN(mem_wr), .A_REN(~mem_wr),
     .A_ADDR(mem_addr), .A_DIN(s0[0]), .A_DLY(1'b1), .A_DOUT(dout0), .A_BM(mem_bm),
@@ -273,18 +271,6 @@ module tt_um_jlnuijens_one11_uart #(
   RM_IHPSG13_1P_512x32_c2_bm_bist u_sram1 (
     .A_CLK(clk), .A_MEN(mem_on), .A_WEN(mem_wr), .A_REN(~mem_wr),
     .A_ADDR(mem_addr), .A_DIN(s0[1]), .A_DLY(1'b1), .A_DOUT(dout1), .A_BM(mem_bm),
-    .A_BIST_CLK(1'b0), .A_BIST_EN(1'b0), .A_BIST_MEN(1'b0), .A_BIST_WEN(1'b0),
-    .A_BIST_REN(1'b0), .A_BIST_ADDR(9'd0), .A_BIST_DIN(32'd0), .A_BIST_BM(32'd0)
-  );
-  RM_IHPSG13_1P_512x32_c2_bm_bist u_sram2 (
-    .A_CLK(clk), .A_MEN(mem_on), .A_WEN(mem_wr), .A_REN(~mem_wr),
-    .A_ADDR(mem_addr), .A_DIN(s0[2]), .A_DLY(1'b1), .A_DOUT(dout2), .A_BM(mem_bm),
-    .A_BIST_CLK(1'b0), .A_BIST_EN(1'b0), .A_BIST_MEN(1'b0), .A_BIST_WEN(1'b0),
-    .A_BIST_REN(1'b0), .A_BIST_ADDR(9'd0), .A_BIST_DIN(32'd0), .A_BIST_BM(32'd0)
-  );
-  RM_IHPSG13_1P_512x32_c2_bm_bist u_sram3 (
-    .A_CLK(clk), .A_MEN(mem_on), .A_WEN(mem_wr), .A_REN(~mem_wr),
-    .A_ADDR(mem_addr), .A_DIN(s0[3]), .A_DLY(1'b1), .A_DOUT(dout3), .A_BM(mem_bm),
     .A_BIST_CLK(1'b0), .A_BIST_EN(1'b0), .A_BIST_MEN(1'b0), .A_BIST_WEN(1'b0),
     .A_BIST_REN(1'b0), .A_BIST_ADDR(9'd0), .A_BIST_DIN(32'd0), .A_BIST_BM(32'd0)
   );

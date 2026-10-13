@@ -16,8 +16,8 @@ Joshua Luke Nuijens / Axiom 1 Technology, LLC. Top module `tt_um_jlnuijens_one11
 | Word in | 8 bits, one FIRE. Not one byte per clock. |
 | Fetch | None. The stage is loaded. The clock holds it while the tile is enabled. |
 | Line | UART 8N1. Count 1 uses both edges: 10 ns, 100 Mbit/s. |
-| Memory | Four `RM_IHPSG13_1P_512x32_c2_bm_bist`. 512 × 32, one port. 8 KB. |
-| Address on the pins | `uio[7:0]`, 256 of 512 words. Four words at that address. |
+| Memory | Two `RM_IHPSG13_1P_512x32_c2_bm_bist`. 512 × 32, one port. 4 KB. |
+| Address on the pins | `uio[7:0]`, 256 of 512 words. Two words at that address. |
 | Tile | 6×4. The 8×4 template is not in this flow. |
 | License | Apache-2.0 |
 
@@ -121,12 +121,12 @@ Crossing a count with a different map does not add a module. UART at the I2C hol
 
 ## Memory
 
-Map `11`, count `000`. `uio[7:0]` is the address. The upper address bit stays 0, so the pins reach 256 of the 512 words. All four macros use that address.
+Map `11`, count `000`. `uio[7:0]` is the address. The upper address bit stays 0, so the pins reach 256 of the 512 words. Both macros use that address.
 
 | Operation | Result |
 |---|---|
-| Read | Bases 0 through 3 each take the word from their own macro. `uo[7:0]` is the low byte of the first word. |
-| Write | FIRE stores the four results at that address. |
+| Read | Bases 0 and 1 each take the word from their own macro. `uo[7:0]` is the low byte of the first word. |
+| Write | FIRE stores the two results at that address. |
 | Hold | The words remain until that address is written again. |
 
 UART, SPI, I2C, and the other walks keep their pins on the other maps.

@@ -4,7 +4,7 @@ project:
   title:        "CPU 1.1 UART"
   author:       "Joshua Luke Nuijens / Axiom 1 Technology, LLC"
   discord:      ""
-  description:  "ONE CPU 1.1 32. UART, SPI, I2C, hook walks. Four 512x32 SRAM macros, 8 KB, addressed by the cycle count."
+  description:  "ONE CPU 1.1 32. UART, SPI, I2C, hook walks. Two 512x32 SRAM macros, 4 KB, addressed by the cycle count."
   language:     "Verilog"
   clock_hz:     50000000
 
