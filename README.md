@@ -129,6 +129,36 @@ Count 0 is 1°. Each count doubles the units and halves the degree. The stack ca
 
 On this die, IN+ is the byte on `uio` and IN− is `ui`. The same pickup runs on the 1.6 GB/s vector, base 0 against base 16.
 
+## Ground
+
+Reset puts the stage back on the ground. Hold `rst_n` low with `ui` and `uio` at 0, then let it go. The difference is 0. `uo` comes back as `00000101`.
+
+One pin after that is the whole map. Nothing is added. `ui` is the minus side. `uio` is the plus side. The same weight is the same seat. Weight 128 is the full 720. Weight 64 is the cut at 360. Weight 16 is 90. Weight 4 is 22.5, the close. Weight 1 is one seat, 5.625°.
+
+| Pin | Weight | Differential | 512 | 720 | `uo[7:0]` |
+|---|---|---|---|---|---|
+| none | 0 | 0 | 0 | 0 | `00000101` |
+| `ui[0]` | 1 | −1 | −4 | −5.625° | `00000110` |
+| `ui[1]` | 2 | −2 | −8 | −11.25° | `00000101` |
+| `ui[2]` | 4 | −4 | −16 | −22.5° | `00000101` |
+| `ui[3]` | 8 | −8 | −32 | −45° | `01000101` |
+| `ui[4]` | 16 | −16 | −64 | −90° | `00010101` |
+| `ui[5]` | 32 | −32 | −128 | −180° | `00000101` |
+| `ui[6]` | 64 | −64 | −256 | −360° | `00001111` |
+| `ui[7]` | 128 | −128 | −512 | −720° | `00001111` |
+| `uio[0]` | 1 | +1 | 4 | 5.625° | `00001111` |
+| `uio[1]` | 2 | +2 | 8 | 11.25° | `00001111` |
+| `uio[2]` | 4 | +4 | 16 | 22.5° | `00001111` |
+| `uio[3]` | 8 | +8 | 32 | 45° | `00001111` |
+| `uio[4]` | 16 | +16 | 64 | 90° | `00001111` |
+| `uio[5]` | 32 | +32 | 128 | 180° | `00001111` |
+| `uio[6]` | 64 | +64 | 256 | 360° | `00001111` |
+| `uio[7]` | 128 | +128 | 512 | 720° | `00001111` |
+
+`uo` is `uo[7]` on the left. The `uio` rows sit at `00001111` because the line is low. They do not change from one `uio` bit to the next. Leave the pins stacked and the seats add. Reset is what keeps each pin on its own seat.
+
+That is the range Jane Street asked for. No new block. Any one pin, same two tracks, the sign is which side.
+
 r0, r3, and r10–r13 stay 0. The full site table is in [docs/info.md](docs/info.md).
 
 ## Preloaded
