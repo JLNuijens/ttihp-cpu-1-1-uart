@@ -14,22 +14,30 @@ One clock, 50 MHz. Thirty-two bases take the same FIRE on the rising edge. That 
 
 ## What was asked
 
-Jane Street asked for a chip that can be pointed at a protocol after it is fabricated. The reference was a small programmable IO machine: load a sequence, and the pins follow a protocol the silicon was not drawn for. A UART block beside an SPI block beside an I2C block is not that. Flexibility is what they score. The protocols you can show, and how the chip was checked, come after that.
+Jane Street asked for one chip that can be turned to more than one job after it is fabricated. They called that reprogrammable. A UART block beside an SPI block beside an I2C block, each frozen as its own machine, is not that. Flexibility is what they score.
 
 ## What this one does
 
-This die does not load a sequence. After fabrication the program is the pins.
+This die is not programmed. It is preloaded. Nothing is written in after fabrication, and nothing has to be. The functions are already in the silicon, so the part is ready when it is powered.
+
+Three ways in, one clock, the same 32 bases.
+
+| Way in | What it is |
+|---|---|
+| Signal weight and the cycle | What is on the pins has a weight. The count is the cycle. The walk that fits that weight and that cycle is the one that runs. No sequence is loaded to name it. |
+| CPU 1.1 | The preload processor. One FIRE. Base *k* takes byte + *k*. The stage is already loaded. |
+| 512 and 720 | The same seat, read two ways. r7 is 128. r14 is 4. `4 × 128 = 512`. The 720 reading is that number times `720 / 512`. |
+
+The byte, the hold, and the map are how the signal is presented.
 
 | Pin | What you set |
 |---|---|
 | `uio[7:0]` | The byte. Any of 256. The 32 bases do not change with the coding. |
-| `ui[7:5]` | The hold. 1, 4, 5, 8, 16, 33, 125, or 434 clocks. |
+| `ui[7:5]` | The cycle. 1, 4, 5, 8, 16, 33, 125, or 434 clocks. |
 | `ui[4:3]` | Which pins carry that bit. |
 | `ui[0]` | FIRE. One rising edge. One cell. |
 
 Same clock. Same FIRE. Same 32 bases. UART held for the I2C count is the same shifter on `uo[0]`. SPI at the 10 ns hold is the same shifter on MOSI and SCLK. No module is added for the crossing.
-
-The walks on the die are the walks that run.
 
 | Map | What runs |
 |---|---|
@@ -38,7 +46,7 @@ The walks on the die are the walks that run.
 | `10` | I2C start, one byte, ACK, stop. |
 | `11` | The count picks the line: memory, JTAG shift, Manchester, SWD header, PS/2 frame, USB low-speed bit cell, CAN bit cell. |
 
-A framing that was not drawn is not created by a pin. There is no fetch, so a new program cannot be written in after the chip is made. The byte is not limited to a named format. PE, ELF, Mach-O, DEX, WASM, UTF-8, a GPU file, and a byte with no name all take the same FIRE.
+Those are the preloaded walks. The byte is not limited to a named format. PE, ELF, Mach-O, DEX, WASM, UTF-8, a GPU file, and a byte with no name all take the same FIRE.
 
 ## Specification
 
