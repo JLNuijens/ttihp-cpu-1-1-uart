@@ -259,7 +259,52 @@ Raise one pin from that ground and leave the others at 0. The 512 and 720 column
 | `uio[6]` | 64 | +64 | 256 | 360° | `00001111` |
 | `uio[7]` | 128 | +128 | 512 | 720° | `00001111` |
 
-`uio` does not change `uo` from one bit to the next. Those eight pins sit at `00001111`. Reset before each pin. Pins left asserted together add.
+`uio` does not change `uo` from one bit to the next. Those eight pins sit at `00001111`. Reset before each pin.
+
+Two inputs in the same clock are both in the result. The result is not either pin alone, and the two patterns are not added. `01001111` with `00010111` does not become `01011111`.
+
+`ui[3]` was sent `1 0 1 1 0 0 1 0`. `ui[4]` was sent `1 1 0 0 1 0 0 1`. `uo[7]` is the left-hand bit.
+
+Code on `ui[3]` only:
+
+| Clock | In | `uo[7:0]` |
+|---|---|---|
+| 1 | 1 | `01001111` |
+| 2 | 0 | `00001111` |
+| 3 | 1 | `01001111` |
+| 4 | 1 | `01001111` |
+| 5 | 0 | `00001101` |
+| 6 | 0 | `00001111` |
+| 7 | 1 | `01001111` |
+| 8 | 0 | `00001111` |
+
+Code on `ui[4]` only:
+
+| Clock | In | `uo[7:0]` |
+|---|---|---|
+| 1 | 1 | `00010111` |
+| 2 | 1 | `00010111` |
+| 3 | 0 | `00001111` |
+| 4 | 0 | `00001111` |
+| 5 | 1 | `00011101` |
+| 6 | 0 | `00001101` |
+| 7 | 0 | `00001111` |
+| 8 | 1 | `00011111` |
+
+Code on both in the same clock:
+
+| Clock | `ui[3]` | `ui[4]` | `uo[7:0]` |
+|---|---|---|---|
+| 1 | 1 | 1 | `00000000` |
+| 2 | 0 | 1 | `00010111` |
+| 3 | 1 | 0 | `01001111` |
+| 4 | 1 | 0 | `01001111` |
+| 5 | 0 | 1 | `00011101` |
+| 6 | 0 | 0 | `00001101` |
+| 7 | 1 | 0 | `01001111` |
+| 8 | 0 | 1 | `00011111` |
+
+A clock with code on one input returns that input's result. A clock with code on both returns `00000000`. A clock with code on neither returns the cycle, `00001111` then `00001101`.
 
 ## Verify
 

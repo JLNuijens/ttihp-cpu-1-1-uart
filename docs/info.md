@@ -95,7 +95,7 @@ The macros hold. One FIRE writes one address, the byte on `uio`. Base 0 goes in 
 | 64 | 360° |
 | 128 | 720° |
 
-The per-pin `uo` readings are in the README. Pins left asserted together add. Reset is required to measure one pin alone.
+The per-pin `uo` readings are in the README. Reset is required to measure one pin alone. Code on `ui[3]` and `ui[4]` in the same clock returns `00000000`, which is neither pin's own result. The two patterns are not added.
 
 ## Processor
 
