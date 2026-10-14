@@ -6,6 +6,40 @@ Jane Street protocol-emulator ASIC. Tiny Tapeout, IHP CMOS5L, tile 6×4.
 
 Joshua Luke Nuijens / Axiom 1 Technology, LLC. Top module `tt_um_jlnuijens_one11_uart`.
 
+This tree passed the layout, precheck, the RTL simulation, and the gate-level simulation.
+
+## What it does
+
+One clock, 50 MHz. Thirty-two bases take the same FIRE on the rising edge. That edge is 1.6 GB/s inside the tile. What leaves on the wire is one byte, held for the count set on the pins. Two SRAM macros hold two words at the address on those pins. Nothing is fetched. The stage is already loaded, and the clock holds it while the tile is enabled.
+
+## What was asked
+
+Jane Street asked for a chip that can be pointed at a protocol after it is fabricated. The reference was a small programmable IO machine: load a sequence, and the pins follow a protocol the silicon was not drawn for. A UART block beside an SPI block beside an I2C block is not that. Flexibility is what they score. The protocols you can show, and how the chip was checked, come after that.
+
+## What this one does
+
+This die does not load a sequence. After fabrication the program is the pins.
+
+| Pin | What you set |
+|---|---|
+| `uio[7:0]` | The byte. Any of 256. The 32 bases do not change with the coding. |
+| `ui[7:5]` | The hold. 1, 4, 5, 8, 16, 33, 125, or 434 clocks. |
+| `ui[4:3]` | Which pins carry that bit. |
+| `ui[0]` | FIRE. One rising edge. One cell. |
+
+Same clock. Same FIRE. Same 32 bases. UART held for the I2C count is the same shifter on `uo[0]`. SPI at the 10 ns hold is the same shifter on MOSI and SCLK. No module is added for the crossing.
+
+The walks on the die are the walks that run.
+
+| Map | What runs |
+|---|---|
+| `00` | UART 8N1. Start, eight data bits, stop. |
+| `01` | SPI mode 0, eight bits. |
+| `10` | I2C start, one byte, ACK, stop. |
+| `11` | The count picks the line: memory, JTAG shift, Manchester, SWD header, PS/2 frame, USB low-speed bit cell, CAN bit cell. |
+
+A framing that was not drawn is not created by a pin. There is no fetch, so a new program cannot be written in after the chip is made. The byte is not limited to a named format. PE, ELF, Mach-O, DEX, WASM, UTF-8, a GPU file, and a byte with no name all take the same FIRE.
+
 ## Specification
 
 | | |
@@ -20,8 +54,6 @@ Joshua Luke Nuijens / Axiom 1 Technology, LLC. Top module `tt_um_jlnuijens_one11
 | Address on the pins | `uio[7:0]`, 256 of 512 words. Two words at that address. |
 | Tile | 6×4. The 8×4 template is not in this flow. |
 | License | Apache-2.0 |
-
-Jane Street asked for a design that can be pointed at a new protocol after fabrication, within the timing and the pins, rather than a UART block plus an SPI block plus an I2C block. The RP2040 PIO was the reference. This die does not load a program. The pins are the configuration. The same clock, the same FIRE, and the same 32 bases produce the cell.
 
 ## How to use
 

@@ -2,6 +2,8 @@
 
 Jane Street protocol-emulator ASIC. IHP CMOS5L, tile 6×4. Thirty-two bases, one FIRE, 1.6 GB/s on the rising edge. The line at count 1 is 100 Mbit/s, both edges. Two `512×32` macros, 4 KB. The 8×4 template is not in this flow.
 
+Jane Street asked for a sequence that can be loaded after fabrication, so the pins can run a protocol the silicon was not drawn for. This die does not load one. The program is the byte, the hold, and the map. FIRE runs that cell on the same 32 bases. A count crossed with another map does not add a module. A framing that was never drawn is not created by a pin.
+
 ## SRAM
 
 Two copies of `RM_IHPSG13_1P_512x32_c2_bm_bist`. 512 words, 32 bits, 2 KB each. One port.
