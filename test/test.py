@@ -16,17 +16,36 @@ def _rtl(obj, name):
         return None
 
 
+_GL = {}
+
+
+def gl_map(top):
+    key = id(top)
+    if key not in _GL:
+        found = {}
+        for child in top:
+            found[child._name.replace("\\", "").strip()] = child
+        _GL[key] = found
+    return _GL[key]
+
+
 def read_bus(top, rtl, gl_name, width):
     """RTL object, or the flattened bits. A folded constant-0 bit is absent."""
     if rtl is not None:
         return int(rtl.value)
+    found = gl_map(top)
     value = 0
+    hits = 0
     for i in range(width):
-        try:
-            bit = top[f"{gl_name}[{i}]"]
-        except KeyError:
+        child = found.get(f"{gl_name}[{i}]")
+        if child is None:
             continue
-        value |= int(bit.value) << i
+        hits += 1
+        value |= int(child.value) << i
+    if hits == 0:
+        tail = gl_name.rsplit(".", 1)[-1]
+        near = [name for name in found if tail in name][:6]
+        raise AssertionError(f"no bits named {gl_name}, near {near}")
     return value
 
 
@@ -126,11 +145,11 @@ async def test_rise_steps(dut):
             cyc_h, str_h = None, None
             cyc_n, str_n = r"bases[0].u_cpu.cyc", r"bases[0].u_cpu.str"
         await RisingEdge(dut.clk)
-        await Timer(1, unit="ns")
+        await FallingEdge(dut.clk)
         c0 = read_bus(top, cyc_h, cyc_n, 32)
         s0 = read_bus(top, str_h, str_n, 32)
         await ClockCycles(dut.clk, 4)
-        await Timer(1, unit="ns")
+        await FallingEdge(dut.clk)
         c1 = read_bus(top, cyc_h, cyc_n, 32)
         s1 = read_bus(top, str_h, str_n, 32)
         assert c1 - c0 == 4, f"steps {c1 - c0}"
@@ -406,7 +425,7 @@ async def test_preload_seat(dut):
         else:
             s0 = read_bus(top, None, r"bases[0].u_cpu.str", 32)
             await ClockCycles(dut.clk, 1)
-            await Timer(1, unit="ns")
+            await FallingEdge(dut.clk)
             s1 = read_bus(top, None, r"bases[0].u_cpu.str", 32)
             assert s1 - s0 == 128, f"stack {s1 - s0}"
             assert ((int(dut.uo_out.value) >> 2) & 1) == 1
