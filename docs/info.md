@@ -72,7 +72,7 @@ On maps `00`, `01`, and `10` the count is only the bit time. The hook walks are 
 
 ## Seat
 
-The 512 is the preload already in the CPU. r7 is 128. r14 is 4, which is 512 / 128. There is no second circuit. A weight of 1 is 4 on that seat and 5.625° on the 720 reading. The ratio is 1.40625.
+The 512 is the preload already in the CPU. r7 is 128. r14 is 4. `4 × 128 = 512`. There is no second circuit. A pin weight times r14 is the 512 column. That number times `720 / 512` is the 720 column. Each rising edge adds r7 to the stride. That is one rung: 4, and 5.625°.
 
 The macros hold. One FIRE writes one address, the byte on `uio`. Base 0 goes in the first macro, base 1 in the second. Other addresses keep what they have. The word stays until that address is written again. Not a fetch. Not a cache.
 

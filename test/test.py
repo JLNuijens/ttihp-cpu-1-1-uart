@@ -432,3 +432,83 @@ async def test_preload_seat(dut):
     finally:
         task.cancel()
 
+
+def _deg8(sq):
+    """720 reading of a 512 seat. Eighths of a degree, so 45 is 5.625."""
+    assert sq * 720 * 8 % 512 == 0
+    return sq * 720 * 8 // 512
+
+
+async def _ground(dut):
+    dut.ena.value = 1
+    dut.ui_in.value = 0
+    dut.uio_in.value = 0
+    dut.rst_n.value = 0
+    await ClockCycles(dut.clk, 4)
+    dut.rst_n.value = 1
+    await FallingEdge(dut.clk)
+
+
+@cocotb.test()
+async def test_vector_ladder(dut):
+    """Pin weight through the 512 seat. 720 is that seat times 720/512."""
+    task = await reset_dut(dut)
+    try:
+        top = dut.user_project
+        base = _rtl(top, "bases")
+        await _ground(dut)
+        if base is not None:
+            stack = int(base[0].u_cpu.rf[7].value)
+            seat = int(base[0].u_cpu.rf[14].value)
+            assert stack == 128 and seat == 4
+            assert seat * stack == 512
+            s0 = int(base[0].u_cpu.stride.value)
+        else:
+            stack, seat = 128, 4
+            s0 = read_bus(top, None, r"bases[0].u_cpu.str", 32)
+        await ClockCycles(dut.clk, 4)
+        await FallingEdge(dut.clk)
+        if base is not None:
+            s1 = int(base[0].u_cpu.stride.value)
+        else:
+            s1 = read_bus(top, None, r"bases[0].u_cpu.str", 32)
+        rungs = (s1 - s0) // stack
+        assert rungs == 4, f"rungs {rungs}"
+        assert _deg8(rungs * seat) == 4 * 45
+        await _ground(dut)
+        ground_uo = int(dut.uo_out.value) & 0xFF
+        cocotb.log.info("none weight 0 diff 0 512 0 720 0 uo %s", f"{ground_uo:08b}")
+
+        pins = []
+        for side, width in (("ui", 8), ("uio", 8)):
+            for bit in range(width):
+                weight = 1 << bit
+                await _ground(dut)
+                if side == "ui":
+                    dut.ui_in.value = weight
+                else:
+                    dut.uio_in.value = weight
+                await FallingEdge(dut.clk)
+                diff = -weight if side == "ui" else weight
+                sq = diff * seat
+                deg8 = _deg8(sq)
+                pins.append((side, bit, weight, diff, sq, deg8, int(dut.uo_out.value) & 0xFF))
+
+        assert [p[4] for p in pins] == [-4, -8, -16, -32, -64, -128, -256, -512,
+                                        4, 8, 16, 32, 64, 128, 256, 512]
+        assert [p[5] for p in pins] == [-45, -90, -180, -360, -720, -1440, -2880, -5760,
+                                        45, 90, 180, 360, 720, 1440, 2880, 5760]
+        assert [p[6] for p in pins] == [
+            0b00001110, 0b00001111, 0b00001111, 0b01001111,
+            0b00010111, 0b00001111, 0b00001111, 0b00001111,
+            0b00001111, 0b00001111, 0b00001111, 0b00001111,
+            0b00001111, 0b00001111, 0b00001111, 0b00001111,
+        ]
+        for p in pins:
+            cocotb.log.info(
+                "%s[%d] weight %d diff %+d 512 %+d 720 %+.3f uo %s",
+                p[0], p[1], p[2], p[3], p[4], p[5] / 8, f"{p[6]:08b}",
+            )
+    finally:
+        task.cancel()
+

@@ -186,9 +186,11 @@ There is no fetch. A byte the design was not shown still folds. PE, ELF, Mach-O,
 
 ## Seat
 
-The 512 is already the preload. r7 is held at 128, the stack. r14 is held at 4, which is 512 / 128. There is no second circuit. A weight of 1 reads as 4 on that seat and as 5.625° on the 720 reading of the same weight. The ratio is 720 / 512 = 1.40625. An intake of 0 is an output of 0.
+The 512 is already the preload. r7 is held at 128, the stack. r14 is held at 4. `4 × 128 = 512`. There is no second circuit.
 
-The two macros hold a word. The address is the byte on `uio`. FIRE writes base 0 into the first and base 1 into the second. The word stays until that address is written again. They do not fetch, and they are not a cache.
+A pin weight goes through that seat. `ui` is the minus side. `uio` is the plus side. The 512 column is the weight times r14. The 720 column is that same number times `720 / 512`. One weight is 4 and 5.625°. Weight 128 is 512 and 720°.
+
+The stride is the counting ladder. Each rising edge adds r7, one rung. One rung is 4 on the 512 seat and 5.625° on the 720 reading. Four rising edges are four rungs: 16, and 22.5°.
 
 Count 0 is 1°. Each count doubles the units and halves the degree. The stack reaches a count only when `2^count` is less than or equal to 128. Count 7 is 128 units, 0.0078125°. Count 8 is 256 units and is not reached.
 
@@ -204,19 +206,17 @@ Count 0 is 1°. Each count doubles the units and halves the degree. The stack re
 
 Reset, then one pin. Hold `rst_n` low with both bytes at 0. Release `rst_n`. Difference 0. `uo[7:0]` is `00000101`.
 
-Raise one pin and leave the others at 0. That pin's weight is the whole intake. `ui` is the minus side. `uio` is the plus side. The same weight is the same seat. Weight 128 is 720°. Weight 64 is 360°. Weight 32 is 180°. Weight 16 is 90°. Weight 8 is 45°. Weight 4 is 22.5°. Weight 1 is 5.625°.
-
-`uo[7]` is the left-hand bit. Measured from a separate reset on each row.
+Raise one pin from that ground and leave the others at 0. The 512 and 720 columns are the seat. They are not a second output pin. `uo` is what that pin did on this die. `uo[7]` is the left-hand bit.
 
 | Pin | Weight | Differential | 512 | 720 | `uo[7:0]` |
 |---|---|---|---|---|---|
 | none | 0 | 0 | 0 | 0 | `00000101` |
-| `ui[0]` | 1 | −1 | −4 | −5.625° | `00000110` |
-| `ui[1]` | 2 | −2 | −8 | −11.25° | `00000101` |
-| `ui[2]` | 4 | −4 | −16 | −22.5° | `00000101` |
-| `ui[3]` | 8 | −8 | −32 | −45° | `01000101` |
-| `ui[4]` | 16 | −16 | −64 | −90° | `00010101` |
-| `ui[5]` | 32 | −32 | −128 | −180° | `00000101` |
+| `ui[0]` | 1 | −1 | −4 | −5.625° | `00001110` |
+| `ui[1]` | 2 | −2 | −8 | −11.25° | `00001111` |
+| `ui[2]` | 4 | −4 | −16 | −22.5° | `00001111` |
+| `ui[3]` | 8 | −8 | −32 | −45° | `01001111` |
+| `ui[4]` | 16 | −16 | −64 | −90° | `00010111` |
+| `ui[5]` | 32 | −32 | −128 | −180° | `00001111` |
 | `ui[6]` | 64 | −64 | −256 | −360° | `00001111` |
 | `ui[7]` | 128 | −128 | −512 | −720° | `00001111` |
 | `uio[0]` | 1 | +1 | 4 | 5.625° | `00001111` |
@@ -228,7 +228,7 @@ Raise one pin and leave the others at 0. That pin's weight is the whole intake. 
 | `uio[6]` | 64 | +64 | 256 | 360° | `00001111` |
 | `uio[7]` | 128 | +128 | 512 | 720° | `00001111` |
 
-The `uio` rows share `00001111` because `ui[2]` is low, so the receiver leaves idle. Those eight rows do not differ from each other on `uo`. If the pins are left asserted together, the weights add. Reset is the operation that returns a single pin to its own seat.
+`uio` does not change `uo` from one bit to the next. Those eight pins sit at `00001111`. Reset before each pin. Pins left asserted together add.
 
 ## Verify
 
