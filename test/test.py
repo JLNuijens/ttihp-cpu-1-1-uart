@@ -17,12 +17,15 @@ def _rtl(obj, name):
 
 
 def read_bus(top, rtl, gl_name, width):
-    """RTL object, or the flattened bits the layout keeps."""
+    """RTL object, or the flattened bits. A folded constant-0 bit is absent."""
     if rtl is not None:
         return int(rtl.value)
     value = 0
     for i in range(width):
-        bit = top["\\" + f"{gl_name}[{i}]" + "\\"]
+        try:
+            bit = top[f"{gl_name}[{i}]"]
+        except KeyError:
+            continue
         value |= int(bit.value) << i
     return value
 
