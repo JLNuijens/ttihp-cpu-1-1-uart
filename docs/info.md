@@ -68,17 +68,11 @@ UART, SPI, and I2C are the same shift on different pins. The hook walks are bit 
 
 On maps `00`, `01`, and `10` the count is only the bit time. The hook walks are selected only on map `11`.
 
-## Pickup
+## Seat
 
-| Output | Definition | One intake, stack 128 |
-|---|---|---|
-| Squares | intake × 512 / 128 | 4 |
-| Degrees | intake × 720 / 128 | 5.625° |
-| Ratio | 720 / 512 | 1.40625 |
+The 512 is the preload already in the CPU. r7 is 128. r14 is 4, which is 512 / 128. There is no second circuit. A weight of 1 is 4 on that seat and 5.625° on the 720 reading. The ratio is 1.40625.
 
-Intake is `uio[7:0]` minus `ui[7:0]`. The stack does not add to a zero intake. The same function is applied to base 0 against base 16 of the 1.6 GB/s vector.
-
-Count 0 is 1°. Each count doubles the units and halves the degree. Count 7 is 128 units and is the last count the stack reaches. Count 8 is 256 and is not reached.
+The macros hold. One FIRE writes one address, the byte on `uio`. Base 0 goes in the first macro, base 1 in the second. Other addresses keep what they have. The word stays until that address is written again. Not a fetch. Not a cache.
 
 ## Ground
 

@@ -152,19 +152,13 @@ r0, r3, and r10 through r13 stay 0. FIRE loads base *k* with byte + *k*. A finis
 
 There is no fetch. A byte the design was not shown still folds. PE, ELF, Mach-O, DEX, WASM, UTF-8, and a GPU file are bytes. The list is not a whitelist.
 
-## Pickup
+## Seat
 
-The 512 track stays on the processor. The 720 track is the second output of the same intake. The stack is 128. The clock stays hot. The stack is a divisor, not an added term. An intake of 0 is an output of 0.
+The 512 is already the preload. r7 is held at 128, the stack. r14 is held at 4, which is 512 / 128. There is no second circuit. A weight of 1 reads as 4 on that seat and as 5.625° on the 720 reading of the same weight. The ratio is 720 / 512 = 1.40625. An intake of 0 is an output of 0.
 
-| Output | Definition | One intake |
-|---|---|---|
-| Squares | intake × 512 / 128 | 4 |
-| Degrees | intake × 720 / 128 | 5.625° |
-| Ratio | 720 / 512 | 1.40625 |
+The two macros hold a word. The address is the byte on `uio`. FIRE writes base 0 into the first and base 1 into the second. The word stays until that address is written again. They do not fetch, and they are not a cache.
 
-Intake is `uio[7:0]` minus `ui[7:0]`, the pin values taken as unsigned bytes. The same function runs on the vector, base 0 against base 16.
-
-Count 0 is 1°. Each count doubles the units and halves the degree. The stack reaches a count only when `2^count` is less than or equal to 128. Count 7 is 128 units, 0.0078125°. Count 8 is 256 units and is not reached. The units inside a count are counted before the count advances. The map does not end at count 16.
+Count 0 is 1°. Each count doubles the units and halves the degree. The stack reaches a count only when `2^count` is less than or equal to 128. Count 7 is 128 units, 0.0078125°. Count 8 is 256 units and is not reached.
 
 | Count | Units | Degree of one unit |
 |---|---|---|

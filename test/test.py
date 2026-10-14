@@ -388,29 +388,25 @@ async def test_sram_two(dut):
 
 
 @cocotb.test()
-async def test_range_front(dut):
-    """One intake on the stack of 128 sits at 4 squares and 5.625 degrees."""
+async def test_preload_seat(dut):
+    """The 512 seat is already in the CPU. r7 is the stack, 128. r14 is 4."""
     task = await reset_dut(dut)
     try:
-        dut.ui_in.value = 0
-        dut.uio_in.value = 1
-        await ClockCycles(dut.clk, 2)
-        await Timer(1, unit="ns")
         top = dut.user_project
-        sq = read_bus(top, _rtl(top, "pick_sq"), "pick_sq", 20)
-        de = read_bus(top, _rtl(top, "pick_deg8"), "pick_deg8", 24)
-        if sq >= 2**19:
-            sq -= 2**20
-        if de >= 2**23:
-            de -= 2**24
-        assert sq == 4, f"squares {sq}"
-        assert de == 45, f"deg8 {de}"
-        hit = _rtl(top, "pick_hit")
-        assert int(hit.value if hit is not None else top["\\pick_hit\\"].value) == 1
-        dut.uio_in.value = 0
+        base = _rtl(top, "bases")
         await ClockCycles(dut.clk, 2)
         await Timer(1, unit="ns")
-        assert read_bus(top, _rtl(top, "pick_sq"), "pick_sq", 20) == 0, "stack adds no power"
+        if base is not None:
+            cpu = base[0].u_cpu
+            assert int(cpu.rf[7].value) == 128
+            assert int(cpu.rf[14].value) == 4
+        else:
+            s0 = read_bus(top, None, r"bases[0].u_cpu.str", 32)
+            await ClockCycles(dut.clk, 1)
+            await Timer(1, unit="ns")
+            s1 = read_bus(top, None, r"bases[0].u_cpu.str", 32)
+            assert s1 - s0 == 128, f"stack {s1 - s0}"
+            assert ((int(dut.uo_out.value) >> 2) & 1) == 1
     finally:
         task.cancel()
 
