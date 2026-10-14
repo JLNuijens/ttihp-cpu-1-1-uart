@@ -512,3 +512,52 @@ async def test_vector_ladder(dut):
     finally:
         task.cancel()
 
+
+def _rf(top, base, idx):
+    bases = _rtl(top, "bases")
+    if bases is not None:
+        return int(bases[base].u_cpu.rf[idx].value)
+    return read_bus(top, None, f"bases[{base}].u_cpu.rf[{idx}]", 32)
+
+
+async def _take(dut, byte):
+    dut.uio_in.value = byte & 0xFF
+    dut.ui_in.value = 0x04
+    await RisingEdge(dut.clk)
+    dut.ui_in.value = 0x05
+    await RisingEdge(dut.clk)
+    dut.ui_in.value = 0x04
+    await FallingEdge(dut.clk)
+
+
+@cocotb.test()
+async def test_any_bitstream(dut):
+    """Any byte is eight weights, 1 then 2 of that. None is rejected."""
+    task = await reset_dut(dut)
+    try:
+        top = dut.user_project
+        weights = [1 << i for i in range(8)]
+        assert weights == [1, 2, 4, 8, 16, 32, 64, 128]
+        for i in range(1, 8):
+            assert weights[i] == 2 * weights[i - 1]
+
+        stream = [0x00, 0x01, 0x90, 0xC3, 0xFF, 0x1F, 0xE7, 0xA3, 0x5C, 0xB1]
+        seen = []
+        for byte in stream:
+            parts = [weights[i] for i in range(8) if byte & weights[i]]
+            assert sum(parts) == byte
+            await _take(dut, byte)
+            got = _rf(top, 0, 9) & 0xFF
+            nxt = _rf(top, 3, 9) & 0xFF
+            sig = _rf(top, 0, 4)
+            wt = _rf(top, 0, 6)
+            assert got == byte, f"byte {byte:#x} latched {got:#x}"
+            assert nxt == (byte + 3) & 0xFF
+            assert wt != 0
+            assert sig != 0
+            seen.append((byte, sig, wt))
+            cocotb.log.info("byte %02x weights %s sig %08x wt %d", byte, parts, sig, wt)
+        assert len({row[1] for row in seen}) > 1
+    finally:
+        task.cancel()
+

@@ -46,7 +46,30 @@ Same clock. Same FIRE. Same 32 bases. UART held for the I2C count is the same sh
 | `10` | I2C start, one byte, ACK, stop. |
 | `11` | The count picks the line: memory, JTAG shift, Manchester, SWD header, PS/2 frame, USB low-speed bit cell, CAN bit cell. |
 
-Those are the preloaded walks. The byte is not limited to a named format. PE, ELF, Mach-O, DEX, WASM, UTF-8, a GPU file, and a byte with no name all take the same FIRE.
+Those are the preloaded walks. The byte is not a program, and it is not shifted because its name was recognized. The next section is the whole of what a byte is on this die.
+
+## The byte
+
+A byte is eight weights already on the processor: 1, 2, 4, 8, 16, 32, 64, 128. Each one is 2 of the one before it. The byte is the sum of the weights that are present. That is the only bitstream. There is no other coding, and there is no fetch.
+
+An instruction on another machine is the same sum. It is not decoded, and it is not executed. `90` is not a no-op. `C3` is not a return. `B1` has no name. All three take the same FIRE and the same 32 bases. A foreign opcode gets no special case.
+
+Base 0 stores the byte. Base 3 stores the byte plus 3. The result and the weight are what base 0 returned.
+
+| Byte | Weights present | Result | Weight |
+|---|---|---|---|
+| `00` | none | `020a0000` | 1 |
+| `01` | 1 | `020a0001` | 1 |
+| `90` | 16 + 128 | `104f0090` | 8 |
+| `C3` | 1 + 2 + 64 + 128 | `104f00c3` | 8 |
+| `FF` | all eight | `104f00ff` | 8 |
+| `1F` | 1 + 2 + 4 + 8 + 16 | `104f001f` | 8 |
+| `E7` | 1 + 2 + 4 + 32 + 64 + 128 | `104f00e7` | 8 |
+| `A3` | 1 + 2 + 32 + 128 | `104f00a3` | 8 |
+| `5C` | 4 + 8 + 16 + 64 | `104f005c` | 8 |
+| `B1` | 1 + 16 + 32 + 128 | `104f00b1` | 8 |
+
+PE, ELF, Mach-O, DEX, WASM, UTF-8, a GPU file, and a byte with no name are this table. The list is not a whitelist. None of them is run as itself.
 
 ## Specification
 
@@ -190,7 +213,7 @@ r0, r3, and r10 through r13 stay 0. FIRE loads base *k* with byte + *k*. A finis
 
 `uo[4:7]` carries the face when no walk owns those pins. One rising edge is the low nibble. The next rising edge is the next four bits. 200 Mbit/s. The clock is not used as data.
 
-There is no fetch. A byte the design was not shown still folds. PE, ELF, Mach-O, DEX, WASM, UTF-8, and a GPU file are bytes. The list is not a whitelist.
+There is no fetch. A byte the design was not shown still folds, including an opcode from another machine. `90` is not a no-op here. `C3` is not a return. See "The byte."
 
 ## Seat
 
