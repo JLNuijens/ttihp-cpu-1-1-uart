@@ -6,7 +6,6 @@ Jane Street protocol-emulator ASIC. Tiny Tapeout, IHP CMOS5L, tile 6×4.
 
 Joshua Luke Nuijens / Axiom 1 Technology, LLC. Top module `tt_um_jlnuijens_one11_uart`.
 
-This tree passed the layout, precheck, the RTL simulation, and the gate-level simulation.
 
 ## What it does
 
