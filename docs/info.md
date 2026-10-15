@@ -2,7 +2,7 @@
 
 Jane Street protocol-emulator ASIC. IHP CMOS5L, tile 6×4. Thirty-two bases, one FIRE, 1.6 GB/s on the rising edge. The line at count 1 is 100 Mbit/s, both edges. Two `512×32` macros, 4 KB. The 8×4 template is not in this flow.
 
-Jane Street asked for one part that can do more than one job after fabrication, by being reprogrammed. This die is not programmed. It is preloaded, so nothing has to be loaded to use it. The weight of the signal and the cycle select the walk. The other two ways in are the CPU 1.1 preload and the 512 / 720 seat. Same clock, same FIRE, same 32 bases.
+Jane Street asked for one part that can be used for more than one thing after fabrication. This one is. Nothing new is written in. The code that arrives on the pins is the use for that clock. The weight of the signal and the cycle select the walk. The other two ways in are the CPU 1.1 preload and the 512 / 720 seat. Same clock, same FIRE, same 32 bases.
 
 ## SRAM
 

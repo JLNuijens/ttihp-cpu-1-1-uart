@@ -13,11 +13,11 @@ One clock, 50 MHz. Thirty-two bases take the same FIRE on the rising edge. That 
 
 ## What was asked
 
-Jane Street asked for one chip that can be turned to more than one job after it is fabricated. They called that reprogrammable. A UART block beside an SPI block beside an I2C block, each frozen as its own machine, is not that. Flexibility is what they score.
+Jane Street asked for one chip that can be used for more than one thing after it is fabricated. They called that reprogrammable. A UART block beside an SPI block beside an I2C block, each frozen as its own machine, is not that. Flexibility is what they score.
 
 ## What this one does
 
-This die is not programmed. It is preloaded. Nothing is written in after fabrication, and nothing has to be. The functions are already in the silicon, so the part is ready when it is powered.
+This one is more than one thing after it is made. Nothing new is written in. The code that arrives on the pins is the use for that clock. The uses are already in the silicon, so the part is ready when it is powered.
 
 Three ways in, one clock, the same 32 bases.
 
