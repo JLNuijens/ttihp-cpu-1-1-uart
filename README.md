@@ -91,7 +91,7 @@ PE, ELF, Mach-O, DEX, WASM, UTF-8, a GPU file, and a byte with no name are this 
 
 1. Drive `rst_n` low. Hold `ui[7:0]` and `uio[7:0]` at 0. Release `rst_n`. The difference is 0. `uo[7:0]` reads `00000101` (`uo[7]` on the left): TX idle, ONES set.
 2. Place the byte on `uio[7:0]`. Any of the 256 values. The sites do not change with the value.
-3. Set the hold on `ui[7:5]`. Eight values. This is the bit time, not a stored mode.
+3. Set the hold on `ui[7:5]`. Eight values. The stored word can replace that hold. See Stored word.
 4. Set the map on `ui[4:3]`. This selects which pins carry that bit.
 5. Pulse `ui[0]` high for one clock, then low. That rising edge is FIRE. One walk runs. The walks that were not selected hold.
 6. Read `uo[7:0]`. `uo[1]` is high while the walk is busy. `uo[0]` is the NRZ output when the map is UART.
@@ -197,11 +197,13 @@ UART, SPI, I2C, and the other walks keep their pins on the other maps.
 
 ## Stored word
 
-The two macros stay the signature hold. A separate word sets the map, the count, and the byte. It does not need another SRAM.
+This is a small input register. It is not a second processor, and it is not a size limit. The two macros stay the signature hold.
+
+The register holds the map (2 bits), the count (3 bits), and the byte (8 bits). A second store adds a hold byte. That hold is a number of clocks, from 1 to 255, including numbers the eight counts do not have. The fields are open. Another input can be added to the same register.
 
 Set the pads to the load you want. Then set the pads to map `11`, count `000`, raise `ui[1]`, and FIRE. The word stores the map, the count, and the byte from the clock before that. After that, those three come from the word. `ui[0]` still fires. Reset clears the word.
 
-A second FIRE of that same pad stores a hold the eight counts do not have. The byte on the pads before that FIRE is the number of clocks. `7` is a 7-clock hold. The map and the data byte stay what the first FIRE stored.
+A second FIRE of that same pad stores the hold. The byte on the pads before that FIRE is the number of clocks. `7` is a 7-clock hold. The map and the data byte stay what the first FIRE stored.
 
 The pads can say something else. The outputs follow the stored load.
 
