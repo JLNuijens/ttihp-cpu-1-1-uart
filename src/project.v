@@ -29,10 +29,10 @@ module tt_um_jlnuijens_one11_uart #(
 
   // The pads arm a load. Memory map with HOT and FIRE stores it.
   // After that the word sets the map, the count, and the byte.
-  reg       prog_on;
+  reg       prog_on, custom_hold;
   reg [1:0] prog_map, arm_map;
   reg [2:0] prog_count, arm_count;
-  reg [7:0] prog_byte, arm_byte;
+  reg [7:0] prog_byte, arm_byte, prog_hold;
   wire      pad_mem = (pad_map == 2'd3) && (pad_rsel == 3'd0);
 
   reg fire_d;
@@ -46,9 +46,11 @@ module tt_um_jlnuijens_one11_uart #(
   always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
       prog_on    <= 1'b0;
+      custom_hold<= 1'b0;
       prog_map   <= 2'd0;
       prog_count <= 3'd0;
       prog_byte  <= 8'd0;
+      prog_hold  <= 8'd0;
       arm_map    <= 2'd0;
       arm_count  <= 3'd0;
       arm_byte   <= 8'd0;
@@ -59,10 +61,15 @@ module tt_um_jlnuijens_one11_uart #(
         arm_byte  <= uio_in;
       end
       if (pad_mem && fire && hot_pin) begin
-        prog_on    <= 1'b1;
-        prog_map   <= arm_map;
-        prog_count <= arm_count;
-        prog_byte  <= arm_byte;
+        if (!prog_on) begin
+          prog_on    <= 1'b1;
+          prog_map   <= arm_map;
+          prog_count <= arm_count;
+          prog_byte  <= arm_byte;
+        end else begin
+          custom_hold <= 1'b1;
+          prog_hold   <= arm_byte;
+        end
       end
     end
   end
@@ -72,16 +79,20 @@ module tt_um_jlnuijens_one11_uart #(
   wire [7:0] op_byte  = prog_on ? prog_byte : uio_in;
   wire [31:0] seq     = {24'd0, op_byte};
 
-  wire [15:0] cpb;
-  js_range u_range (.sel(rsel), .clks(cpb));
+  wire [15:0] range_clks;
+  js_range u_range (.sel(rsel), .clks(range_clks));
+  wire [15:0] cpb = (prog_on && custom_hold)
+      ? {8'd0, (prog_hold == 8'd0 ? 8'd1 : prog_hold)}
+      : range_clks;
 
-  wire uart_f = fire & (map == 2'd0);
-  wire spi_f  = fire & (map == 2'd1);
-  wire i2c_f  = fire & (map == 2'd2);
+  wire use_fire = fire & ~(pad_mem & hot_pin);
+  wire uart_f = use_fire & (map == 2'd0);
+  wire spi_f  = use_fire & (map == 2'd1);
+  wire i2c_f  = use_fire & (map == 2'd2);
   wire tap_sel = (rsel == 3'd1) || (rsel == 3'd3) || (rsel == 3'd4) || (rsel == 3'd6);
   wire on_tap = (map == 2'd3) && tap_sel;
-  wire line_f = fire & (map == 2'd3) & ~tap_sel;
-  wire tap_f  = fire & (map == 2'd3) & tap_sel;
+  wire line_f = use_fire & (map == 2'd3) & ~tap_sel;
+  wire tap_f  = use_fire & (map == 2'd3) & tap_sel;
   wire [1:0] tap_kind =
       (rsel == 3'd1) ? 2'd0 :
       (rsel == 3'd3) ? 2'd1 :

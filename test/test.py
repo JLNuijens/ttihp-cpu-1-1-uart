@@ -592,3 +592,83 @@ async def test_stored_word_sets_pins(dut):
     finally:
         task.cancel()
 
+
+@cocotb.test()
+async def test_spi_on_the_five_clock(dut):
+    """Stored word: SPI, count index 2, byte C3. Pads are then UART."""
+    task = await reset_dut(dut)
+    try:
+        dut.uio_in.value = 0xC3
+        dut.ui_in.value = 0x4C
+        await ClockCycles(dut.clk, 2)
+        dut.uio_in.value = 0
+        dut.ui_in.value = 0x1A
+        await RisingEdge(dut.clk)
+        dut.ui_in.value = 0x1B
+        await RisingEdge(dut.clk)
+        dut.ui_in.value = 0x1A
+        await FallingEdge(dut.clk)
+        dut.uio_in.value = 0
+        dut.ui_in.value = 0x04
+        await RisingEdge(dut.clk)
+        dut.ui_in.value = 0x05
+        await RisingEdge(dut.clk)
+        dut.ui_in.value = 0x04
+        cols = {0: [], 4: [], 5: [], 6: []}
+        for _ in range(80):
+            await FallingEdge(dut.clk)
+            uo = int(dut.uo_out.value) & 0xFF
+            for b in cols:
+                cols[b].append((uo >> b) & 1)
+        for b in (0, 4, 5, 6):
+            cocotb.log.info("uo[%d] %s", b, "".join(str(x) for x in cols[b]))
+        assert 0 in cols[6], "CS never went low"
+        assert cols[5].count(1) > 0, "SCLK never rose"
+        assert cols[0].count(0) == 0, "UART took uo[0]"
+    finally:
+        task.cancel()
+
+
+@cocotb.test()
+async def test_hold_seven(dut):
+    """Second store sets a hold of 7. That hold is not one of the eight."""
+    task = await reset_dut(dut)
+    try:
+        dut.uio_in.value = 0xC3
+        dut.ui_in.value = 0x0C  # SPI, count 0, RX idle
+        await ClockCycles(dut.clk, 2)
+        dut.ui_in.value = 0x1A
+        await RisingEdge(dut.clk)
+        dut.ui_in.value = 0x1B
+        await RisingEdge(dut.clk)
+        dut.ui_in.value = 0x1A
+        await FallingEdge(dut.clk)
+        dut.uio_in.value = 7
+        dut.ui_in.value = 0x04
+        await ClockCycles(dut.clk, 2)
+        dut.ui_in.value = 0x1A
+        await RisingEdge(dut.clk)
+        dut.ui_in.value = 0x1B
+        await RisingEdge(dut.clk)
+        dut.ui_in.value = 0x1A
+        await FallingEdge(dut.clk)
+        dut.uio_in.value = 0
+        dut.ui_in.value = 0x04
+        await RisingEdge(dut.clk)
+        dut.ui_in.value = 0x05
+        await RisingEdge(dut.clk)
+        dut.ui_in.value = 0x04
+        sclk = []
+        mosi = []
+        for _ in range(28):
+            await FallingEdge(dut.clk)
+            uo = int(dut.uo_out.value)
+            sclk.append((uo >> 5) & 1)
+            mosi.append((uo >> 4) & 1)
+        cocotb.log.info("sclk %s", "".join(str(x) for x in sclk))
+        cocotb.log.info("mosi %s", "".join(str(x) for x in mosi))
+        assert "".join(str(x) for x in sclk).startswith("00000001111111"), sclk
+        assert "".join(str(x) for x in mosi).startswith("1" * 14)
+    finally:
+        task.cancel()
+

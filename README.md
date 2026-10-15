@@ -201,6 +201,8 @@ The two macros stay the signature hold. A separate word sets the map, the count,
 
 Set the pads to the load you want. Then set the pads to map `11`, count `000`, raise `ui[1]`, and FIRE. The word stores the map, the count, and the byte from the clock before that. After that, those three come from the word. `ui[0]` still fires. Reset clears the word.
 
+A second FIRE of that same pad stores a hold the eight counts do not have. The byte on the pads before that FIRE is the number of clocks. `7` is a 7-clock hold. The map and the data byte stay what the first FIRE stored.
+
 The pads can say something else. The outputs follow the stored load.
 
 ## Processor
