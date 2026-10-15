@@ -36,7 +36,7 @@ The protocol after fabrication is three inputs and FIRE.
 
 Same clock. Same FIRE. Same 32 bases. A different count or a different map is a different cell. No module is added.
 
-A stored word can set the map, the count, and the byte. It is a small input register, not another SRAM and not a size limit. The fields are open. Set the pads to the load, then FIRE on map `11`, count `000`, with `ui[1]` high. A second FIRE of that pad stores the byte as a hold in clocks, from 1 to 255. Reset clears it. The two macros still hold the signatures.
+A stored word can set the map, the count, and the byte. It is a small input register, not another SRAM and not a size limit. The count is one of the eight holds. Set the pads to the load, then FIRE on map `11`, count `000`, with `ui[1]` high. Reset clears it. The two macros still hold the signatures.
 
 The byte is loaded into the shift and into all 32 bases on the FIRE edge. UART, SPI, I2C, Manchester, NRZI, JTAG, SWD, PS/2, and the CAN cell shift that byte. A named file format is a sequence of bytes. An unnamed byte takes the same edge.
 
