@@ -561,3 +561,34 @@ async def test_any_bitstream(dut):
     finally:
         task.cancel()
 
+
+@cocotb.test()
+async def test_stored_word_sets_pins(dut):
+    """Arm UART, count 4, byte A5. Memory+HOT+FIRE stores it. Pads then say SPI."""
+    task = await reset_dut(dut)
+    try:
+        dut.uio_in.value = 0xA5
+        dut.ui_in.value = 0x24
+        await ClockCycles(dut.clk, 2)
+        dut.uio_in.value = 0
+        dut.ui_in.value = 0x1A
+        await RisingEdge(dut.clk)
+        dut.ui_in.value = 0x1B
+        await RisingEdge(dut.clk)
+        dut.ui_in.value = 0x1A
+        await FallingEdge(dut.clk)
+        dut.uio_in.value = 0x00
+        dut.ui_in.value = 0x0C
+        await RisingEdge(dut.clk)
+        dut.ui_in.value = 0x0D
+        await RisingEdge(dut.clk)
+        dut.ui_in.value = 0x0C
+        saw_start = False
+        for _ in range(6):
+            await FallingEdge(dut.clk)
+            if (int(dut.uo_out.value) & 1) == 0:
+                saw_start = True
+        assert saw_start, f"uo {int(dut.uo_out.value) & 0xFF:08b}"
+    finally:
+        task.cancel()
+

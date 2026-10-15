@@ -36,6 +36,8 @@ The protocol after fabrication is three inputs and FIRE.
 
 Same clock. Same FIRE. Same 32 bases. A different count or a different map is a different cell. No module is added.
 
+A stored word can set the map, the count, and the byte. Set the pads to the load, then FIRE on map `11`, count `000`, with `ui[1]` high. The word is what the pads held on the clock before that FIRE. Afterward the outputs follow the word. `ui[0]` still fires. Reset clears it. The two macros are not this word. They still hold the signatures.
+
 The byte is loaded into the shift and into all 32 bases on the FIRE edge. UART, SPI, I2C, Manchester, NRZI, JTAG, SWD, PS/2, and the CAN cell shift that byte. A named file format is a sequence of bytes. An unnamed byte takes the same edge.
 
 Count 1 uses both edges of the 50 MHz clock. Every larger count holds the bit on the rising edge. The falling edge is not a new bit.

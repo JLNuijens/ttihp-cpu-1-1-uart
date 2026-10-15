@@ -195,6 +195,14 @@ Map `11`, count `000`. `uio[7:0]` is the address. The upper address bit stays 0,
 
 UART, SPI, I2C, and the other walks keep their pins on the other maps.
 
+## Stored word
+
+The two macros stay the signature hold. A separate word sets the map, the count, and the byte. It does not need another SRAM.
+
+Set the pads to the load you want. Then set the pads to map `11`, count `000`, raise `ui[1]`, and FIRE. The word stores the map, the count, and the byte from the clock before that. After that, those three come from the word. `ui[0]` still fires. Reset clears the word.
+
+The pads can say something else. The outputs follow the stored load.
+
 ## Processor
 
 | Site | At reset | While the clock holds |

@@ -24,9 +24,16 @@ module tt_um_jlnuijens_one11_uart #(
   wire fire_pin = ui_in[0];
   wire hot_pin  = ui_in[1];
   wire line_in  = ui_in[2];
-  wire [1:0] map  = ui_in[4:3];
-  wire [2:0] rsel = ui_in[7:5];
-  wire [31:0] seq = {24'd0, uio_in};
+  wire [1:0] pad_map  = ui_in[4:3];
+  wire [2:0] pad_rsel = ui_in[7:5];
+
+  // The pads arm a load. Memory map with HOT and FIRE stores it.
+  // After that the word sets the map, the count, and the byte.
+  reg       prog_on;
+  reg [1:0] prog_map, arm_map;
+  reg [2:0] prog_count, arm_count;
+  reg [7:0] prog_byte, arm_byte;
+  wire      pad_mem = (pad_map == 2'd3) && (pad_rsel == 3'd0);
 
   reg fire_d;
   always @(posedge clk or negedge rst_n) begin
@@ -35,6 +42,35 @@ module tt_um_jlnuijens_one11_uart #(
   end
   wire fire = fire_pin & ~fire_d;
   wire hot  = hot_pin | ena;
+
+  always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+      prog_on    <= 1'b0;
+      prog_map   <= 2'd0;
+      prog_count <= 3'd0;
+      prog_byte  <= 8'd0;
+      arm_map    <= 2'd0;
+      arm_count  <= 3'd0;
+      arm_byte   <= 8'd0;
+    end else begin
+      if (!pad_mem) begin
+        arm_map   <= pad_map;
+        arm_count <= pad_rsel;
+        arm_byte  <= uio_in;
+      end
+      if (pad_mem && fire && hot_pin) begin
+        prog_on    <= 1'b1;
+        prog_map   <= arm_map;
+        prog_count <= arm_count;
+        prog_byte  <= arm_byte;
+      end
+    end
+  end
+
+  wire [1:0] map      = prog_on ? prog_map : pad_map;
+  wire [2:0] rsel     = prog_on ? prog_count : pad_rsel;
+  wire [7:0] op_byte  = prog_on ? prog_byte : uio_in;
+  wire [31:0] seq     = {24'd0, op_byte};
 
   wire [15:0] cpb;
   js_range u_range (.sel(rsel), .clks(cpb));
@@ -85,7 +121,7 @@ module tt_um_jlnuijens_one11_uart #(
     .clk     (clk),
     .rst_n   (rst_n),
     .fire    (spi_f),
-    .seq     (uio_in),
+    .seq     (op_byte),
     .clks    (cpb),
     .miso    (line_in),
     .mosi    (spi_mosi),
@@ -101,7 +137,7 @@ module tt_um_jlnuijens_one11_uart #(
     .clk     (clk),
     .rst_n   (rst_n),
     .fire    (i2c_f),
-    .seq     (uio_in),
+    .seq     (op_byte),
     .clks    (cpb),
     .sda_in  (uio_in[0]),
     .scl     (i2c_scl),
@@ -117,7 +153,7 @@ module tt_um_jlnuijens_one11_uart #(
     .clk       (clk),
     .rst_n     (rst_n),
     .fire      (line_f),
-    .seq       (uio_in),
+    .seq       (op_byte),
     .clks      (cpb),
     .usb_n_eth ((rsel == 3'd5) || (rsel == 3'd7)),
     .dm        (line_dm),
@@ -131,7 +167,7 @@ module tt_um_jlnuijens_one11_uart #(
     .clk    (clk),
     .rst_n  (rst_n),
     .fire   (tap_f),
-    .seq    (uio_in),
+    .seq    (op_byte),
     .clks   (cpb),
     .kind   (tap_kind),
     .din    (line_in),
@@ -162,7 +198,7 @@ module tt_um_jlnuijens_one11_uart #(
   end
   wire rx_strobe = got & ~got_d;
 
-  wire mem_face = (map == 2'd3) && (rsel == 3'd0);
+  wire mem_face = pad_mem;
   // The pins pick the address. It stays there. FIRE writes the result next cycle.
   reg [8:0] addr_q;
   reg       wr_pend;
