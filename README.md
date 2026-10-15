@@ -9,45 +9,30 @@ Joshua Luke Nuijens / Axiom 1 Technology, LLC. Top module `tt_um_jlnuijens_one11
 
 ## What it does
 
-One clock, 50 MHz. Thirty-two bases take the same FIRE on the rising edge. That edge is 1.6 GB/s inside the tile. What leaves on the wire is one byte, held for the count set on the pins. Two SRAM macros hold two words at the address on those pins. The input is the load. FIRE puts that load on the bases and on the output pins. The clock holds it while the tile is enabled.
+One clock, 50 MHz. Thirty-two bases take the same FIRE. That edge is 1.6 GB/s inside the tile. Two SRAM macros hold the signatures of base 0 and base 1. A register holds the map, the count, and the byte. The clock holds the stage while the tile is enabled.
 
-## What was asked
+## Programmable
 
-Jane Street asked for one chip that can be used for more than one thing after it is fabricated. They called that reprogrammable. A UART block beside an SPI block beside an I2C block, each frozen as its own machine, is not that. Flexibility is what they score.
+Jane Street asked for one chip that can be used for more than one thing after it is fabricated. This one is. The register is the program. No separate file is sent.
 
-## What this one does
-
-This one is reprogrammed after it is made by setting the inputs. That set is the load. It writes the outputs for that clock, and it loads itself. No separate program is sent.
-
-The loads in the silicon are the CPU, UART, SPI, I2C, and, on the hook, the memory, JTAG, Manchester, SWD, PS/2, a USB low-speed bit cell, and a CAN bit cell. The input selects which load is on the pins.
-
-Three ways in, one clock, the same 32 bases.
+The loads are the CPU, UART, SPI, I2C, and, on the hook, the memory, JTAG, Manchester, SWD, PS/2, a USB low-speed bit cell, and a CAN bit cell. The register selects which load is on the pins. Until the register is stored, the pads select it.
 
 | Way in | What it is |
 |---|---|
-| Signal weight and the cycle | What is on the pins has a weight. The count is the cycle. The input names the load, and that load goes on the pins. |
-| CPU 1.1 | The preload processor. One FIRE. Base *k* takes byte + *k*. The stage is already loaded. |
-| 512 and 720 | The same seat, read two ways. r7 is 128. r14 is 4. `4 × 128 = 512`. The 720 reading is that number times `720 / 512`. |
+| The register | Map, count, and byte. FIRE on the memory pads stores them. After that the outputs follow the register. |
+| CPU 1.1 | One FIRE. Base *k* takes byte + *k*. |
+| 512 and 720 | The same seat. r7 is 128. r14 is 4. `4 × 128 = 512`. The 720 reading is that number times `720 / 512`. |
 
-The byte, the hold, and the map are how the signal is presented.
+| Field | Pins | Values |
+|---|---|---|
+| Byte | `uio[7:0]` | Any of 256. The 32 bases do not change with the coding. |
+| Count | `ui[7:5]` | 1, 4, 5, 8, 16, 33, 125, or 434 clocks. |
+| Map | `ui[4:3]` | Which pins carry the bit. The map table is below. |
+| FIRE | `ui[0]` | One rising edge. One cell. |
 
-| Pin | What you set |
-|---|---|
-| `uio[7:0]` | The byte. Any of 256. The 32 bases do not change with the coding. |
-| `ui[7:5]` | The cycle. 1, 4, 5, 8, 16, 33, 125, or 434 clocks. |
-| `ui[4:3]` | Which pins carry that bit. |
-| `ui[0]` | FIRE. One rising edge. One cell. |
+UART held for the I2C count is the same shifter on `uo[0]`. SPI at the 10 ns hold is the same shifter on MOSI and SCLK. No module is added for the crossing.
 
-Same clock. Same FIRE. Same 32 bases. UART held for the I2C count is the same shifter on `uo[0]`. SPI at the 10 ns hold is the same shifter on MOSI and SCLK. No module is added for the crossing.
-
-| Map | What runs |
-|---|---|
-| `00` | UART 8N1. Start, eight data bits, stop. |
-| `01` | SPI mode 0, eight bits. |
-| `10` | I2C start, one byte, ACK, stop. |
-| `11` | The count picks the line: memory, JTAG shift, Manchester, SWD header, PS/2 frame, USB low-speed bit cell, CAN bit cell. |
-
-The input selects one load, and FIRE puts it on the pins. The byte is the load the bases take. It is not an instruction from another machine, and it is not shifted because its name was recognized. The next section is the whole of what a byte is on this die.
+The byte is the load the bases take. It is not an instruction from another machine. The next section is the whole of what a byte is on this die.
 
 ## The byte
 
@@ -80,7 +65,8 @@ PE, ELF, Mach-O, DEX, WASM, UTF-8, a GPU file, and a byte with no name are this 
 | Bases | 32. Two stacks of 16. Base *k* takes byte + *k*. |
 | Internal rate | 32 × 50 MHz = 1.6 GB/s, on the rising edge. |
 | Word in | 8 bits, one FIRE. Not one byte per clock. |
-| Fetch | None. The stage is loaded. The clock holds it while the tile is enabled. |
+| Fetch | None. The register is the program. No separate file is sent. |
+| Register | Map, 2 bits. Count, 3 bits, one of the eight holds. Byte, 8 bits. Not the SRAM. |
 | Line | UART 8N1. Count 1 uses both edges: 10 ns, 100 Mbit/s. |
 | Memory | Two `RM_IHPSG13_1P_512x32_c2_bm_bist`. 512 × 32, one port. 4 KB. |
 | Address on the pins | `uio[7:0]`, 256 of 512 words. Two words at that address. |
@@ -90,11 +76,12 @@ PE, ELF, Mach-O, DEX, WASM, UTF-8, a GPU file, and a byte with no name are this 
 ## How to use
 
 1. Drive `rst_n` low. Hold `ui[7:0]` and `uio[7:0]` at 0. Release `rst_n`. The difference is 0. `uo[7:0]` reads `00000101` (`uo[7]` on the left): TX idle, ONES set.
-2. Place the byte on `uio[7:0]`. Any of the 256 values. The sites do not change with the value.
-3. Set the hold on `ui[7:5]`. Eight values. The stored word keeps whichever of those eight you armed.
-4. Set the map on `ui[4:3]`. This selects which pins carry that bit.
-5. Pulse `ui[0]` high for one clock, then low. That rising edge is FIRE. One walk runs. The walks that were not selected hold.
-6. Read `uo[7:0]`. `uo[1]` is high while the walk is busy. `uo[0]` is the NRZ output when the map is UART.
+2. Place the byte on `uio[7:0]`. Any of the 256 values.
+3. Set the hold on `ui[7:5]`. One of the eight.
+4. Set the map on `ui[4:3]`.
+5. Pulse `ui[0]` for one clock. That FIRE runs the load the pads are showing.
+6. To store it, set map `11`, count `000`, raise `ui[1]`, and FIRE. The register keeps the byte, the hold, and the map from the clock before that FIRE. Later FIREs follow the register. The pads can change. Reset clears the register.
+7. Read `uo[7:0]`. `uo[1]` is high while the walk is busy. `uo[0]` is the NRZ output when the map is UART.
 
 `ui[1]` held high keeps the clock on the stage. The tile enable does the same while the tile is selected.
 
@@ -106,7 +93,7 @@ PE, ELF, Mach-O, DEX, WASM, UTF-8, a GPU file, and a byte with no name are this 
 | `clk` | in | 50 MHz | The only time base. |
 | `ena` | in | Tile enable | Holds the stage while the tile is selected. |
 | `ui[0]` | in | FIRE | Rising edge. One operation for all 32 bases and for the selected walk. |
-| `ui[1]` | in | HOT | High holds the stage. |
+| `ui[1]` | in | HOT | High holds the stage. With map `11`, count `000`, and FIRE, stores the register. |
 | `ui[2]` | in | Line in | UART RX, SPI MISO, JTAG TDO, CAN RX. Idle high. Sampled on map `00`. |
 | `ui[3]` | in | Map bit 0 | With `ui[4]`, selects the walk. |
 | `ui[4]` | in | Map bit 1 | With `ui[3]`, selects the walk. |
@@ -193,17 +180,7 @@ Map `11`, count `000`. `uio[7:0]` is the address. The upper address bit stays 0,
 | Write | FIRE stores the two results at that address. |
 | Hold | The words remain until that address is written again. |
 
-UART, SPI, I2C, and the other walks keep their pins on the other maps.
-
-## Stored word
-
-This is a small input register. It is not a second processor, and it is not a size limit. The two macros stay the signature hold.
-
-The register holds the map (2 bits), the count (3 bits), and the byte (8 bits). The count is one of the eight holds. The fields are those three. Reset clears the register.
-
-Set the pads to the load you want. Then set the pads to map `11`, count `000`, raise `ui[1]`, and FIRE. The word stores the map, the count, and the byte from the clock before that. After that, those three come from the word. `ui[0]` still fires.
-
-The pads can say something else. The outputs follow the stored load.
+UART, SPI, I2C, and the other walks keep their pins on the other maps. The register is not these macros.
 
 ## Processor
 
@@ -220,11 +197,9 @@ The pads can say something else. The outputs follow the stored load.
 | r14 | 4 | Held |
 | r15 | `0x4F4E4553` | ONES. `uo[2]` is high while this value holds |
 
-r0, r3, and r10 through r13 stay 0. FIRE loads base *k* with byte + *k*. A finished RX byte is written to r8 of every base. The count does not change the face.
+r0, r3, and r10 through r13 stay 0. FIRE loads base *k* with byte + *k*. A finished RX byte is written to r8 of every base. The count does not change the face. A byte the design was not shown still folds. See "The byte."
 
 `uo[4:7]` carries the face when no walk owns those pins. One rising edge is the low nibble. The next rising edge is the next four bits. 200 Mbit/s. The clock is not used as data.
-
-The input is the load. A byte the design was not shown still folds, including an opcode from another machine. `90` is not a no-op here. `C3` is not a return. See "The byte."
 
 ## Seat
 
@@ -272,50 +247,7 @@ Raise one pin from that ground and leave the others at 0. The 512 and 720 column
 
 `uio` does not change `uo` from one bit to the next. Those eight pins sit at `00001111`. Reset before each pin.
 
-Two inputs in the same clock are both in the result. The result is not either pin alone, and the two patterns are not added. `01001111` with `00010111` does not become `01011111`.
-
-`ui[3]` was sent `1 0 1 1 0 0 1 0`. `ui[4]` was sent `1 1 0 0 1 0 0 1`. `uo[7]` is the left-hand bit.
-
-Code on `ui[3]` only:
-
-| Clock | In | `uo[7:0]` |
-|---|---|---|
-| 1 | 1 | `01001111` |
-| 2 | 0 | `00001111` |
-| 3 | 1 | `01001111` |
-| 4 | 1 | `01001111` |
-| 5 | 0 | `00001101` |
-| 6 | 0 | `00001111` |
-| 7 | 1 | `01001111` |
-| 8 | 0 | `00001111` |
-
-Code on `ui[4]` only:
-
-| Clock | In | `uo[7:0]` |
-|---|---|---|
-| 1 | 1 | `00010111` |
-| 2 | 1 | `00010111` |
-| 3 | 0 | `00001111` |
-| 4 | 0 | `00001111` |
-| 5 | 1 | `00011101` |
-| 6 | 0 | `00001101` |
-| 7 | 0 | `00001111` |
-| 8 | 1 | `00011111` |
-
-Code on both in the same clock:
-
-| Clock | `ui[3]` | `ui[4]` | `uo[7:0]` |
-|---|---|---|---|
-| 1 | 1 | 1 | `00000000` |
-| 2 | 0 | 1 | `00010111` |
-| 3 | 1 | 0 | `01001111` |
-| 4 | 1 | 0 | `01001111` |
-| 5 | 0 | 1 | `00011101` |
-| 6 | 0 | 0 | `00001101` |
-| 7 | 1 | 0 | `01001111` |
-| 8 | 0 | 1 | `00011111` |
-
-A clock with code on one input returns that input's result. A clock with code on both returns `00000000`. A clock with code on neither returns the cycle, `00001111` then `00001101`.
+`ui[3]` alone is `01001111`. `ui[4]` alone is `00010111`. Both in the same clock are `00000000`, which is not those two patterns added. Neither driven is the cycle, `00001111` then `00001101`.
 
 ## Verify
 

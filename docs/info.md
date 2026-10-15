@@ -2,7 +2,7 @@
 
 Jane Street protocol-emulator ASIC. IHP CMOS5L, tile 6×4. Thirty-two bases, one FIRE, 1.6 GB/s on the rising edge. The line at count 1 is 100 Mbit/s, both edges. Two `512×32` macros, 4 KB. The 8×4 template is not in this flow.
 
-Jane Street asked for one part that can be reprogrammed after fabrication and used for more than one thing. This one is. Setting the inputs is the load. It writes the outputs for that clock, and it loads itself. No separate program is sent. The loads are the CPU, UART, SPI, I2C, and, on the hook, the memory, JTAG, Manchester, SWD, PS/2, a USB low-speed bit cell, and a CAN bit cell. Same clock, same FIRE, same 32 bases.
+Jane Street asked for one part that can be used for more than one thing after fabrication. This one is. The register is the program: the map, the count, and the byte. No separate file is sent. The loads are the CPU, UART, SPI, I2C, and, on the hook, the memory, JTAG, Manchester, SWD, PS/2, a USB low-speed bit cell, and a CAN bit cell. Same clock, same FIRE, same 32 bases.
 
 ## SRAM
 
@@ -15,7 +15,7 @@ Map `11`, count `000`. `uio[7:0]` is the address. The upper address bit is held 
 | Pad | Walk | Processor |
 |---|---|---|
 | `ui[0]` | FIRE | One rising edge, all 32 bases |
-| `ui[1]` | HOT | Clock holds the stage |
+| `ui[1]` | HOT, and the store | High holds the stage. With map `11`, count `000`, and FIRE, stores the register. |
 | `ui[2]` | RX | Finished byte is stored in r8 |
 | `ui[4:3]` | UART, SPI, I2C, or hook | `00` leaves the face on `uo[4:7]` |
 | `ui[7:5]` | Hold, 1 to 434 clocks | Does not change the face |
@@ -36,7 +36,7 @@ The protocol after fabrication is three inputs and FIRE.
 
 Same clock. Same FIRE. Same 32 bases. A different count or a different map is a different cell. No module is added.
 
-A stored word can set the map, the count, and the byte. It is a small input register, not another SRAM and not a size limit. The count is one of the eight holds. Set the pads to the load, then FIRE on map `11`, count `000`, with `ui[1]` high. Reset clears it. The two macros still hold the signatures.
+The register is the program. It holds the map, the count, and the byte. It is not the SRAM. Set the pads to the load, then FIRE on map `11`, count `000`, with `ui[1]` high. Reset clears it. The count is one of the eight holds. The two macros still hold the signatures.
 
 The byte is loaded into the shift and into all 32 bases on the FIRE edge. UART, SPI, I2C, Manchester, NRZI, JTAG, SWD, PS/2, and the CAN cell shift that byte. A named file format is a sequence of bytes. An unnamed byte takes the same edge.
 
