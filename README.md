@@ -9,7 +9,7 @@ Joshua Luke Nuijens / Axiom 1 Technology, LLC. Top module `tt_um_jlnuijens_one11
 
 ## What it does
 
-One clock, 50 MHz. Thirty-two bases take the same FIRE on the rising edge. That edge is 1.6 GB/s inside the tile. What leaves on the wire is one byte, held for the count set on the pins. Two SRAM macros hold two words at the address on those pins. Nothing is fetched. The stage is already loaded, and the clock holds it while the tile is enabled.
+One clock, 50 MHz. Thirty-two bases take the same FIRE on the rising edge. That edge is 1.6 GB/s inside the tile. What leaves on the wire is one byte, held for the count set on the pins. Two SRAM macros hold two words at the address on those pins. The input is the load. FIRE puts that load on the bases and on the output pins. The clock holds it while the tile is enabled.
 
 ## What was asked
 
@@ -17,13 +17,15 @@ Jane Street asked for one chip that can be used for more than one thing after it
 
 ## What this one does
 
-This one is more than one thing after it is made. Nothing new is written in. The code that arrives on the pins is the use for that clock. The uses are already in the silicon, so the part is ready when it is powered.
+This one is reprogrammed after it is made by setting the inputs. That set is the load. It writes the outputs for that clock, and it loads itself. No separate program is sent.
+
+The loads in the silicon are the CPU, UART, SPI, I2C, and, on the hook, the memory, JTAG, Manchester, SWD, PS/2, a USB low-speed bit cell, and a CAN bit cell. The input selects which load is on the pins.
 
 Three ways in, one clock, the same 32 bases.
 
 | Way in | What it is |
 |---|---|
-| Signal weight and the cycle | What is on the pins has a weight. The count is the cycle. The walk that fits that weight and that cycle is the one that runs. No sequence is loaded to name it. |
+| Signal weight and the cycle | What is on the pins has a weight. The count is the cycle. The input names the load, and that load goes on the pins. |
 | CPU 1.1 | The preload processor. One FIRE. Base *k* takes byte + *k*. The stage is already loaded. |
 | 512 and 720 | The same seat, read two ways. r7 is 128. r14 is 4. `4 × 128 = 512`. The 720 reading is that number times `720 / 512`. |
 
@@ -45,11 +47,11 @@ Same clock. Same FIRE. Same 32 bases. UART held for the I2C count is the same sh
 | `10` | I2C start, one byte, ACK, stop. |
 | `11` | The count picks the line: memory, JTAG shift, Manchester, SWD header, PS/2 frame, USB low-speed bit cell, CAN bit cell. |
 
-Those are the preloaded walks. The byte is not a program, and it is not shifted because its name was recognized. The next section is the whole of what a byte is on this die.
+The input selects one load, and FIRE puts it on the pins. The byte is the load the bases take. It is not an instruction from another machine, and it is not shifted because its name was recognized. The next section is the whole of what a byte is on this die.
 
 ## The byte
 
-A byte is eight weights already on the processor: 1, 2, 4, 8, 16, 32, 64, 128. Each one is 2 of the one before it. The byte is the sum of the weights that are present. That is the only bitstream. There is no other coding, and there is no fetch.
+A byte is eight weights already on the processor: 1, 2, 4, 8, 16, 32, 64, 128. Each one is 2 of the one before it. The byte is the sum of the weights that are present. That is the load. There is no separate file.
 
 An instruction on another machine is the same sum. It is not decoded, and it is not executed. `90` is not a no-op. `C3` is not a return. `B1` has no name. All three take the same FIRE and the same 32 bases. A foreign opcode gets no special case.
 
@@ -212,7 +214,7 @@ r0, r3, and r10 through r13 stay 0. FIRE loads base *k* with byte + *k*. A finis
 
 `uo[4:7]` carries the face when no walk owns those pins. One rising edge is the low nibble. The next rising edge is the next four bits. 200 Mbit/s. The clock is not used as data.
 
-There is no fetch. A byte the design was not shown still folds, including an opcode from another machine. `90` is not a no-op here. `C3` is not a return. See "The byte."
+The input is the load. A byte the design was not shown still folds, including an opcode from another machine. `90` is not a no-op here. `C3` is not a return. See "The byte."
 
 ## Seat
 

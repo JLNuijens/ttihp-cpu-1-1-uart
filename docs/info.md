@@ -2,7 +2,7 @@
 
 Jane Street protocol-emulator ASIC. IHP CMOS5L, tile 6×4. Thirty-two bases, one FIRE, 1.6 GB/s on the rising edge. The line at count 1 is 100 Mbit/s, both edges. Two `512×32` macros, 4 KB. The 8×4 template is not in this flow.
 
-Jane Street asked for one part that can be used for more than one thing after fabrication. This one is. Nothing new is written in. The code that arrives on the pins is the use for that clock. The weight of the signal and the cycle select the walk. The other two ways in are the CPU 1.1 preload and the 512 / 720 seat. Same clock, same FIRE, same 32 bases.
+Jane Street asked for one part that can be reprogrammed after fabrication and used for more than one thing. This one is. Setting the inputs is the load. It writes the outputs for that clock, and it loads itself. No separate program is sent. The loads are the CPU, UART, SPI, I2C, and, on the hook, the memory, JTAG, Manchester, SWD, PS/2, a USB low-speed bit cell, and a CAN bit cell. Same clock, same FIRE, same 32 bases.
 
 ## SRAM
 
@@ -42,7 +42,7 @@ Count 1 uses both edges of the 50 MHz clock. Every larger count holds the bit on
 
 ## Preloaded
 
-The stage is loaded before the first FIRE. There is no fetch. A byte is eight weights: 1, 2, 4, 8, 16, 32, 64, 128. Each is 2 of the one before it. The byte is the sum of the weights that are on. That is the only bitstream.
+The input is the load. FIRE puts it on the bases and on the pins. A byte is eight weights: 1, 2, 4, 8, 16, 32, 64, 128. Each is 2 of the one before it. The byte is the sum of the weights that are on. There is no separate file.
 
 An instruction from another machine is that sum. It is not decoded. `90` is not a no-op. `C3` is not a return. `B1` has no name. All three take the same FIRE. x86 and ARM64 are not a special case, and they are not a limit. The measured results are in the README under "The byte."
 
