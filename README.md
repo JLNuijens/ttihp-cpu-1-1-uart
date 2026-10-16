@@ -57,6 +57,23 @@ Base 0 stores the byte. Base 3 stores the byte plus 3. The result and the weight
 
 PE, ELF, Mach-O, DEX, WASM, UTF-8, a GPU file, and a byte with no name are this table. The list is not a whitelist. None of them is run as itself.
 
+## Functions
+
+The walks are one use. These are the others. Same clock, same FIRE, same 32 bases.
+
+| Function | How |
+|---|---|
+| Add | FIRE the byte. Base *k* returns that byte plus *k*. On the memory map the held word is added in pairs. `02 + 0A` returns `0C`. |
+| Carry | FIRE `FF`. That base returns `104F00FF`. The next base returns `104F0100`. The low byte wraps from `FF` to `00`. |
+| Multiply | Leave the clock running. The stride is 128 times the cycle. Cycle 4 is 512. |
+| Divide | Set `ui[7:5]`. That hold divides the 50 MHz clock. Count `000` is 100 Mbit/s. Count `010` is 10 Mbit/s. Count `111` is 434 clocks. |
+| AND | Raise `ui[5]` and `ui[6]` together. That is the 8-clock hold. Either pin alone is a different hold. |
+| OR | Raise `ui[5]`, `ui[6]`, and `ui[7]` together. That is the 434-clock hold. On the byte, bit 0 or bit 1 returns `104F0003`. |
+| XOR | FIRE one byte. The 32 results mix by XOR onto `uo[7:4]`. |
+| Shift | Store the count in the register. Each bit of the frame on `uo[0]` is held for that count. |
+| Compare | The low byte of the result is the byte you fired. `uo[2]` is high while r15 is `4F4E4553`. |
+| Each clock | The cycle adds 1 and the stride adds 128. The next edge replaces that word. |
+
 ## Specification
 
 | | |
@@ -65,7 +82,7 @@ PE, ELF, Mach-O, DEX, WASM, UTF-8, a GPU file, and a byte with no name are this 
 | Bases | 32. Two stacks of 16. Base *k* takes byte + *k*. |
 | Internal rate | 32 × 50 MHz = 1.6 GB/s, on the rising edge. |
 | Word in | 8 bits, one FIRE. Not one byte per clock. |
-| Fetch | None. The register is the program. No separate file is sent. |
+| Fetch | The register is the program. Each clock replaces the cycle and the stride. No separate file is sent. |
 | Register | Map, 2 bits. Count, 3 bits, one of the eight holds. Byte, 8 bits. Not the SRAM. |
 | Line | UART 8N1. Count 1 uses both edges: 10 ns, 100 Mbit/s. |
 | Memory | Two `RM_IHPSG13_1P_512x32_c2_bm_bist`. 512 × 32, one port. 4 KB. |

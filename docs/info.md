@@ -40,6 +40,8 @@ The register is the program. It holds the map, the count, and the byte. It is no
 
 The byte is loaded into the shift and into all 32 bases on the FIRE edge. UART, SPI, I2C, Manchester, NRZI, JTAG, SWD, PS/2, and the CAN cell shift that byte. A named file format is a sequence of bytes. An unnamed byte takes the same edge.
 
+The same FIRE is the add, the carry, the multiply, the divide, the AND, the OR, the XOR, the shift, and the compare. Base *k* returns the byte plus *k*. The stride is 128 times the cycle. The count divides the 50 MHz clock. `ui[5]` and `ui[6]` together are the 8-clock hold. All three count pins are the 434-clock hold. The 32 results mix by XOR onto `uo[7:4]`. The low byte of the result is the byte you fired. Each clock adds 1 to the cycle and 128 to the stride. The how-to is in the README under Functions.
+
 Count 1 uses both edges of the 50 MHz clock. Every larger count holds the bit on the rising edge. The falling edge is not a new bit.
 
 ## Preloaded
