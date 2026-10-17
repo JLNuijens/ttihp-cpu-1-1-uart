@@ -2,7 +2,7 @@
 
 # ONE CPU 1.1 32
 
-Jane Street protocol-emulator ASIC. Tiny Tapeout, IHP CMOS5L, tile 6×4.
+Jane Street protocol-emulator ASIC. Tiny Tapeout, IHP CMOS5L, tile 8×4.
 
 Joshua Luke Nuijens / Axiom 1 Technology, LLC. Top module `tt_um_jlnuijens_one11_uart`.
 
@@ -87,9 +87,9 @@ The walks are one use. These are the others. Same clock, same FIRE, same 32 base
 | Fetch | The register is the program. Each clock replaces the cycle and the stride. No separate file is sent. |
 | Register | Map, 2 bits. Count, 3 bits, one of the eight holds. Byte, 8 bits. Not the SRAM. |
 | Line | UART 8N1. Count 1 uses both edges: 10 ns, 100 Mbit/s. |
-| Memory | Two `RM_IHPSG13_1P_512x32_c2_bm_bist`. 512 × 32, one port. 4 KB. |
+| Memory | Four `RM_IHPSG13_1P_512x32_c2_bm_bist`. Two hold the signatures, 4 KB. Two hold the list, 1,024 cells. |
 | Address on the pins | `uio[7:0]`, 256 of 512 words. Two words at that address. |
-| Tile | 6×4. The 8×4 template is not in this flow. |
+| Tile | 8×4. 1724 by 711 µm. |
 | License | Apache-2.0 |
 
 ## How to use
@@ -205,7 +205,7 @@ UART, SPI, I2C, and the other walks keep their pins on the other maps. The regis
 
 ## List
 
-A third macro sits in front of the walks. Each store appends a cell: the map, the count, and the byte. `uio` at `FF` on the store starts the counter at the first cell. Each later FIRE runs the cell the counter is on. When that cell finishes, the counter adds 1. The two macros behind the bases still hold the signatures.
+Two macros sit in front of the walks, in the same two rows as the pair behind the bases. Each store appends a cell: the map, the count, and the byte. The first 512 cells are the lower macro. The next 512 are the upper one. `uio` at `FF` on the store starts the counter at the first cell. Each later FIRE runs the cell the counter is on. When that cell finishes, the counter adds 1. The two macros behind the bases still hold the signatures.
 
 ## Processor
 
@@ -283,6 +283,6 @@ cd test && make
 
 ## Submit
 
-Public GitHub tree. `info.yaml` sets `tiles: "6x4"`, `top_module: tt_um_jlnuijens_one11_uart`, `clock_hz: 50000000`. Push to `main` runs test, docs, and GDS. The submission form takes this repository URL. Deadline 18 January 2027. Selected designs are planned for the March 2027 CMOS5L shuttle.
+Public GitHub tree. `info.yaml` sets `tiles: "8x4"`, `top_module: tt_um_jlnuijens_one11_uart`, `clock_hz: 50000000`. Push to `main` runs test, docs, and GDS. The submission form takes this repository URL. Deadline 18 January 2027. Selected designs are planned for the March 2027 CMOS5L shuttle.
 
 Pin-level detail is also in [docs/info.md](docs/info.md).

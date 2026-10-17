@@ -1,15 +1,15 @@
 # Tiny Tapeout / Jane Street CMOS5L — CPU 1.1 UART
-# 1.1 class line. 6x4. 2x16 bases. UART is FIRE on a pad.
+# 1.1 class line. 8x4. 2x16 bases. UART is FIRE on a pad.
 project:
   title:        "CPU 1.1 UART"
   author:       "Joshua Luke Nuijens / Axiom 1 Technology, LLC"
   discord:      ""
-  description:  "ONE CPU 1.1 32. UART, SPI, I2C, hook walks. Two 512x32 SRAM macros hold signatures. A third holds the list: map, count, byte. FF on the store starts the counter."
+  description:  "ONE CPU 1.1 32. UART, SPI, I2C, hook walks. 8x4. Two 512x32 SRAM macros hold signatures. Two more hold the list: map, count, byte. FF on the store starts the counter."
   language:     "Verilog"
   clock_hz:     50000000
 
   # Jane Street allocation. A tile is ~167x108 µm.
-  tiles: "6x4"
+  tiles: "8x4"
 
   # Must start with tt_um_. Unique with github username.
   top_module:  "tt_um_jlnuijens_one11_uart"

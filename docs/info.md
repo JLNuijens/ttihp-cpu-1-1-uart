@@ -1,12 +1,12 @@
 # ONE CPU 1.1 32
 
-Jane Street protocol-emulator ASIC. IHP CMOS5L, tile 6×4. Thirty-two bases, one FIRE, 1.6 GB/s on the rising edge. The line at count 1 is 100 Mbit/s, both edges. Two `512×32` macros, 4 KB. The 8×4 template is not in this flow.
+Jane Street protocol-emulator ASIC. IHP CMOS5L, tile 8×4. Thirty-two bases, one FIRE, 1.6 GB/s on the rising edge. The line at count 1 is 100 Mbit/s, both edges. Four `512×32` macros. Two hold the signatures. Two hold the list.
 
 Jane Street asked for one part that can be used for more than one thing after fabrication. This one is. The register is the program: the map, the count, and the byte. No separate file is sent. The loads are the CPU, UART, SPI, I2C, and, on the hook, the memory, JTAG, Manchester, SWD, PS/2, a USB low-speed bit cell, and a CAN bit cell. Same clock, same FIRE, same 32 bases.
 
 ## SRAM
 
-Two copies of `RM_IHPSG13_1P_512x32_c2_bm_bist` hold the signatures. 512 words, 32 bits, 2 KB each. One port. A third copy sits in front of the walks and holds the list. Each store appends the map, the count, and the byte. `uio` at `FF` on that store starts the counter. Each FIRE runs that cell, and the counter adds 1 when the cell finishes.
+Two copies of `RM_IHPSG13_1P_512x32_c2_bm_bist` hold the signatures. 512 words, 32 bits, 2 KB each. One port. Two more sit in front of the walks, in the same two rows, and hold the list. 1,024 cells. Each store appends the map, the count, and the byte. `uio` at `FF` on that store starts the counter. Each FIRE runs that cell, and the counter adds 1 when the cell finishes.
 
 Map `11`, count `000`. `uio[7:0]` is the address. The upper address bit is held at 0, so 256 of 512 words are reachable. Both macros use that address. Bases 0 and 1 each read their own word. `uo[7:0]` is the low byte of the first word and replaces the walk pins while this map is selected. FIRE stores the two results. The words remain until that address is written again.
 
