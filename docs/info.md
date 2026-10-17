@@ -34,7 +34,7 @@ The protocol after fabrication is three inputs and FIRE.
 | `ui[7:5]` | 3 | Clocks the bit is held: 1, 4, 5, 8, 16, 33, 125, 434. |
 | `ui[4:3]` | 2 | Pins that carry the bit. |
 
-Same clock. Same FIRE. Same 32 bases. A different count or a different map is a different cell. No module is added.
+Same clock. Same FIRE. Same 32 bases. Any byte, any count, and any map is a cell. The named walks are not a whitelist. No module is added.
 
 The register is the program. It holds the map, the count, and the byte. It is not the SRAM. Set the pads to the load, then FIRE on map `11`, count `000`, with `ui[1]` high. Reset clears it. The count is one of the eight holds. The two macros still hold the signatures.
 

@@ -148,6 +148,8 @@ Count `000` writes one bit on the rising edge and the next bit on the falling ed
 
 ## Map — `ui[4:3]`
 
+The four values choose which pins move. They are not a limit on the byte or the count. Any of the 256 bytes at any of the eight holds is a mapping on that map.
+
 | `ui[4:3]` | Walk | Output | Input |
 |---|---|---|---|
 | `00` | UART 8N1 | `uo[0]` TX. Start, eight data bits, LSB first, stop. | `ui[2]` RX |
@@ -170,7 +172,7 @@ On map `11` the count selects the line.
 
 ## Cells
 
-A cell is one byte, one hold, and one map. The output column is the pin waveform. These ten were simulated on this die.
+A cell is any byte, any hold, and any map. That is 256 × 8 × 4. The ten rows are examples of that field, not the set. The output column is the pin waveform.
 
 | | Map | Count | Byte | Output |
 |---|---|---|---|---|
