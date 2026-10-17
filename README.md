@@ -55,6 +55,8 @@ Base 0 stores the byte. Base 3 stores the byte plus 3. The result and the weight
 | `5C` | 4 + 8 + 16 + 64 | `104f005c` | 8 |
 | `B1` | 1 + 16 + 32 + 128 | `104f00b1` | 8 |
 
+All 256 codes take the same FIRE. Each one returns itself in the low byte. Two return weight 1: `00` is `020a0000`, `01` is `020a0001`. Seven return weight 2, and they are the single bits `02`, `04`, `08`, `10`, `20`, `40`, `80`, with the result `0414` and that byte. The other 247 return weight 8, with the result `104f` and that byte. The rows above are examples of that field, not the set.
+
 PE, ELF, Mach-O, DEX, WASM, UTF-8, a GPU file, and a byte with no name are this table. The list is not a whitelist. None of them is run as itself.
 
 ## Functions

@@ -48,7 +48,7 @@ Count 1 uses both edges of the 50 MHz clock. Every larger count holds the bit on
 
 The input is the load. FIRE puts it on the bases and on the pins. A byte is eight weights: 1, 2, 4, 8, 16, 32, 64, 128. Each is 2 of the one before it. The byte is the sum of the weights that are on. There is no separate file.
 
-An instruction from another machine is that sum. It is not decoded. `90` is not a no-op. `C3` is not a return. `B1` has no name. All three take the same FIRE. x86 and ARM64 are not a special case, and they are not a limit. The measured results are in the README under "The byte."
+An instruction from another machine is that sum. It is not decoded. `90` is not a no-op. `C3` is not a return. `B1` has no name. All 256 codes take the same FIRE and return themselves in the low byte. Two have weight 1, seven have weight 2, and the other 247 have weight 8. x86 and ARM64 are not a special case, and they are not a limit. The measured results are in the README under "The byte."
 
 UART, SPI, and I2C are the same shift on different pins. The hook walks are bit cells: low-speed USB NRZI, 10 Mbit Manchester, a JTAG shift, an SWD header, a PS/2 device frame, and a CAN bit. They are not a USB stack, an Ethernet MAC, or a CAN controller.
 
