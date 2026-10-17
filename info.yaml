@@ -4,7 +4,7 @@ project:
   title:        "CPU 1.1 UART"
   author:       "Joshua Luke Nuijens / Axiom 1 Technology, LLC"
   discord:      ""
-  description:  "ONE CPU 1.1 32. UART, SPI, I2C, hook walks. Two 512x32 SRAM macros, 4 KB. The address is the byte on uio. FIRE stores the word. It stays until that address is written again."
+  description:  "ONE CPU 1.1 32. UART, SPI, I2C, hook walks. Two 512x32 SRAM macros hold signatures. A third holds the list: map, count, byte. FF on the store starts the counter."
   language:     "Verilog"
   clock_hz:     50000000
 

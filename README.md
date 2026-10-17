@@ -203,6 +203,10 @@ Map `11`, count `000`. `uio[7:0]` is the address. The upper address bit stays 0,
 
 UART, SPI, I2C, and the other walks keep their pins on the other maps. The register is not these macros.
 
+## List
+
+A third macro sits in front of the walks. Each store appends a cell: the map, the count, and the byte. `uio` at `FF` on the store starts the counter at the first cell. Each later FIRE runs the cell the counter is on. When that cell finishes, the counter adds 1. The two macros behind the bases still hold the signatures.
+
 ## Processor
 
 | Site | At reset | While the clock holds |

@@ -103,7 +103,8 @@
       },
       "instances": {
         "u_sram0": {"location": [3.36, 3.78], "orientation": "FS"},
-        "u_sram1": {"location": [3.36, 340.2], "orientation": "N"}
+        "u_sram1": {"location": [3.36, 340.2], "orientation": "N"},
+        "u_sram2": {"location": [430.08, 3.78], "orientation": "N"}
       }
     }
   },
@@ -111,7 +112,9 @@
     "u_sram0 VPWR VGND VDD! VSS!",
     "u_sram0 VPWR VGND VDDARRAY! VSS!",
     "u_sram1 VPWR VGND VDD! VSS!",
-    "u_sram1 VPWR VGND VDDARRAY! VSS!"
+    "u_sram1 VPWR VGND VDDARRAY! VSS!",
+    "u_sram2 VPWR VGND VDD! VSS!",
+    "u_sram2 VPWR VGND VDDARRAY! VSS!"
   ],
   "ROUTING_OBSTRUCTIONS": [
     "Metal2 3.36 3.78 420.00 195.12",
@@ -119,6 +122,9 @@
     "Metal4 3.36 3.78 420.00 195.12",
     "Metal2 3.36 340.2 420.00 531.54",
     "Metal3 3.36 340.2 420.00 531.54",
-    "Metal4 3.36 340.2 420.00 531.54"
+    "Metal4 3.36 340.2 420.00 531.54",
+    "Metal2 430.08 3.78 846.72 195.12",
+    "Metal3 430.08 3.78 846.72 195.12",
+    "Metal4 430.08 3.78 846.72 195.12"
   ]
 }

@@ -33,6 +33,9 @@ module tt_um_jlnuijens_one11_uart #(
   reg [1:0] prog_map, arm_map;
   reg [2:0] prog_count, arm_count;
   reg [7:0] prog_byte, arm_byte;
+  reg       run_list;
+  reg [8:0] pc, rd;
+  reg [12:0] list_q;
   wire      pad_mem = (pad_map == 2'd3) && (pad_rsel == 3'd0);
 
   reg fire_d;
@@ -67,9 +70,9 @@ module tt_um_jlnuijens_one11_uart #(
     end
   end
 
-  wire [1:0] map      = prog_on ? prog_map : pad_map;
-  wire [2:0] rsel     = prog_on ? prog_count : pad_rsel;
-  wire [7:0] op_byte  = prog_on ? prog_byte : uio_in;
+  wire [1:0] map      = run_list ? list_q[1:0]  : (prog_on ? prog_map   : pad_map);
+  wire [2:0] rsel     = run_list ? list_q[4:2]  : (prog_on ? prog_count : pad_rsel);
+  wire [7:0] op_byte  = run_list ? list_q[12:5] : (prog_on ? prog_byte  : uio_in);
   wire [31:0] seq     = {24'd0, op_byte};
 
   wire [15:0] cpb;
@@ -311,6 +314,39 @@ module tt_um_jlnuijens_one11_uart #(
     .A_BIST_REN(1'b0), .A_BIST_ADDR(9'd0), .A_BIST_DIN(32'd0), .A_BIST_BM(32'd0)
   );
   reg [31:0] mem_q;
+  wire [31:0] dout2;
+  wire        list_store = pad_mem & fire & hot_pin & (uio_in != 8'hFF);
+  wire        list_start = pad_mem & fire & hot_pin & (uio_in == 8'hFF) & (pc != 9'd0);
+  wire [31:0] list_din   = {19'd0, arm_byte, arm_count, arm_map};
+  wire [8:0]  list_ad    = list_store ? pc : rd;
+  RM_IHPSG13_1P_512x32_c2_bm_bist u_sram2 (
+    .A_CLK(clk), .A_MEN(rst_n & (list_store | run_list)), .A_WEN(list_store), .A_REN(~list_store),
+    .A_ADDR(list_ad), .A_DIN(list_din), .A_DLY(1'b1), .A_DOUT(dout2), .A_BM(mem_bm),
+    .A_BIST_CLK(1'b0), .A_BIST_EN(1'b0), .A_BIST_MEN(1'b0), .A_BIST_WEN(1'b0),
+    .A_BIST_REN(1'b0), .A_BIST_ADDR(9'd0), .A_BIST_DIN(32'd0), .A_BIST_BM(32'd0)
+  );
+  reg busy_d;
+  always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+      run_list <= 1'b0;
+      pc       <= 9'd0;
+      rd       <= 9'd0;
+      list_q   <= 13'd0;
+      busy_d   <= 1'b0;
+    end else begin
+      busy_d <= busy;
+      if (list_start) begin
+        run_list <= 1'b1;
+        rd       <= 9'd0;
+      end else if (list_store) begin
+        pc <= pc + 9'd1;
+      end else if (run_list && busy_d && !busy) begin
+        if (rd + 9'd1 >= pc) run_list <= 1'b0;
+        else                 rd <= rd + 9'd1;
+      end
+      if (run_list) list_q <= dout2[12:0];
+    end
+  end
   always @(posedge clk or negedge rst_n) begin
     if (!rst_n) mem_q <= 32'd0;
     else        mem_q <= dout0;
@@ -353,6 +389,6 @@ module tt_um_jlnuijens_one11_uart #(
   assign uio_oe  = {6'd0, on_tap & tap_clk_oe, ((map == 2'd2) & i2c_oe) | (on_tap & tap_oe)};
 
   // The 512 seat is already the preload. r7 is 128. r14 is 4.
-  // The macros hold a word. They do not fetch.
+  // Two macros hold a signature. The third holds the list.
   wire _unused = &{ena, s0[0], s1[0], sl[0], ss[0], st[0], i2c_ack, 1'b0};
 endmodule

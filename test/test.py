@@ -628,3 +628,55 @@ async def test_spi_on_the_five_clock(dut):
     finally:
         task.cancel()
 
+
+@cocotb.test()
+async def test_list_walks(dut):
+    """Two stored cells. FF on the memory pads starts the counter. Each FIRE runs the next cell."""
+    task = await reset_dut(dut)
+    try:
+        dut.uio_in.value = 0xA5
+        dut.ui_in.value = 0x24
+        await ClockCycles(dut.clk, 2)
+        dut.uio_in.value = 0
+        dut.ui_in.value = 0x1A
+        await RisingEdge(dut.clk)
+        dut.ui_in.value = 0x1B
+        await RisingEdge(dut.clk)
+        dut.ui_in.value = 0x1A
+        await ClockCycles(dut.clk, 2)
+        dut.uio_in.value = 0xC3
+        dut.ui_in.value = 0x0C
+        await ClockCycles(dut.clk, 2)
+        dut.uio_in.value = 0
+        dut.ui_in.value = 0x1A
+        await RisingEdge(dut.clk)
+        dut.ui_in.value = 0x1B
+        await RisingEdge(dut.clk)
+        dut.ui_in.value = 0x1A
+        await ClockCycles(dut.clk, 2)
+        dut.uio_in.value = 0xFF
+        dut.ui_in.value = 0x1A
+        await RisingEdge(dut.clk)
+        dut.ui_in.value = 0x1B
+        await RisingEdge(dut.clk)
+        dut.ui_in.value = 0x00
+        await ClockCycles(dut.clk, 4)
+        dut.ui_in.value = 0x01
+        await RisingEdge(dut.clk)
+        dut.ui_in.value = 0x00
+        await FallingEdge(dut.clk)
+        assert dut.user_project.u_uart.busy_r.value == 1
+        for _ in range(40):
+            await RisingEdge(dut.clk)
+            if dut.user_project.u_uart.busy_r.value == 0:
+                break
+        await ClockCycles(dut.clk, 4)
+        dut.ui_in.value = 0x01
+        await RisingEdge(dut.clk)
+        dut.ui_in.value = 0x00
+        await FallingEdge(dut.clk)
+        assert dut.user_project.spi_busy.value == 1
+    finally:
+        task.cancel()
+
+

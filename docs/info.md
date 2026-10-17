@@ -6,7 +6,7 @@ Jane Street asked for one part that can be used for more than one thing after fa
 
 ## SRAM
 
-Two copies of `RM_IHPSG13_1P_512x32_c2_bm_bist`. 512 words, 32 bits, 2 KB each. One port.
+Two copies of `RM_IHPSG13_1P_512x32_c2_bm_bist` hold the signatures. 512 words, 32 bits, 2 KB each. One port. A third copy sits in front of the walks and holds the list. Each store appends the map, the count, and the byte. `uio` at `FF` on that store starts the counter. Each FIRE runs that cell, and the counter adds 1 when the cell finishes.
 
 Map `11`, count `000`. `uio[7:0]` is the address. The upper address bit is held at 0, so 256 of 512 words are reachable. Both macros use that address. Bases 0 and 1 each read their own word. `uo[7:0]` is the low byte of the first word and replaces the walk pins while this map is selected. FIRE stores the two results. The words remain until that address is written again.
 
