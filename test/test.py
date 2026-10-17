@@ -665,17 +665,32 @@ async def test_list_walks(dut):
         await RisingEdge(dut.clk)
         dut.ui_in.value = 0x00
         await FallingEdge(dut.clk)
-        assert dut.user_project.u_uart.busy_r.value == 1
-        for _ in range(40):
+        assert tx_busy(dut) == 1
+        saw_start = tx_bit(dut) == 0
+        for _ in range(48):
             await RisingEdge(dut.clk)
-            if dut.user_project.u_uart.busy_r.value == 0:
+            if tx_bit(dut) == 0:
+                saw_start = True
+            if tx_busy(dut) == 0:
                 break
+        assert saw_start
+        assert tx_busy(dut) == 0
         await ClockCycles(dut.clk, 4)
         dut.ui_in.value = 0x01
         await RisingEdge(dut.clk)
         dut.ui_in.value = 0x00
-        await FallingEdge(dut.clk)
-        assert dut.user_project.spi_busy.value == 1
+        cs_low = False
+        sclk = False
+        for _ in range(16):
+            await FallingEdge(dut.clk)
+            uo = int(dut.uo_out.value) & 0xFF
+            if ((uo >> 6) & 1) == 0:
+                cs_low = True
+            if ((uo >> 5) & 1) == 1:
+                sclk = True
+        assert cs_low
+        assert sclk
+        assert tx_bit(dut) == 1
     finally:
         task.cancel()
 
