@@ -1,12 +1,12 @@
 # ONE CPU 1.1 32
 
-Jane Street protocol-emulator ASIC. IHP CMOS5L, tile 8×4. One clock cycle: `ui[0]` high for that cycle, and all 32 bases take the byte. Base *k* gets the byte plus *k*. Every cycle, on all 32, is the 1.6 GB/s. The line at count 1 is 100 Mbit/s, both edges. Four `512×32` macros. Two hold the signatures. Two hold the list.
+Jane Street protocol-emulator ASIC. IHP CMOS5L, tile 8×4. One clock cycle: `ui[0]` high for that cycle, and all 32 bases take the byte. Base *k* gets the byte plus *k*. Every cycle, on all 32, is the 1.6 GB/s. The line at count 1 is 100 Mbit/s, both edges. Four `512×32` macros. Two behind the bases hold a cycle each. Two in front hold the list.
 
 Jane Street asked for one part that can be used for more than one thing after fabrication. This one is. The register is the program: the map, the count, and the byte. No separate file is sent. The loads are the CPU, UART, SPI, I2C, and, on the hook, the memory, JTAG, Manchester, SWD, PS/2, a USB low-speed bit cell, and a CAN bit cell. Same clock, same FIRE, same 32 bases.
 
 ## SRAM
 
-Two copies of `RM_IHPSG13_1P_512x32_c2_bm_bist` sit behind the bases. 512 words, 32 bits, 2 KB each. The first holds the signature of base 0. The second holds the rung: FIRE stores the cycle, and a later read of that address puts the cycle back. The stride is that cycle times 128. Two more sit in front of the walks and hold the list. 1,024 cells. Each store appends the map, the count, and the byte. `uio` at `FF` on that store starts the counter. Each FIRE runs that cell, and the counter adds 1 when the cell finishes.
+Two copies of `RM_IHPSG13_1P_512x32_c2_bm_bist` sit behind the bases. Both hold a cycle. FIRE writes the new cycle in the second and moves the one already there into the first. The compare is the second minus the first. The clock is not set back. 256 of the 512 words are named by the pins. Two more sit in front and hold the list, 1,024 cells, 13 bits used in each. One of those two is on at a time.
 
 Map `11`, count `000`. `uio[7:0]` is the address. The upper address bit is held at 0, so 256 of 512 words are reachable. Both macros use that address. Bases 0 and 1 each read their own word. `uo[7:0]` is the low byte of the first word and replaces the walk pins while this map is selected. FIRE stores the two results. The words remain until that address is written again.
 
@@ -36,7 +36,7 @@ The protocol after fabrication is three inputs and FIRE.
 
 Same clock. Same FIRE. Same 32 bases. Any byte, any count, and any map is a cell. The named walks are not a whitelist. No module is added.
 
-The register is the program. It holds the map, the count, and the byte. It is not the SRAM. Set the pads to the load, then FIRE on map `11`, count `000`, with `ui[1]` high. Reset clears it. The count is one of the eight holds. The two macros still hold the signatures.
+The register is the program. It holds the map, the count, and the byte. It is not the SRAM. Set the pads to the load, then FIRE on map `11`, count `000`, with `ui[1]` high. Reset clears it. The count is one of the eight holds. The two macros behind the bases hold a cycle each.
 
 The byte is loaded into the shift and into all 32 bases on the FIRE edge. UART, SPI, I2C, Manchester, NRZI, JTAG, SWD, PS/2, and the CAN cell shift that byte. A named file format is a sequence of bytes. An unnamed byte takes the same edge.
 

@@ -380,7 +380,7 @@ async def test_can_bit(dut):
 
 @cocotb.test()
 async def test_sram_two(dut):
-    """Address is the uio byte. FIRE stores the result. The same address reads it back."""
+    """Both back macros hold a cycle. The second minus the first is the compare."""
     task = await reset_dut(dut)
     try:
         dut.ui_in.value = 0x18
@@ -390,28 +390,26 @@ async def test_sram_two(dut):
         await ClockCycles(dut.clk, 1)
         dut.ui_in.value = 0x18
         await ClockCycles(dut.clk, 2)
-        word = int(dut.user_project.u_sram0.mem[5].value)
-        assert word == 0x020A0000, f"sram {word:08x}"
-        rung = int(dut.user_project.u_sram1.mem[5].value)
-        assert rung != 0x020A0000
+        first = int(dut.user_project.u_sram1.mem[5].value)
+        assert int(dut.user_project.u_sram0.mem[5].value) == 0
+        assert first != 0
         dut.ui_in.value = 0x04
         await ClockCycles(dut.clk, 20)
         dut.ui_in.value = 0x18
         dut.uio_in.value = 5
         await ClockCycles(dut.clk, 4)
-        got = int(dut.user_project.bases[0].u_cpu.cyc.value)
-        assert got == rung, f"rung {rung} came back {got}"
-        dut.uio_in.value = 9
+        dut.ui_in.value = 0x19
+        await ClockCycles(dut.clk, 1)
+        dut.ui_in.value = 0x18
         await ClockCycles(dut.clk, 2)
-        assert int(dut.user_project.u_sram0.mem[5].value) == 0x020A0000
-        dut.uio_in.value = 5
+        assert int(dut.user_project.u_sram0.mem[5].value) == first
+        second = int(dut.user_project.u_sram1.mem[5].value)
+        assert second > first
         await ClockCycles(dut.clk, 3)
         await Timer(1, unit="ns")
-        top = dut.user_project
-        dout = read_bus(top, _rtl(top, "dout0"), "dout0", 32)
-        assert dout == 0x020A0000
-        mem = _rtl(top, "mem_q")
-        low = int(mem.value) & 0xFF if mem is not None else read_bus(top, None, "mem_q", 8)
+        cmp = int(dut.user_project.rung_cmp.value)
+        assert cmp == (second - first) & 0xFFFFFFFF
+        low = int(dut.user_project.mem_q.value) & 0xFF
         assert int(dut.uo_out.value) == low
     finally:
         task.cancel()

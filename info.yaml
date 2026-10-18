@@ -4,7 +4,7 @@ project:
   title:        "CPU 1.1 UART"
   author:       "Joshua Luke Nuijens / Axiom 1 Technology, LLC"
   discord:      ""
-  description:  "ONE CPU 1.1 32. UART, SPI, I2C, hook walks. 8x4. One 512x32 SRAM holds the signature. One holds the rung. Two hold the list."
+  description:  "ONE CPU 1.1 32. UART, SPI, I2C, hook walks. 8x4. Two 512x32 SRAM macros behind the bases hold a cycle each and compare. Two in front hold the list."
   language:     "Verilog"
   clock_hz:     50000000
 

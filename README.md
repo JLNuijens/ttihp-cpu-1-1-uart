@@ -9,7 +9,7 @@ Joshua Luke Nuijens / Axiom 1 Technology, LLC. Top module `tt_um_jlnuijens_one11
 
 ## What it does
 
-One clock, 50 MHz. One cycle. Raise `ui[0]` for that cycle. All 32 bases take the byte on it. Base 0 gets the byte. Base 1 gets the byte plus 1. Base 31 gets the byte plus 31. Every cycle, on all 32, the count adds 1 and the stride adds 128. That is the 1.6 GB/s. One SRAM macro holds the signature of base 0. The next holds the rung: the cycle at FIRE, given back on a later read. A register holds the map, the count, and the byte. The clock holds the stage while the tile is enabled.
+One clock, 50 MHz. One cycle. Raise `ui[0]` for that cycle. All 32 bases take the byte on it. Base 0 gets the byte. Base 1 gets the byte plus 1. Base 31 gets the byte plus 31. Every cycle, on all 32, the count adds 1 and the stride adds 128. That is the 1.6 GB/s. Two SRAM macros behind the bases each hold a cycle. FIRE keeps the new one and the one before it, and the read is the difference. Two in front hold the list. A register holds the map, the count, and the byte. The clock holds the stage while the tile is enabled.
 
 ## Programmable
 
@@ -87,7 +87,7 @@ The walks are one use. These are the others. Same clock, same FIRE, same 32 base
 | Fetch | The register is the program. Each clock replaces the cycle and the stride. No separate file is sent. |
 | Register | Map, 2 bits. Count, 3 bits, one of the eight holds. Byte, 8 bits. Not the SRAM. |
 | Line | UART 8N1. Count 1 uses both edges: 10 ns, 100 Mbit/s. |
-| Memory | Four `RM_IHPSG13_1P_512x32_c2_bm_bist`. One holds the signature of base 0. One holds the rung. Two hold the list, 1,024 cells. |
+| Memory | Four `RM_IHPSG13_1P_512x32_c2_bm_bist`. Two behind the bases hold a cycle each and compare. Two in front hold the list, 1,024 cells. |
 | Address on the pins | `uio[7:0]`, 256 of 512 words. Two words at that address. |
 | Tile | 8×4. 1724 by 711 µm. |
 | License | Apache-2.0 |
@@ -163,7 +163,7 @@ On map `11` the count selects the line.
 
 | Count | Walk | Output |
 |---|---|---|
-| `000` | Memory | `uo[7:0]` is the low byte of the word at the address on `uio[7:0]`. |
+| `000` | Memory | The two back macros hold a cycle each. `uo[7:0]` is the low byte of the second minus the first. |
 | `001` | JTAG bit-bang | First FIRE stores TMS. Second FIRE clocks eight TDI bits. `uo[5]` TCK, `uo[6]` TMS, `uo[4]` TDI. `ui[2]` is TDO. |
 | `010` | Manchester | `uo[0]`, `uo[7]`. |
 | `011` | SWD | FIRE the request, FIRE the data byte. Header, turnaround, ACK, one data byte. `uo[5]` SWCLK, `uio[0]` SWDIO. |
@@ -193,18 +193,39 @@ Crossing a count with a different map does not add a module. UART at the I2C hol
 
 ## Memory
 
-Map `11`, count `000`. `uio[7:0]` is the address. The upper address bit stays 0, so the pins reach 256 of the 512 words.
+Four macros. All four are clocked and written. None of them is full on every cycle.
 
-| Macro | What FIRE writes | What a later read does |
-|---|---|---|
-| First | The signature of base 0 | Base 0 takes that word again. `uo[7:0]` is its low byte. |
-| Second | The rung. The cycle on that clock. | The cycle comes back. The stride is that cycle times 128. It stays while the address is held. |
+The back pair is on only while the map is `11` and the count is `000`, or on the write cycle after FIRE. The address is the byte on `uio`. The top address bit is held at 0, so 256 of the 512 words are used. Both macros use that same address.
 
-The words remain until that address is written again. UART, SPI, I2C, and the other walks keep their pins on the other maps. The register is not these macros.
+| Macro | Where | What it holds | What a read does |
+|---|---|---|---|
+| First | Behind the bases | The cycle that was already stored | Kept, so the next FIRE can move it |
+| Second | Behind the bases | The cycle at this FIRE | Kept. The stride is not pulled back. |
+| Third | In front | List cells 0 to 511 | The counter reads the cell and runs it |
+| Fourth | In front | List cells 512 to 1,023 | Same list, the upper half |
+
+FIRE on the back pair writes the new cycle into the second macro and moves the cycle that was there into the first. The compare is the second minus the first. `uo[7:0]` is the low byte of that difference. While the address is held, the 32 bases take that difference as the word. The clock is not set back to either cycle. The two numbers stay until that address is written again.
+
+The front pair is on only while a cell is being stored or the list is running. One of the two is selected at a time: the lower macro for the first 512 cells, the upper for the next 512. A cell is 13 bits of the 32: the map, the count, and the byte. The other 19 bits are unused. `uio` at `FF` on a store starts the counter at the first cell. Each later FIRE runs the cell the counter is on. When that cell finishes, the counter adds 1.
+
+What this covers, and what it does not:
+
+| Spec | Where it lives |
+|---|---|
+| The 32 bases, the 1.6 GB/s, the walks | The logic. Not in these macros. |
+| The 512 seat and the 720 reading | r7 and r14. Not in these macros. |
+| A cycle you can come back to | The second macro keeps it. The clock is not set back to it. |
+| The cycle before that one | The first macro. |
+| The difference of those two cycles | The compare on `uo[7:0]`, and the word the bases take while the address is held. |
+| A stored order of map, count, and byte | The two front macros, 1,024 cells. |
+| All 32 signatures | Not stored. The bases still fold them. Only the two cycles are kept. |
+| All 512 addresses on the back pair | No. The pins name 256. |
+
+UART, SPI, I2C, and the other walks keep their pins on the other maps. The register is not these macros.
 
 ## List
 
-Two macros sit in front of the walks, in the same two rows as the pair behind the bases. Each store appends a cell: the map, the count, and the byte. The first 512 cells are the lower macro. The next 512 are the upper one. `uio` at `FF` on the store starts the counter at the first cell. Each later FIRE runs the cell the counter is on. When that cell finishes, the counter adds 1. The two macros behind the bases hold the signature and the rung.
+The list is the two front macros in the table above. The two behind it hold the two cycles.
 
 ## Processor
 

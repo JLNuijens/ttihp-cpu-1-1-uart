@@ -206,16 +206,20 @@ module tt_um_jlnuijens_one11_uart #(
   reg [8:0] addr_q;
   reg       wr_pend;
   reg [31:0] rung_q;
+  reg [31:0] prev_q;
   reg        rung_arm;
+  wire [31:0] rung_cmp;
   always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
       addr_q   <= 9'd0;
       wr_pend  <= 1'b0;
       rung_q   <= 32'd0;
+      prev_q   <= 32'd0;
       rung_arm <= 1'b0;
     end else begin
       wr_pend <= mem_face & fire;
       if (fire) rung_q <= cc[0];
+      if (mem_face && !fire && !wr_pend) prev_q <= dout1;
       if (mem_face && !fire) addr_q <= {1'b0, uio_in};
       rung_arm <= mem_face && !fire && !wr_pend && (addr_q == {1'b0, uio_in});
     end
@@ -224,15 +228,13 @@ module tt_um_jlnuijens_one11_uart #(
   genvar k;
   generate
     for (k = 0; k < N_BASES; k = k + 1) begin : bases
-      wire [31:0] seq_k =
-          (mem_face && !wr_pend && (k == 0)) ? dout0 :
-          (seq + k);
+      wire [31:0] seq_k = rung_arm ? rung_cmp : (seq + k);
       one_cpu11 #(.LANE(k)) u_cpu (
         .clk       (clk),
         .rst_n     (rst_n),
         .run_hot   (hot),
         .fire      (fire),
-        .rung_back (rung_arm),
+        .rung_back (1'b0),
         .rung      (dout1),
         .seq       (seq_k),
         .rx_strobe (rx_strobe),
@@ -301,16 +303,17 @@ module tt_um_jlnuijens_one11_uart #(
   assign cy_all = c4[0] ^ c4[1];
   assign px_all = p4[0] ^ p4[1];
 
-  // The first macro holds the signature of base 0.
-  // The second holds the rung. FIRE stores the cycle. A later read puts it back.
+  // Behind the bases. Both hold a cycle. FIRE writes the new one in the
+  // second macro and moves the one already there into the first.
   wire        mem_on   = rst_n & (mem_face | wr_pend);
   wire        mem_wr   = wr_pend;
   wire [8:0]  mem_addr = addr_q;
   wire [31:0] mem_bm   = 32'hffffffff;
   wire [31:0] dout0, dout1;
+  assign rung_cmp = dout1 - dout0;
   RM_IHPSG13_1P_512x32_c2_bm_bist u_sram0 (
     .A_CLK(clk), .A_MEN(mem_on), .A_WEN(mem_wr), .A_REN(~mem_wr),
-    .A_ADDR(mem_addr), .A_DIN(s0[0]), .A_DLY(1'b1), .A_DOUT(dout0), .A_BM(mem_bm),
+    .A_ADDR(mem_addr), .A_DIN(prev_q), .A_DLY(1'b1), .A_DOUT(dout0), .A_BM(mem_bm),
     .A_BIST_CLK(1'b0), .A_BIST_EN(1'b0), .A_BIST_MEN(1'b0), .A_BIST_WEN(1'b0),
     .A_BIST_REN(1'b0), .A_BIST_ADDR(9'd0), .A_BIST_DIN(32'd0), .A_BIST_BM(32'd0)
   );
@@ -365,7 +368,7 @@ module tt_um_jlnuijens_one11_uart #(
   end
   always @(posedge clk or negedge rst_n) begin
     if (!rst_n) mem_q <= 32'd0;
-    else        mem_q <= dout0;
+    else        mem_q <= rung_cmp;
   end
 
   // Eight bits of the mix. One nibble per rise. The clock is not data,
