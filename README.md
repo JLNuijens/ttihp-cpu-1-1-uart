@@ -9,7 +9,7 @@ Joshua Luke Nuijens / Axiom 1 Technology, LLC. Top module `tt_um_jlnuijens_one11
 
 ## What it does
 
-One clock, 50 MHz. Thirty-two bases take the same FIRE. That edge is 1.6 GB/s inside the tile. Two SRAM macros hold the signatures of base 0 and base 1. A register holds the map, the count, and the byte. The clock holds the stage while the tile is enabled.
+One clock, 50 MHz. One cycle. Raise `ui[0]` for that cycle. All 32 bases take the byte on it. Base 0 gets the byte. Base 1 gets the byte plus 1. Base 31 gets the byte plus 31. Every cycle, on all 32, the count adds 1 and the stride adds 128. That is the 1.6 GB/s. Two SRAM macros hold the signatures of base 0 and base 1. A register holds the map, the count, and the byte. The clock holds the stage while the tile is enabled.
 
 ## Programmable
 
@@ -20,7 +20,7 @@ The loads are the CPU, UART, SPI, I2C, and, on the hook, the memory, JTAG, Manch
 | Way in | What it is |
 |---|---|
 | The register | Map, count, and byte. FIRE on the memory pads stores them. After that the outputs follow the register. |
-| CPU 1.1 | One FIRE. Base *k* takes byte + *k*. |
+| CPU 1.1 | One clock cycle. Base *k* gets the byte plus *k*. |
 | 512 and 720 | The same seat. r7 is 128. r14 is 4. `4 × 128 = 512`. The 720 reading is that number times `720 / 512`. |
 
 | Field | Pins | Values |
@@ -28,7 +28,7 @@ The loads are the CPU, UART, SPI, I2C, and, on the hook, the memory, JTAG, Manch
 | Byte | `uio[7:0]` | Any of 256. The 32 bases do not change with the coding. |
 | Count | `ui[7:5]` | 1, 4, 5, 8, 16, 33, 125, or 434 clocks. |
 | Map | `ui[4:3]` | Which pins carry the bit. The map table is below. |
-| FIRE | `ui[0]` | One rising edge. One cell. |
+| FIRE | `ui[0]` | One clock cycle. High for that cycle, low the cycle before. |
 
 UART held for the I2C count is the same shifter on `uo[0]`. SPI at the 10 ns hold is the same shifter on MOSI and SCLK. No module is added for the crossing.
 
@@ -83,7 +83,7 @@ The walks are one use. These are the others. Same clock, same FIRE, same 32 base
 | Clock | 50 MHz. Period 20 ns. One oscillator. |
 | Bases | 32. Two stacks of 16. Base *k* takes byte + *k*. |
 | Internal rate | 32 × 50 MHz = 1.6 GB/s, on the rising edge. |
-| Word in | 8 bits, one FIRE. Not one byte per clock. |
+| Word in | 8 bits, on that one clock cycle. Not a new byte every cycle. |
 | Fetch | The register is the program. Each clock replaces the cycle and the stride. No separate file is sent. |
 | Register | Map, 2 bits. Count, 3 bits, one of the eight holds. Byte, 8 bits. Not the SRAM. |
 | Line | UART 8N1. Count 1 uses both edges: 10 ns, 100 Mbit/s. |
@@ -111,7 +111,7 @@ The walks are one use. These are the others. Same clock, same FIRE, same 32 base
 | `rst_n` | in | Reset, active low | Low, then high, with `ui` and `uio` at 0. Returns the stage to the ground. |
 | `clk` | in | 50 MHz | The only time base. |
 | `ena` | in | Tile enable | Holds the stage while the tile is selected. |
-| `ui[0]` | in | FIRE | Rising edge. One operation for all 32 bases and for the selected walk. |
+| `ui[0]` | in | FIRE | High for one clock cycle. All 32 bases take the byte on that cycle. The selected walk takes it too. |
 | `ui[1]` | in | HOT | High holds the stage. With map `11`, count `000`, and FIRE, stores the register. |
 | `ui[2]` | in | Line in | UART RX, SPI MISO, JTAG TDO, CAN RX. Idle high. Sampled on map `00`. |
 | `ui[3]` | in | Map bit 0 | With `ui[4]`, selects the walk. |
