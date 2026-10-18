@@ -9,7 +9,7 @@ Joshua Luke Nuijens / Axiom 1 Technology, LLC. Top module `tt_um_jlnuijens_one11
 
 ## What it does
 
-One clock, 50 MHz. One cycle. Raise `ui[0]` for that cycle. All 32 bases take the byte on it. Base 0 gets the byte. Base 1 gets the byte plus 1. Base 31 gets the byte plus 31. Every cycle, on all 32, the count adds 1 and the stride adds 128. That is the 1.6 GB/s. Two SRAM macros hold the signatures of base 0 and base 1. A register holds the map, the count, and the byte. The clock holds the stage while the tile is enabled.
+One clock, 50 MHz. One cycle. Raise `ui[0]` for that cycle. All 32 bases take the byte on it. Base 0 gets the byte. Base 1 gets the byte plus 1. Base 31 gets the byte plus 31. Every cycle, on all 32, the count adds 1 and the stride adds 128. That is the 1.6 GB/s. One SRAM macro holds the signature of base 0. The next holds the rung: the cycle at FIRE, given back on a later read. A register holds the map, the count, and the byte. The clock holds the stage while the tile is enabled.
 
 ## Programmable
 
@@ -87,7 +87,7 @@ The walks are one use. These are the others. Same clock, same FIRE, same 32 base
 | Fetch | The register is the program. Each clock replaces the cycle and the stride. No separate file is sent. |
 | Register | Map, 2 bits. Count, 3 bits, one of the eight holds. Byte, 8 bits. Not the SRAM. |
 | Line | UART 8N1. Count 1 uses both edges: 10 ns, 100 Mbit/s. |
-| Memory | Four `RM_IHPSG13_1P_512x32_c2_bm_bist`. Two hold the signatures, 4 KB. Two hold the list, 1,024 cells. |
+| Memory | Four `RM_IHPSG13_1P_512x32_c2_bm_bist`. One holds the signature of base 0. One holds the rung. Two hold the list, 1,024 cells. |
 | Address on the pins | `uio[7:0]`, 256 of 512 words. Two words at that address. |
 | Tile | 8×4. 1724 by 711 µm. |
 | License | Apache-2.0 |
@@ -193,19 +193,18 @@ Crossing a count with a different map does not add a module. UART at the I2C hol
 
 ## Memory
 
-Map `11`, count `000`. `uio[7:0]` is the address. The upper address bit stays 0, so the pins reach 256 of the 512 words. Both macros use that address.
+Map `11`, count `000`. `uio[7:0]` is the address. The upper address bit stays 0, so the pins reach 256 of the 512 words.
 
-| Operation | Result |
-|---|---|
-| Read | Bases 0 and 1 each take the word from their own macro. `uo[7:0]` is the low byte of the first word. |
-| Write | FIRE stores the two results at that address. |
-| Hold | The words remain until that address is written again. |
+| Macro | What FIRE writes | What a later read does |
+|---|---|---|
+| First | The signature of base 0 | Base 0 takes that word again. `uo[7:0]` is its low byte. |
+| Second | The rung. The cycle on that clock. | The cycle comes back. The stride is that cycle times 128. It stays while the address is held. |
 
-UART, SPI, I2C, and the other walks keep their pins on the other maps. The register is not these macros.
+The words remain until that address is written again. UART, SPI, I2C, and the other walks keep their pins on the other maps. The register is not these macros.
 
 ## List
 
-Two macros sit in front of the walks, in the same two rows as the pair behind the bases. Each store appends a cell: the map, the count, and the byte. The first 512 cells are the lower macro. The next 512 are the upper one. `uio` at `FF` on the store starts the counter at the first cell. Each later FIRE runs the cell the counter is on. When that cell finishes, the counter adds 1. The two macros behind the bases still hold the signatures.
+Two macros sit in front of the walks, in the same two rows as the pair behind the bases. Each store appends a cell: the map, the count, and the byte. The first 512 cells are the lower macro. The next 512 are the upper one. `uio` at `FF` on the store starts the counter at the first cell. Each later FIRE runs the cell the counter is on. When that cell finishes, the counter adds 1. The two macros behind the bases hold the signature and the rung.
 
 ## Processor
 

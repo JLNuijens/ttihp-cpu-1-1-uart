@@ -9,6 +9,8 @@ module one_cpu11 #(
   input  wire        rst_n,
   input  wire        run_hot,
   input  wire        fire,
+  input  wire        rung_back,
+  input  wire [31:0] rung,
   input  wire [31:0] seq,
   input  wire        rx_strobe,
   input  wire [7:0]  rx_data,
@@ -58,7 +60,12 @@ module one_cpu11 #(
       latched<= 32'd0;
       st     <= 2'd2;
     end else begin
-      if (run_hot) begin
+      if (rung_back) begin
+        cyc   <= rung;
+        str   <= (rung << 7) + LANE;
+        rf[1] <= rung;
+        rf[2] <= (rung << 7) + LANE;
+      end else if (run_hot) begin
         cyc   <= cyc + 32'd1;
         str   <= str + 32'd128;
         rf[1] <= cyc + 32'd1;
