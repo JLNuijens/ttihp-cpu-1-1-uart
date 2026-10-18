@@ -9,7 +9,11 @@ Joshua Luke Nuijens / Axiom 1 Technology, LLC. Top module `tt_um_jlnuijens_one11
 
 ## What it does
 
-One clock, 50 MHz. One cycle. Raise `ui[0]` for that cycle. All 32 bases take the byte on it. Base 0 gets the byte. Base 1 gets the byte plus 1. Base 31 gets the byte plus 31. Every cycle, on all 32, the count adds 1 and the stride adds 128. That is the 1.6 GB/s. Two SRAM macros behind the bases each hold a cycle. FIRE keeps the new one and the one before it, and the read is the difference. Two in front hold the list. A register holds the map, the count, and the byte. The clock holds the stage while the tile is enabled.
+The clock is 50 MHz. One cycle is 20 ns.
+
+`ui[0]` sits low. Raise it for one cycle, then let it fall. That cycle is the whole of what this page calls FIRE. The byte is already on `uio[7:0]`. On that cycle all 32 bases take it. Base 0 gets the byte. Base 1 gets the byte plus 1. Base 31 gets the byte plus 31.
+
+Every cycle, whether or not `ui[0]` is high, each base adds 1 to its count and 128 to its stride. 32 bases on every cycle is the 1.6 GB/s. Two SRAM macros behind the bases each hold a cycle. The one-cycle rise keeps the new one and the one before it, and the read is the difference. Two in front hold the list. A register holds the map, the count, and the byte. The clock holds the stage while the tile is enabled.
 
 ## Programmable
 
@@ -19,7 +23,7 @@ The loads are the CPU, UART, SPI, I2C, and, on the hook, the memory, JTAG, Manch
 
 | Way in | What it is |
 |---|---|
-| The register | Map, count, and byte. FIRE on the memory pads stores them. After that the outputs follow the register. |
+| The register | Map, count, and byte. Raise `ui[0]` for one cycle on the memory pads. That stores them. After that the outputs follow the register. |
 | CPU 1.1 | One clock cycle. Base *k* gets the byte plus *k*. |
 | 512 and 720 | The same seat. r7 is 128. r14 is 4. `4 × 128 = 512`. The 720 reading is that number times `720 / 512`. |
 
@@ -28,17 +32,17 @@ The loads are the CPU, UART, SPI, I2C, and, on the hook, the memory, JTAG, Manch
 | Byte | `uio[7:0]` | Any of 256. The 32 bases do not change with the coding. |
 | Count | `ui[7:5]` | 1, 4, 5, 8, 16, 33, 125, or 434 clocks. |
 | Map | `ui[4:3]` | Which pins carry the bit. The map table is below. |
-| FIRE | `ui[0]` | One clock cycle. High for that cycle, low the cycle before. |
+| FIRE | `ui[0]` | The name of that one cycle. High for the cycle, low the cycle before. |
 
 UART held for the I2C count is the same shifter on `uo[0]`. SPI at the 10 ns hold is the same shifter on MOSI and SCLK. No module is added for the crossing.
 
-The byte is the load the bases take. It is not an instruction from another machine. The next section is the whole of what a byte is on this die.
+The byte is the load the bases take. An opcode from another machine is that same byte. The next section is the measured run.
 
 ## The byte
 
 A byte is eight weights already on the processor: 1, 2, 4, 8, 16, 32, 64, 128. Each one is 2 of the one before it. The byte is the sum of the weights that are present. That is the load. There is no separate file.
 
-An instruction on another machine is that byte. The opcode is the byte. The 1s in it are the weights, and those run. One FIRE. The other machine's name for the byte is not a second operation. `90` is `10010000`, so the weights are 16 and 128, and the result is `104f0090`. `C3` is not a return. `B1` has no name. All three take the same FIRE and the same 32 bases. A foreign opcode gets no special case.
+An instruction on another machine is that byte. The opcode is the byte. The 1s in it are the weights, and those run on the one cycle `ui[0]` is high. The other machine's name for the byte is not a second operation. `90` is `10010000`, so the weights are 16 and 128, and the result is `104f0090`. `C3` is not a return. `B1` has no name. All three take the same cycle and the same 32 bases. A foreign opcode gets no special case.
 
 Base 0 stores the byte. Base 3 stores the byte plus 3. The result and the weight are what base 0 returned.
 
@@ -55,44 +59,127 @@ Base 0 stores the byte. Base 3 stores the byte plus 3. The result and the weight
 | `5C` | 4 + 8 + 16 + 64 | `104f005c` | 8 |
 | `B1` | 1 + 16 + 32 + 128 | `104f00b1` | 8 |
 
-All 256 codes take the same FIRE. Each one returns itself in the low byte. Two return weight 1: `00` is `020a0000`, `01` is `020a0001`. Seven return weight 2, and they are the single bits `02`, `04`, `08`, `10`, `20`, `40`, `80`, with the result `0414` and that byte. The other 247 return weight 8, with the result `104f` and that byte. The rows above are examples of that field, not the set.
+All 256 codes take that one cycle. Each one returns itself in the low byte. Two return weight 1: `00` is `020a0000`, `01` is `020a0001`. Seven return weight 2, and they are the single bits `02`, `04`, `08`, `10`, `20`, `40`, `80`, with the result `0414` and that byte. The other 247 return weight 8, with the result `104f` and that byte. The rows above are examples of that field, not the set.
 
-Thirty sets were fired, one opcode each. All 30 came back as themselves. Then every byte from `00` to `FF`. None missed. A wider instruction is its bytes, one FIRE each.
+113 machines were fired. A wider instruction was its bytes, one cycle each. 185 cycles. Every byte came back as itself. None missed.
 
-| Set | Opcode | Result |
-|---|---|---|
-| x86 | `90` | `104f0090` |
-| x86-64 | `48` | `104f0048` |
-| 6502 | `A9` | `104f00a9` |
-| Z80 | `3E` | `104f003e` |
-| 8080 | `3E` | `104f003e` |
-| 6800 | `86` | `104f0086` |
-| 6809 | `86` | `104f0086` |
-| 8051 | `E4` | `104f00e4` |
-| AVR | `0C` | `104f000c` |
-| SM83 | `3E` | `104f003e` |
-| Thumb | `20` | `04140020` |
-| ARM64 | `D6` | `104f00d6` |
-| RISC-V | `13` | `104f0013` |
-| MIPS | `20` | `04140020` |
-| PowerPC | `7C` | `104f007c` |
-| SPARC | `9A` | `104f009a` |
-| JVM | `B1` | `104f00b1` |
-| CIL | `00` | `020a0000` |
-| WASM | `0B` | `104f000b` |
-| DEX | `0E` | `104f000e` |
-| eBPF | `B7` | `104f00b7` |
-| PDP-11 | `15` | `104f0015` |
-| CHIP-8 | `EE` | `104f00ee` |
-| Lua | `27` | `104f0027` |
-| Brainfuck | `2B` | `104f002b` |
-| UTF-8 | `C3` | `104f00c3` |
-| ELF | `7F` | `104f007f` |
-| PE | `4D` | `104f004d` |
-| Mach-O | `CF` | `104f00cf` |
-| Mach-O 64 | `FA` | `104f00fa` |
+| Machine | Bytes |
+|---|---|
+| x86 | `90` |
+| x86-64 | `48` |
+| 6502 | `A9` |
+| 65C02 | `1A` |
+| 65816 | `A9` |
+| Z80 | `3E` |
+| eZ80 | `40` |
+| 8080 | `76` |
+| 8085 | `76` |
+| 8008 | `C0` |
+| 4004 | `E0` |
+| 1802 | `D4` |
+| SC/MP | `90` |
+| 6800 | `86` |
+| 6809 | `86` |
+| 68HC11 | `86` |
+| 6805 | `A6` |
+| 8051 | `E4` |
+| STM8 | `72` |
+| AVR | `0C` |
+| SM83 | `3E` |
+| HuC6280 | `03` |
+| SPC700 | `8F` |
+| Z8 | `8F` |
+| Rabbit | `87` |
+| PIC16 | `28 00` |
+| MSP430 | `40 30` |
+| H8 | `01 00` |
+| SuperH | `00 09` |
+| V850 | `40` |
+| Blackfin | `00 00` |
+| M32R | `70 00` |
+| MicroBlaze | `80 00 00 00` |
+| Nios II | `00 00 00 06` |
+| Xtensa | `00 20 00` |
+| ARC | `26 4A 23 00` |
+| Hexagon | `00 C0 00 7F` |
+| Thumb | `00 20` |
+| ARM | `00 00 A0 E1` |
+| ARM64 | `C0 03 5F D6` |
+| RISC-V | `13 00 00 00` |
+| RISC-V C | `01 00` |
+| MIPS | `00 00 00 00` |
+| MIPS16 | `65 00` |
+| PowerPC | `7C 08 02 A6` |
+| SPARC | `9D E3 BF A0` |
+| Alpha | `00 00 FE 2F` |
+| PA-RISC | `08 00 02 40` |
+| System/360 | `1B` |
+| z/Architecture | `07` |
+| VAX | `04` |
+| PDP-11 | `00 87` |
+| PDP-8 | `74` |
+| Itanium | `00 00 00 00` |
+| OpenRISC | `15 00 00 00` |
+| LoongArch | `00 00 00 04` |
+| C-SKY | `00 00` |
+| Andes | `00 00 00 45` |
+| TMS9900 | `03 80` |
+| NS32016 | `02` |
+| Clipper | `00 00` |
+| Transputer | `2F` |
+| MMIX | `00 00 00 00` |
+| Propeller | `00` |
+| x87 | `D9` |
+| MMX | `0F` |
+| SSE | `0F` |
+| AVX | `C5` |
+| EVEX | `62` |
+| JVM | `B1` |
+| CIL | `00` |
+| WASM | `0B` |
+| DEX | `0E` |
+| SPIR-V | `07 23 02 03` |
+| LLVM | `42 43 C0 DE` |
+| eBPF | `B7` |
+| cBPF | `00` |
+| Lua | `1B` |
+| Python | `16` |
+| BEAM | `46` |
+| OCaml | `84` |
+| CHIP-8 | `EE` |
+| Uxn | `00` |
+| Brainfuck | `2B` |
+| Forth | `20` |
+| PostScript | `25` |
+| ELF | `7F` |
+| PE | `4D` |
+| Mach-O | `CF` |
+| Mach-O 64 | `FE` |
+| a.out | `07` |
+| COFF | `4C` |
+| XCOFF | `01` |
+| Java | `CA` |
+| FAT | `CA` |
+| ZIP | `50` |
+| gzip | `1F` |
+| bzip2 | `42` |
+| xz | `FD` |
+| 7z | `37` |
+| RAR | `52` |
+| PNG | `89` |
+| JPEG | `FF` |
+| GIF | `47` |
+| PDF | `25` |
+| SQLite | `53` |
+| FLAC | `66` |
+| Ogg | `4F` |
+| MP3 | `49` |
+| MP4 | `66` |
+| UTF-8 | `C3` |
+| UTF-16 | `FF` |
+| UTF-32 | `FF` |
 
-The list is not a whitelist. Any other set whose instructions are bytes is the same proof.
+The low byte of the result is the byte that went in. The list is not a whitelist. Any other set whose instructions are bytes is the same cycle.
 
 ## Functions
 

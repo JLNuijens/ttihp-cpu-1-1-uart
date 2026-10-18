@@ -1,6 +1,6 @@
 # ONE CPU 1.1 32
 
-Jane Street protocol-emulator ASIC. IHP CMOS5L, tile 8×4. One clock cycle: `ui[0]` high for that cycle, and all 32 bases take the byte. Base *k* gets the byte plus *k*. Every cycle, on all 32, is the 1.6 GB/s. The line at count 1 is 100 Mbit/s, both edges. Four `512×32` macros. Two behind the bases hold a cycle each. Two in front hold the list.
+Jane Street protocol-emulator ASIC. IHP CMOS5L, tile 8×4. The clock is 50 MHz. `ui[0]` sits low. Raise it for one cycle. That cycle is FIRE. The byte is already on the pins, and all 32 bases take it. Base *k* gets the byte plus *k*. Every cycle, on all 32, is the 1.6 GB/s. The line at count 1 is 100 Mbit/s, both edges. Four `512×32` macros. Two behind the bases hold a cycle each. Two in front hold the list.
 
 Jane Street asked for one part that can be used for more than one thing after fabrication. This one is. The register is the program: the map, the count, and the byte. No separate file is sent. The loads are the CPU, UART, SPI, I2C, and, on the hook, the memory, JTAG, Manchester, SWD, PS/2, a USB low-speed bit cell, and a CAN bit cell. Same clock, same FIRE, same 32 bases.
 
@@ -48,7 +48,7 @@ Count 1 uses both edges of the 50 MHz clock. Every larger count holds the bit on
 
 The input is the load. FIRE puts it on the bases and on the pins. A byte is eight weights: 1, 2, 4, 8, 16, 32, 64, 128. Each is 2 of the one before it. The byte is the sum of the weights that are on. There is no separate file.
 
-An instruction from another machine is that byte. The opcode is the byte. The 1s in it are the weights, and those run. `90` is `10010000`, weights 16 and 128, result `104f0090`. `C3` is not a return. `B1` has no name. All 256 codes take the same FIRE and return themselves in the low byte. Thirty sets were fired, one opcode each, and all 30 came back. The measured table is in the README under "The byte." x86 and ARM64 are not a special case, and they are not a limit.
+An instruction from another machine is that byte. The opcode is the byte. The 1s in it are the weights, and those run on the cycle `ui[0]` is high. `90` is `10010000`, weights 16 and 128, result `104f0090`. `C3` is not a return. `B1` has no name. All 256 codes take that cycle and return themselves in the low byte. 113 machines were fired, 185 cycles, and every byte came back. The table is in the README under "The byte." x86 and ARM64 are not a special case, and they are not a limit.
 
 UART, SPI, and I2C are the same shift on different pins. The hook walks are bit cells: low-speed USB NRZI, 10 Mbit Manchester, a JTAG shift, an SWD header, a PS/2 device frame, and a CAN bit. They are not a USB stack, an Ethernet MAC, or a CAN controller.
 
