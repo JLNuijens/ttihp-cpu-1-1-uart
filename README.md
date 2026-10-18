@@ -38,7 +38,7 @@ The byte is the load the bases take. It is not an instruction from another machi
 
 A byte is eight weights already on the processor: 1, 2, 4, 8, 16, 32, 64, 128. Each one is 2 of the one before it. The byte is the sum of the weights that are present. That is the load. There is no separate file.
 
-An instruction on another machine is the same sum. It is not decoded, and it is not executed. `90` is not a no-op. `C3` is not a return. `B1` has no name. All three take the same FIRE and the same 32 bases. A foreign opcode gets no special case.
+An instruction on another machine is that byte. The opcode is the byte. The 1s in it are the weights, and those run. One FIRE. The other machine's name for the byte is not a second operation. `90` is `10010000`, so the weights are 16 and 128, and the result is `104f0090`. `C3` is not a return. `B1` has no name. All three take the same FIRE and the same 32 bases. A foreign opcode gets no special case.
 
 Base 0 stores the byte. Base 3 stores the byte plus 3. The result and the weight are what base 0 returned.
 
@@ -57,7 +57,42 @@ Base 0 stores the byte. Base 3 stores the byte plus 3. The result and the weight
 
 All 256 codes take the same FIRE. Each one returns itself in the low byte. Two return weight 1: `00` is `020a0000`, `01` is `020a0001`. Seven return weight 2, and they are the single bits `02`, `04`, `08`, `10`, `20`, `40`, `80`, with the result `0414` and that byte. The other 247 return weight 8, with the result `104f` and that byte. The rows above are examples of that field, not the set.
 
-PE, ELF, Mach-O, DEX, WASM, UTF-8, a GPU file, and a byte with no name are this table. The list is not a whitelist. None of them is run as itself.
+Thirty sets were fired, one opcode each. All 30 came back as themselves. Then every byte from `00` to `FF`. None missed. A wider instruction is its bytes, one FIRE each.
+
+| Set | Opcode | Result |
+|---|---|---|
+| x86 | `90` | `104f0090` |
+| x86-64 | `48` | `104f0048` |
+| 6502 | `A9` | `104f00a9` |
+| Z80 | `3E` | `104f003e` |
+| 8080 | `3E` | `104f003e` |
+| 6800 | `86` | `104f0086` |
+| 6809 | `86` | `104f0086` |
+| 8051 | `E4` | `104f00e4` |
+| AVR | `0C` | `104f000c` |
+| SM83 | `3E` | `104f003e` |
+| Thumb | `20` | `04140020` |
+| ARM64 | `D6` | `104f00d6` |
+| RISC-V | `13` | `104f0013` |
+| MIPS | `20` | `04140020` |
+| PowerPC | `7C` | `104f007c` |
+| SPARC | `9A` | `104f009a` |
+| JVM | `B1` | `104f00b1` |
+| CIL | `00` | `020a0000` |
+| WASM | `0B` | `104f000b` |
+| DEX | `0E` | `104f000e` |
+| eBPF | `B7` | `104f00b7` |
+| PDP-11 | `15` | `104f0015` |
+| CHIP-8 | `EE` | `104f00ee` |
+| Lua | `27` | `104f0027` |
+| Brainfuck | `2B` | `104f002b` |
+| UTF-8 | `C3` | `104f00c3` |
+| ELF | `7F` | `104f007f` |
+| PE | `4D` | `104f004d` |
+| Mach-O | `CF` | `104f00cf` |
+| Mach-O 64 | `FA` | `104f00fa` |
+
+The list is not a whitelist. Any other set whose instructions are bytes is the same proof.
 
 ## Functions
 
