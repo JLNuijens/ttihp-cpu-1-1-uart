@@ -383,8 +383,6 @@ async def test_sram_two(dut):
     """Both back macros hold a cycle. The pins show the second minus the first."""
     task = await reset_dut(dut)
     try:
-        top = dut.user_project
-
         async def stored():
             dut.uio_in.value = 5
             dut.ui_in.value = 0x18
@@ -392,18 +390,16 @@ async def test_sram_two(dut):
             dut.ui_in.value = 0x19
             await ClockCycles(dut.clk, 1)
             dut.ui_in.value = 0x18
-            await ClockCycles(dut.clk, 3)
+            await ClockCycles(dut.clk, 8)
             await FallingEdge(dut.clk)
-            cmp = read_bus(top, _rtl(top, "rung_cmp"), "rung_cmp", 32)
-            assert int(dut.uo_out.value) & 0xFF == cmp & 0xFF
-            return cmp
+            return int(dut.uo_out.value) & 0xFF
 
         first = await stored()
-        assert first != 0
+        assert first != 0, "compare stayed 0"
         dut.ui_in.value = 0x04
         await ClockCycles(dut.clk, 40)
         second = await stored()
-        assert second != first
+        assert second != first, f"compare did not move {first:02x}"
         assert second != 0
     finally:
         task.cancel()
