@@ -207,7 +207,6 @@ module tt_um_jlnuijens_one11_uart #(
   reg       wr_pend;
   reg [31:0] rung_q;
   reg [31:0] prev_q;
-  wire [31:0] rung_cmp;
   always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
       addr_q   <= 9'd0;
@@ -216,8 +215,10 @@ module tt_um_jlnuijens_one11_uart #(
       prev_q   <= 32'd0;
     end else begin
       wr_pend <= mem_face & fire;
-      if (fire) rung_q <= cc[0];
-      if (mem_face && !fire && !wr_pend) prev_q <= dout1;
+      if (fire) begin
+        prev_q <= rung_q;
+        rung_q <= cc[0];
+      end
       if (mem_face && !fire) addr_q <= {1'b0, uio_in};
     end
   end
@@ -308,7 +309,6 @@ module tt_um_jlnuijens_one11_uart #(
   wire [8:0]  mem_addr = addr_q;
   wire [31:0] mem_bm   = 32'hffffffff;
   wire [31:0] dout0, dout1;
-  assign rung_cmp = dout1 - dout0;
   RM_IHPSG13_1P_512x32_c2_bm_bist u_sram0 (
     .A_CLK(clk), .A_MEN(mem_on), .A_WEN(mem_wr), .A_REN(~mem_wr),
     .A_ADDR(mem_addr), .A_DIN(prev_q), .A_DLY(1'b1), .A_DOUT(dout0), .A_BM(mem_bm),
@@ -366,7 +366,7 @@ module tt_um_jlnuijens_one11_uart #(
   end
   always @(posedge clk or negedge rst_n) begin
     if (!rst_n) mem_q <= 32'd0;
-    else        mem_q <= rung_cmp;
+    else if (fire) mem_q <= cc[0] - rung_q;
   end
 
   // Eight bits of the mix. One nibble per rise. The clock is not data,
