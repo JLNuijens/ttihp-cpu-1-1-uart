@@ -6,6 +6,23 @@ Jane Street protocol-emulator ASIC. Tiny Tapeout, IHP CMOS5L, tile 8×4.
 
 Joshua Luke Nuijens / Axiom 1 Technology, LLC. Top module `tt_um_jlnuijens_one11_uart`.
 
+The demo is [docs/demo.html](docs/demo.html). The metal is [the tile](https://gds-viewer.tinytapeout.com/?pdk=ihp-sg13cmos5l&model=https://jlnuijens.github.io/ttihp-cpu-1-1-uart/tinytapeout.oas).
+
+## On this tile
+
+8×4. 1724 by 711 µm. One clock, 50 MHz. The clock is the step. While the tile is enabled, all 32 bases add 1 to the cycle and 128 to the stride on every rise. That is the 1.6 GB/s. Nothing is fetched.
+
+On that die, from the same clock:
+
+- Any of 256 bytes. 113 machines were fired, 185 cycles, and every byte came back.
+- UART at 100 Mbit/s, SPI mode 0, and I2C. The map picks the pins. The hold picks the bit time. Eight holds, from 1 clock to 434.
+- On the hook: JTAG, SWD, PS/2, Manchester, a USB low-speed bit, and a CAN bit.
+- A register that stores the map, the hold, and the byte after the chip is made.
+- A list of 1,024 of those steps in the two front memories.
+- Two cycles kept in the two back memories, and the difference of them.
+- Add, carry, the stride as the multiply, the hold as the divide, AND, OR, XOR, shift, and compare.
+- The 512 seat and the 720 reading. r15 held at `4F4E4553`.
+
 ## Words
 
 | Word | What it is |

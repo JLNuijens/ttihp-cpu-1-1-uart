@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ONE CPU 1.1 32</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; background: #10140f; color: #e6e1d6; font: 17px/1.45 Georgia, serif; }
+  main { max-width: 46rem; margin: 0 auto; padding: 2.2rem 1.2rem 4rem; }
+  h1 { font-size: 1.8rem; font-weight: 600; letter-spacing: 0; margin: 0 0 0.2rem; }
+  h2 { font-size: 1.15rem; margin: 2rem 0 0.5rem; font-weight: 600; }
+  p, li { font-size: 1.02rem; }
+  .who { color: #b7b1a4; margin-top: 0; }
+  a { color: #d7c27a; }
+  table { border-collapse: collapse; width: 100%; margin: 0.6rem 0 1rem; }
+  th, td { text-align: left; vertical-align: top; padding: 0.28rem 0.5rem 0.28rem 0; border-bottom: 1px solid #2a3126; }
+  th { color: #b7b1a4; font-weight: 600; font-size: 0.85rem; }
+  code { font-family: ui-monospace, monospace; font-size: 0.92em; }
+  .set { display: flex; flex-wrap: wrap; gap: 0.35rem 0.7rem; margin: 0.4rem 0 0; padding: 0; list-style: none; }
+  .set li { font-family: ui-monospace, monospace; font-size: 0.82rem; color: #d9d3c6; }
+</style>
+</head>
+<body>
+<main>
+  <h1>ONE CPU 1.1 32</h1>
+  <p class="who">Joshua Luke Nuijens / Axiom 1 Technology. Jane Street protocol emulator. Tiny Tapeout, IHP CMOS5L, tile 8×4. 1724 by 711 µm.</p>
+  <p>The clock is the step. 50 MHz, one cycle is 20 ns. While the tile is enabled, all 32 bases add 1 to the cycle and 128 to the stride on every rise. That is 1.6 GB/s. The machine does not wait for an instruction, and nothing is fetched.</p>
+  <p><code>ui[0]</code> sits low. Raise it for one cycle, then let it fall. That cycle is FIRE. The byte is already on <code>uio[7:0]</code>. On that cycle all 32 bases take it. Base 0 gets the byte. Base <em>k</em> gets the byte plus <em>k</em>.</p>
+
+  <h2>On the die</h2>
+  <ul>
+    <li>Any of 256 bytes. 113 machines were fired, 185 cycles. Every byte came back as itself.</li>
+    <li>UART at 100 Mbit/s, SPI mode 0, and I2C. The map picks the pins. The hold picks the bit time: 1, 4, 5, 8, 16, 33, 125, or 434 clocks.</li>
+    <li>On map 11: the memory, JTAG, Manchester, SWD, PS/2, a USB low-speed bit, and a CAN bit.</li>
+    <li>A register stores the map, the hold, and the byte after the chip is made. Later cycles follow the register.</li>
+    <li>Two front memories hold a list of 1,024 of those steps.</li>
+    <li>Two back memories each hold a cycle. The pins show the second minus the first.</li>
+    <li>Add, carry, the stride as the multiply, the hold as the divide, AND, OR, XOR, shift, and compare.</li>
+    <li>The seat is 512. The 720 is that number times 720/512. r15 stays <code>4F4E4553</code>.</li>
+  </ul>
+
+  <h2>Words</h2>
+  <table>
+    <tr><th>Word</th><th>What it is</th></tr>
+    <tr><td>FIRE</td><td><code>ui[0]</code> high for one cycle.</td></tr>
+    <tr><td>Base</td><td>One of the 32 copies.</td></tr>
+    <tr><td>Weight</td><td>1, 2, 4, 8, 16, 32, 64, or 128. A 1 in the byte is that weight in the sum.</td></tr>
+    <tr><td>Load</td><td>The sum of the weights that are present.</td></tr>
+    <tr><td>Stride</td><td>The cycle count times 128. Cycle 4 is 512.</td></tr>
+    <tr><td>Seat</td><td>512. r7 is 128. r14 is 4.</td></tr>
+    <tr><td>Map</td><td><code>ui[4:3]</code>. Which pins carry the bit.</td></tr>
+    <tr><td>Hold</td><td><code>ui[7:5]</code>. How many cycles the bit stays.</td></tr>
+    <tr><td>Walk</td><td>The pin sequence for that map.</td></tr>
+    <tr><td>Hook</td><td>Map 11.</td></tr>
+    <tr><td>Register</td><td>The stored map, hold, and byte.</td></tr>
+    <tr><td>HOT</td><td><code>ui[1]</code> high. Holds the stage. Stores the register on the memory map.</td></tr>
+    <tr><td>ONES</td><td>r15, <code>4F4E4553</code>. <code>uo[2]</code> is high while it holds.</td></tr>
+    <tr><td>Macro</td><td>One memory. 512 words of 32 bits.</td></tr>
+  </table>
+
+  <h2>Pins</h2>
+  <table>
+    <tr><th>Pin</th><th>Use</th></tr>
+    <tr><td><code>ui[0]</code></td><td>FIRE. One cycle. All 32 bases take the byte.</td></tr>
+    <tr><td><code>ui[1]</code></td><td>HOT.</td></tr>
+    <tr><td><code>ui[2]</code></td><td>Line in. UART RX, SPI MISO, JTAG TDO, CAN RX. Idle high.</td></tr>
+    <tr><td><code>ui[4:3]</code></td><td>Map.</td></tr>
+    <tr><td><code>ui[7:5]</code></td><td>Hold.</td></tr>
+    <tr><td><code>uio[7:0]</code></td><td>The byte. On the memory map, the address.</td></tr>
+    <tr><td><code>uo[0]</code></td><td>TX, Manchester, USB DM, or the CAN cell.</td></tr>
+    <tr><td><code>uo[1]</code></td><td>Busy.</td></tr>
+    <tr><td><code>uo[2]</code></td><td>ONES.</td></tr>
+    <tr><td><code>uo[3]</code></td><td>Got a byte.</td></tr>
+    <tr><td><code>uo[7:4]</code></td><td>MOSI, SCLK, CS, or the face.</td></tr>
+  </table>
+
+  <h2>Map</h2>
+  <table>
+    <tr><th>ui[4:3]</th><th>What is on the pins</th></tr>
+    <tr><td>00</td><td>UART 8N1. TX on <code>uo[0]</code>. Count 1 is both edges, 100 Mbit/s.</td></tr>
+    <tr><td>01</td><td>SPI mode 0. MOSI, SCLK, CS.</td></tr>
+    <tr><td>10</td><td>I2C. Start, byte, ACK, stop.</td></tr>
+    <tr><td>11</td><td>The hook. The hold picks the line below.</td></tr>
+  </table>
+  <table>
+    <tr><th>Hold</th><th>Clocks</th><th>On the hook</th></tr>
+    <tr><td>000</td><td>1</td><td>Memory. The address is the byte.</td></tr>
+    <tr><td>001</td><td>4</td><td>JTAG.</td></tr>
+    <tr><td>010</td><td>5</td><td>Manchester.</td></tr>
+    <tr><td>011</td><td>8</td><td>SWD.</td></tr>
+    <tr><td>100</td><td>16</td><td>PS/2.</td></tr>
+    <tr><td>101</td><td>33</td><td>USB low-speed bit.</td></tr>
+    <tr><td>110</td><td>125</td><td>CAN bit.</td></tr>
+    <tr><td>111</td><td>434</td><td>USB bit at this hold.</td></tr>
+  </table>
+
+  <h2>Memory</h2>
+  <table>
+    <tr><th></th><th>Where</th><th>What it holds</th></tr>
+    <tr><td>First</td><td>Behind</td><td>The cycle that was already stored.</td></tr>
+    <tr><td>Second</td><td>Behind</td><td>The cycle at this FIRE. The pins show the second minus the first.</td></tr>
+    <tr><td>Third</td><td>In front</td><td>List cells 0 to 511.</td></tr>
+    <tr><td>Fourth</td><td>In front</td><td>List cells 512 to 1,023.</td></tr>
+  </table>
+  <p>A list cell is the map, the hold, and the byte. <code>uio</code> at <code>FF</code> starts at the first cell. Each later FIRE runs the cell the counter is on.</p>
+
+  <h2>The byte</h2>
+  <p>A byte is eight weights: 1, 2, 4, 8, 16, 32, 64, 128. The 1s are the ones in the sum. <code>90</code> is <code>10010000</code>, weights 16 and 128, result <code>104F0090</code>. The low byte of the result is the byte that went in. All 256 do this. A wider instruction is its bytes, one cycle each.</p>
+  <ul class="set">
+    <li>x86</li><li>x86-64</li><li>6502</li><li>65C02</li><li>65816</li><li>Z80</li><li>eZ80</li><li>8080</li><li>8085</li><li>8008</li><li>4004</li><li>1802</li><li>SC/MP</li><li>6800</li><li>6809</li><li>68HC11</li><li>6805</li><li>8051</li><li>STM8</li><li>AVR</li><li>SM83</li><li>HuC6280</li><li>SPC700</li><li>Z8</li><li>Rabbit</li><li>PIC16</li><li>MSP430</li><li>H8</li><li>SuperH</li><li>V850</li><li>Blackfin</li><li>M32R</li><li>MicroBlaze</li><li>Nios II</li><li>Xtensa</li><li>ARC</li><li>Hexagon</li><li>Thumb</li><li>ARM</li><li>ARM64</li><li>RISC-V</li><li>RISC-V C</li><li>MIPS</li><li>MIPS16</li><li>PowerPC</li><li>SPARC</li><li>Alpha</li><li>PA-RISC</li><li>System/360</li><li>z/Architecture</li><li>VAX</li><li>PDP-11</li><li>PDP-8</li><li>Itanium</li><li>OpenRISC</li><li>LoongArch</li><li>C-SKY</li><li>Andes</li><li>TMS9900</li><li>NS32016</li><li>Clipper</li><li>Transputer</li><li>MMIX</li><li>Propeller</li><li>x87</li><li>MMX</li><li>SSE</li><li>AVX</li><li>EVEX</li><li>JVM</li><li>CIL</li><li>WASM</li><li>DEX</li><li>SPIR-V</li><li>LLVM</li><li>eBPF</li><li>cBPF</li><li>Lua</li><li>Python</li><li>BEAM</li><li>OCaml</li><li>CHIP-8</li><li>Uxn</li><li>Brainfuck</li><li>Forth</li><li>PostScript</li><li>ELF</li><li>PE</li><li>Mach-O</li><li>Mach-O 64</li><li>a.out</li><li>COFF</li><li>XCOFF</li><li>Java</li><li>FAT</li><li>ZIP</li><li>gzip</li><li>bzip2</li><li>xz</li><li>7z</li><li>RAR</li><li>PNG</li><li>JPEG</li><li>GIF</li><li>PDF</li><li>SQLite</li><li>FLAC</li><li>Ogg</li><li>MP3</li><li>MP4</li><li>UTF-8</li><li>UTF-16</li><li>UTF-32</li>
+  </ul>
+
+  <h2>Links</h2>
+  <p><a href="https://github.com/JLNuijens/ttihp-cpu-1-1-uart">The repo</a>. The pin tables and the per-byte results are in the README.</p>
+  <p><a href="https://gds-viewer.tinytapeout.com/?pdk=ihp-sg13cmos5l&model=https://jlnuijens.github.io/ttihp-cpu-1-1-uart/tinytapeout.oas">The metal</a>.</p>
+</main>
+</body>
+</html>
