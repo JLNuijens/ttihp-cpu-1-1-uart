@@ -2,6 +2,10 @@ name: gds
 
 on:
   push:
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
+      - '.github/workflows/gds.yaml'
   workflow_dispatch:
 
 jobs:

@@ -8,9 +8,9 @@ The words are in the README under "Words." FIRE is `ui[0]` high for one cycle. A
 
 ## SRAM
 
-Two copies of `RM_IHPSG13_1P_512x32_c2_bm_bist` sit behind the bases. Both hold a cycle. FIRE writes the new cycle in the second and moves the one already there into the first. The compare is the second minus the first. The clock is not set back. 256 of the 512 words are named by the pins. Two more sit in front and hold the list, 1,024 cells, 13 bits used in each. One of those two is on at a time.
+Two copies of `RM_IHPSG13_1P_512x32_c2_bm_bist` sit behind the bases. Both store a cycle. On FIRE the new cycle and the one before it are held. `uo[7:0]` is the low byte of the new one minus the one before it, on that same cycle. The second macro stores the new cycle. The first stores the one that was there. The clock is not set back. 256 of the 512 words are named by the pins. Two more sit in front and hold the list, 1,024 cells, 13 bits used in each. One of those two is on at a time.
 
-Map `11`, count `000`. `uio[7:0]` is the address. The upper address bit is held at 0, so 256 of 512 words are reachable. Both macros use that address. The first holds the cycle that was already there. The second holds the cycle at this FIRE. `uo[7:0]` is the low byte of the second minus the first.
+Map `11`, count `000`. `uio[7:0]` is the address. The upper address bit is held at 0, so 256 of 512 words are reachable. Both macros use that address. The first stores the cycle that was already there. The second stores the cycle at this FIRE. `uo[7:0]` is the low byte of the new cycle minus the one before it, taken on that FIRE.
 
 ## Pin layout
 
@@ -82,7 +82,7 @@ On maps `00`, `01`, and `10` the count is only the bit time. The hook walks are 
 
 The 512 is the preload already in the CPU. r7 is 128. r14 is 4. `4 × 128 = 512`. There is no second circuit. A pin weight times r14 is the 512 column. That number times `720 / 512` is the 720 column. Each rising edge adds r7 to the stride. That is one rung: 4, and 5.625°.
 
-The macros hold the two cycles. FIRE writes the new cycle in the second and moves the one already there into the first. Other addresses keep what they have. The word stays until that address is written again. Not a fetch. Not a cache.
+The macros store the two cycles. On FIRE the new cycle is held and the one before it is kept. The second macro stores the new one. The first stores the one that was there. Other addresses keep what they have. The word stays until that address is written again. Not a fetch. Not a cache.
 
 ## Ground
 

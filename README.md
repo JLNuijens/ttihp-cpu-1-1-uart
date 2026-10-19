@@ -83,7 +83,7 @@ The clock is 50 MHz. One cycle is 20 ns.
 
 `ui[0]` sits low. Raise it for one cycle, then let it fall. That cycle is the whole of what this page calls FIRE. The byte is already on `uio[7:0]`. On that cycle all 32 bases take it. Base 0 gets the byte. Base 1 gets the byte plus 1. Base 31 gets the byte plus 31.
 
-Every cycle, whether or not `ui[0]` is high, each base adds 1 to its count and 128 to its stride. 32 bases on every cycle is the 1.6 GB/s. Two SRAM macros behind the bases each hold a cycle. The one-cycle rise keeps the new one and the one before it, and the read is the difference. Two in front hold the list. A register holds the map, the count, and the byte. The clock holds the stage while the tile is enabled.
+Every cycle, whether or not `ui[0]` is high, each base adds 1 to its count and 128 to its stride. 32 bases on every cycle is the 1.6 GB/s. On FIRE the new cycle and the one before it are held, and `uo[7:0]` is the low byte of the new one minus the one before it. The two macros behind the bases store that pair. The two in front hold the list. A register holds the map, the count, and the byte. The clock holds the stage while the tile is enabled.
 
 ## Programmable
 
@@ -396,7 +396,7 @@ The back pair is on only while the map is `11` and the count is `000`, or on the
 | Third | In front | List cells 0 to 511 | The counter reads the cell and runs it |
 | Fourth | In front | List cells 512 to 1,023 | Same list, the upper half |
 
-FIRE on the back pair writes the new cycle into the second macro and moves the cycle that was there into the first. The compare is the second minus the first. `uo[7:0]` is the low byte of that difference. It is not sent into the 32 bases. While the address is held, base 0 takes the first cycle and base 1 takes the second. The other thirty take the byte plus their number. The clock is not set back to either cycle. The two numbers stay until that address is written again.
+On FIRE the new cycle is held and the one before it is kept. `uo[7:0]` is the low byte of the new one minus the one before it, on that same cycle. The second macro stores the new cycle. The first stores the one that was there. It is not sent into the 32 bases. While the address is held, base 0 takes the stored first cycle and base 1 takes the stored second. The other thirty take the byte plus their number. The clock is not set back to either cycle. The two numbers stay until that address is written again.
 
 The front pair is on only while a cell is being stored or the list is running. One of the two is selected at a time: the lower macro for the first 512 cells, the upper for the next 512. A cell is 13 bits of the 32: the map, the count, and the byte. The other 19 bits are unused. `uio` at `FF` on a store starts the counter at the first cell. Each later FIRE runs the cell the counter is on. When that cell finishes, the counter adds 1.
 
