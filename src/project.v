@@ -207,7 +207,6 @@ module tt_um_jlnuijens_one11_uart #(
   reg       wr_pend;
   reg [31:0] rung_q;
   reg [31:0] prev_q;
-  reg        rung_arm;
   wire [31:0] rung_cmp;
   always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
@@ -215,27 +214,26 @@ module tt_um_jlnuijens_one11_uart #(
       wr_pend  <= 1'b0;
       rung_q   <= 32'd0;
       prev_q   <= 32'd0;
-      rung_arm <= 1'b0;
     end else begin
       wr_pend <= mem_face & fire;
       if (fire) rung_q <= cc[0];
       if (mem_face && !fire && !wr_pend) prev_q <= dout1;
       if (mem_face && !fire) addr_q <= {1'b0, uio_in};
-      rung_arm <= mem_face && !fire && !wr_pend && (addr_q == {1'b0, uio_in});
     end
   end
 
   genvar k;
   generate
     for (k = 0; k < N_BASES; k = k + 1) begin : bases
-      wire [31:0] seq_k = rung_arm ? rung_cmp : (seq + k);
+      wire [31:0] seq_k =
+          (mem_face && !wr_pend && (k == 0)) ? dout0 :
+          (mem_face && !wr_pend && (k == 1)) ? dout1 :
+          (seq + k);
       one_cpu11 #(.LANE(k)) u_cpu (
         .clk       (clk),
         .rst_n     (rst_n),
         .run_hot   (hot),
         .fire      (fire),
-        .rung_back (1'b0),
-        .rung      (dout1),
         .seq       (seq_k),
         .rx_strobe (rx_strobe),
         .rx_data   (rx_byte),

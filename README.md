@@ -396,7 +396,7 @@ The back pair is on only while the map is `11` and the count is `000`, or on the
 | Third | In front | List cells 0 to 511 | The counter reads the cell and runs it |
 | Fourth | In front | List cells 512 to 1,023 | Same list, the upper half |
 
-FIRE on the back pair writes the new cycle into the second macro and moves the cycle that was there into the first. The compare is the second minus the first. `uo[7:0]` is the low byte of that difference. While the address is held, the 32 bases take that difference as the word. The clock is not set back to either cycle. The two numbers stay until that address is written again.
+FIRE on the back pair writes the new cycle into the second macro and moves the cycle that was there into the first. The compare is the second minus the first. `uo[7:0]` is the low byte of that difference. It is not sent into the 32 bases. While the address is held, base 0 takes the first cycle and base 1 takes the second. The other thirty take the byte plus their number. The clock is not set back to either cycle. The two numbers stay until that address is written again.
 
 The front pair is on only while a cell is being stored or the list is running. One of the two is selected at a time: the lower macro for the first 512 cells, the upper for the next 512. A cell is 13 bits of the 32: the map, the count, and the byte. The other 19 bits are unused. `uio` at `FF` on a store starts the counter at the first cell. Each later FIRE runs the cell the counter is on. When that cell finishes, the counter adds 1.
 
@@ -408,7 +408,7 @@ What this covers, and what it does not:
 | The 512 seat and the 720 reading | r7 and r14. Not in these macros. |
 | A cycle you can come back to | The second macro keeps it. The clock is not set back to it. |
 | The cycle before that one | The first macro. |
-| The difference of those two cycles | The compare on `uo[7:0]`, and the word the bases take while the address is held. |
+| The difference of those two cycles | The compare on `uo[7:0]`. Not sent into the 32 bases. |
 | A stored order of map, count, and byte | The two front macros, 1,024 cells. |
 | All 32 signatures | Not stored. The bases still fold them. Only the two cycles are kept. |
 | All 512 addresses on the back pair | No. The pins name 256. |
