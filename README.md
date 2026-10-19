@@ -51,6 +51,31 @@ On that die, from the same clock:
 | ONES | Register r15, the value `4F4E4553`. `uo[2]` is high while it holds. |
 | Ground | Reset with `ui` and `uio` at 0. The difference is 0. |
 | Macro | One memory block. 512 words, 32 bits each. |
+| Lane | Where a base starts. Base *k* starts at *k*. The stride is the lane plus 128 times the cycle. |
+| Stack | r7, held at 128. One rung adds the stack to the stride. |
+| Fold | The 32 results mixed by XOR, from 32 down to 1. |
+| Signature | The result kept at r4. The low byte is the byte that went in. |
+| Preload | The values already in the registers. r7 is 128. r14 is 4. r15 is ONES. They are written again on every rise. |
+| Fetch | Reading a new instruction out of memory each cycle. This chip does not. |
+| Tile | The 8×4 piece. 1724 by 711 µm. |
+| Pad | One pin on that tile. `ui` in, `uo` out, `uio` either way. |
+| Cell | One map, one hold, one byte. |
+| Crossing | A hold from one map used on another map. The same shifter. No new block. |
+| Nibble | Four bits. `uo[7:4]` is one nibble. |
+| Both edges | Count 1. The bit moves on the rise and on the fall. 10 ns. 100 Mbit/s. |
+| NRZ | The bit holds one level for the whole hold. Not Manchester. |
+| 8N1 | A start bit, eight data bits, one stop bit. No parity bit. |
+| Open-drain | The pin can pull low or let go. It does not drive high. I2C and PS/2. |
+| BUSY | `uo[1]`. High while the selected walk is running. |
+| GOT | `uo[3]`. High when a byte has come in. |
+| MOSI | SPI data out of this chip. `uo[4]`. |
+| MISO | SPI data in. `ui[2]`. |
+| SCLK | SPI clock. `uo[5]`. |
+| CS | SPI select, active low. `uo[6]`. |
+| SCL | I2C clock. `uo[4]`. |
+| SDA | I2C data. `uio[0]`. |
+| Manchester | A bit coded as a mid-bit edge, on `uo[0]` and `uo[7]`. |
+| NRZI | A bit coded as a change or no change. The USB cell. |
 
 ## What it does
 

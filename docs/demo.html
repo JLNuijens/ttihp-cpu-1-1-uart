@@ -57,6 +57,20 @@
     <tr><td>HOT</td><td><code>ui[1]</code> high. Holds the stage. Stores the register on the memory map.</td></tr>
     <tr><td>ONES</td><td>r15, <code>4F4E4553</code>. <code>uo[2]</code> is high while it holds.</td></tr>
     <tr><td>Macro</td><td>One memory. 512 words of 32 bits.</td></tr>
+    <tr><td>Lane</td><td>Where a base starts. Base <em>k</em> starts at <em>k</em>.</td></tr>
+    <tr><td>Fold</td><td>The 32 results mixed by XOR, down to 1.</td></tr>
+    <tr><td>Signature</td><td>The result kept at r4. The low byte is the byte.</td></tr>
+    <tr><td>Preload</td><td>r7 is 128. r14 is 4. r15 is ONES. Already there.</td></tr>
+    <tr><td>Fetch</td><td>Reading a new instruction from memory each cycle. This chip does not.</td></tr>
+    <tr><td>Tile</td><td>The 8×4 piece. 1724 by 711 µm.</td></tr>
+    <tr><td>Pad</td><td>One pin. <code>ui</code> in, <code>uo</code> out, <code>uio</code> either way.</td></tr>
+    <tr><td>Cell</td><td>One map, one hold, one byte.</td></tr>
+    <tr><td>Both edges</td><td>Count 1. The bit moves on the rise and the fall. 100 Mbit/s.</td></tr>
+    <tr><td>8N1</td><td>Start bit, eight data bits, one stop bit.</td></tr>
+    <tr><td>NRZ</td><td>The bit holds one level for the whole hold.</td></tr>
+    <tr><td>Open-drain</td><td>The pin pulls low or lets go. It does not drive high.</td></tr>
+    <tr><td>BUSY</td><td><code>uo[1]</code>. High while a walk is running.</td></tr>
+    <tr><td>GOT</td><td><code>uo[3]</code>. High when a byte has come in.</td></tr>
   </table>
 
   <h2>Pins</h2>
