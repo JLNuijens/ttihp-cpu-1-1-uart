@@ -6,6 +6,34 @@ Jane Street protocol-emulator ASIC. Tiny Tapeout, IHP CMOS5L, tile 8×4.
 
 Joshua Luke Nuijens / Axiom 1 Technology, LLC. Top module `tt_um_jlnuijens_one11_uart`.
 
+## Words
+
+| Word | What it is |
+|---|---|
+| Cycle | One tick of the 50 MHz clock. 20 ns. |
+| FIRE | `ui[0]` high for one cycle, low the cycle before. That is the whole word. |
+| Byte | The eight pins `uio[7:0]`. |
+| Weight | One of 1, 2, 4, 8, 16, 32, 64, 128. A 1 in the byte means that weight is in the sum. |
+| Load | The sum of the weights that are present. |
+| Base | One of the 32 copies. Base *k* is copy number *k*. Base 0 gets the byte. Base *k* gets the byte plus *k*. |
+| Result | The 32-bit word that comes back. Its low byte is the byte that went in. |
+| Returned weight | The number beside the result: 1, 2, 8, or a larger power of two. Not one of the eight weights. |
+| Stride | The cycle count times 128. Cycle 4 is stride 512. |
+| Rung | One step of the stride. One rung is 4 on the seat, and 5.625°. |
+| Seat | 512. Register r7 is held at 128. Register r14 is held at 4. `4 × 128 = 512`. |
+| 720 | The seat times `720 / 512`. The same number, read in degrees. |
+| Map | `ui[4:3]`. Which pins carry the bit. |
+| Hold | `ui[7:5]`. How many cycles the bit stays. Also called the count. |
+| Walk | The pin sequence for that map. UART, SPI, I2C, or a hook. |
+| Hook | Map `11`. The hold then picks the memory, JTAG, Manchester, SWD, PS/2, USB, or CAN. |
+| Register | The stored map, hold, and byte. |
+| HOT | `ui[1]` high. It holds the stage. With the memory map, it stores the register. |
+| Stage | What the clock keeps while the tile is enabled. |
+| List | The cells in the two front memories. A cell is a map, a hold, and a byte. |
+| Face | `uo[7:4]` when no walk is driving those pins. |
+| ONES | Register r15, the value `4F4E4553`. `uo[2]` is high while it holds. |
+| Ground | Reset with `ui` and `uio` at 0. The difference is 0. |
+| Macro | One memory block. 512 words, 32 bits each. |
 
 ## What it does
 
