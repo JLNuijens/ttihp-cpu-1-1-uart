@@ -1,5 +1,11 @@
 name: test
-on: [push, workflow_dispatch]
+on:
+  push:
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
+      - '.github/workflows/test.yaml'
+  workflow_dispatch:
 jobs:
   test:
     runs-on: ubuntu-24.04
