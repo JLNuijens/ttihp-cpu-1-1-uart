@@ -5,6 +5,7 @@ on:
       - 'README.md'
       - 'docs/**'
       - '.github/workflows/test.yaml'
+      - '.github/workflows/gds.yaml'
   workflow_dispatch:
 jobs:
   test:
