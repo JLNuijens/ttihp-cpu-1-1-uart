@@ -1,4 +1,4 @@
-![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg)
+[![gds](https://github.com/JLNuijens/ttihp-cpu-1-1-uart/actions/workflows/gds.yaml/badge.svg?v=pass)](https://github.com/JLNuijens/ttihp-cpu-1-1-uart/actions/workflows/gds.yaml) [![docs](https://github.com/JLNuijens/ttihp-cpu-1-1-uart/actions/workflows/docs.yaml/badge.svg)](https://github.com/JLNuijens/ttihp-cpu-1-1-uart/actions/workflows/docs.yaml) [![test](https://github.com/JLNuijens/ttihp-cpu-1-1-uart/actions/workflows/test.yaml/badge.svg)](https://github.com/JLNuijens/ttihp-cpu-1-1-uart/actions/workflows/test.yaml)
 
 # ONE CPU 1.1 32
 
