@@ -8,13 +8,11 @@ Joshua Luke Nuijens / Axiom 1 Technology, LLC. Top module `tt_um_jlnuijens_one11
 
 The demo is [this page](https://cdn.jsdelivr.net/gh/JLNuijens/ttihp-cpu-1-1-uart@main/docs/demo.html). The metal is [the tile](https://gds-viewer.tinytapeout.com/?pdk=ihp-sg13cmos5l&model=https://jlnuijens.github.io/ttihp-cpu-1-1-uart/tinytapeout.oas).
 
-## Nuijens Collapse Mechanics
+## Nuijens Operational Collapse Mechanics
 
 This tile is that framework. Joshua Luke Nuijens, Axiom 1 Technology, LLC.
 
 The clock is the step. The 32 bases are already loaded. Nothing is fetched. On a rise, each base adds 1 to its cycle and 128 to its stride. A byte is eight weights: 1, 2, 4, 8, 16, 32, 64, 128. Base *k* takes the byte plus *k*. The seat is 512, held as `4 × 128`. The 720 is that same seat in degrees.
-
-The name is the framework. It is not the collapse of a structure, and it is not a quantum wave-function model. Those words are already used for other work.
 
 ## On this tile
 
@@ -35,7 +33,7 @@ On that die, from the same clock:
 
 | Word | What it is |
 |---|---|
-| Nuijens Collapse Mechanics | This framework. The clock steps 32 bases that are already loaded. No fetch. |
+| Nuijens Operational Collapse Mechanics | This framework. The clock steps 32 bases that are already loaded. No fetch. |
 | Cycle | One tick of the 50 MHz clock. 20 ns. |
 | FIRE | `ui[0]` high for one cycle, low the cycle before. That is the whole word. |
 | Byte | The eight pins `uio[7:0]`. |
