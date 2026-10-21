@@ -1,6 +1,6 @@
 # ONE CPU 1.1 32
 
-Jane Street protocol-emulator ASIC. IHP CMOS5L, tile 8×4. This tile is Nuijens Operational Collapse Mechanics, Joshua Luke Nuijens, Axiom 1 Technology, LLC. The clock is the step. The 32 bases are already loaded. Nothing is fetched.
+Jane Street protocol-emulator ASIC. IHP CMOS5L, tile 8×4. This tile is Nuijens Operational Collapse Mechanics, Joshua Luke Nuijens, Axiom 1 Technology, LLC. The operational counting, the mathematics, the physics, and the quantum mechanics are mapped into ONE. ONE is the Optimized Numeric Engine: the mapping of the physical mechanics of 1. The clock is the step. The 32 bases are already loaded. Nothing is fetched.
 
 The clock is 50 MHz. `ui[0]` sits low. Raise it for one cycle. That cycle is FIRE. The byte is already on the pins, and all 32 bases take it. Base *k* gets the byte plus *k*. Every cycle, on all 32, is the 1.6 GB/s. The line at count 1 is 100 Mbit/s, both edges. Four `512×32` macros. Two behind the bases hold a cycle each. Two in front hold the list.
 
