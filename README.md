@@ -14,7 +14,9 @@ This tile is that framework. Joshua Luke Nuijens, Axiom 1 Technology, LLC. The J
 
 It is a remapping of everything backwards. 1 is the largest. The collapse goes inward. √2 is the action. Count 1 makes two of the 1 that is already there.
 
-The counting, the mathematics, the physics, and the quantum mechanics are that same remap. They are mapped into ONE. ONE is the Optimized Numeric Engine: the mapping of the physical mechanics of 1.
+The counting, the mathematics, the physics, the units, and the quantum mechanics are that same remap, and the mapping is different in each. The cubic is 512. The sphere is 720. They are mapped into ONE. ONE is the Optimized Numeric Engine: the mapping of the physical mechanics of 1.
+
+The processor is universal and 100% hot. The clock is the power. Any byte, the same 32 bases, nothing fetched.
 
 The clock is the step. The 32 bases are already loaded. Nothing is fetched. On a rise, each base adds 1 to its cycle and 128 to its stride. A byte is eight weights: 1, 2, 4, 8, 16, 32, 64, 128. Base *k* takes the byte plus *k*. The seat is 512, held as `4 × 128`. The 720 is that same seat in degrees.
 
@@ -49,8 +51,8 @@ On that die, from the same clock:
 | Returned weight | The number beside the result: 1, 2, 8, or a larger power of two. Not one of the eight weights. |
 | Stride | The cycle count times 128. Cycle 4 is stride 512. |
 | Rung | One step of the stride. One rung is 4 on the seat, and 5.625°. |
-| Seat | 512. Register r7 is held at 128. Register r14 is held at 4. `4 × 128 = 512`. |
-| 720 | The seat times `720 / 512`. The same number, read in degrees. |
+| Seat | 512. The cubic. Register r7 is held at 128. Register r14 is held at 4. `4 × 128 = 512`. |
+| 720 | The sphere. The seat times `720 / 512`. The same number, read in degrees. |
 | Map | `ui[4:3]`. Which pins carry the bit. |
 | Hold | `ui[7:5]`. How many cycles the bit stays. Also called the count. |
 | Walk | The pin sequence for that map. UART, SPI, I2C, or a hook. |
