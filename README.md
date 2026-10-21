@@ -14,11 +14,58 @@ This tile is that framework. Joshua Luke Nuijens, Axiom 1 Technology, LLC. The J
 
 It is a remapping of everything backwards. 1 is the largest. The collapse goes inward. √2 is the action. Count 1 makes two of the 1 that is already there.
 
-The counting, the mathematics, the physics, the units, and the quantum mechanics are that same remap, and the mapping is different in each. The cubic is 512. The sphere is 720. They are mapped into ONE. ONE is the Optimized Numeric Engine: the mapping of the physical mechanics of 1.
+The counting, the mathematics, the physics, the units, and the quantum mechanics are that same remap, and the mapping is different in each. They are mapped into ONE. ONE is the Optimized Numeric Engine: the mapping of the physical mechanics of 1.
 
 The processor is universal and 100% hot. The clock is the power. Any byte, the same 32 bases, nothing fetched.
 
-The clock is the step. The 32 bases are already loaded. Nothing is fetched. On a rise, each base adds 1 to its cycle and 128 to its stride. A byte is eight weights: 1, 2, 4, 8, 16, 32, 64, 128. Base *k* takes the byte plus *k*. The seat is 512, held as `4 × 128`. The 720 is that same seat in degrees.
+## The master table
+
+This is the base. There is one unit. It is the whole. Everything after it is that unit read inward. 1 is the largest. A number that looks larger is a deeper inward reading of it.
+
+Four views, all at count 0, depth 0. Same axiom.
+
+| View | What it is |
+|---|---|
+| 1 | The unit, whole, at rest. |
+| −1 | The same unit, read from across its own center. |
+| √1 | The unit carries its own root. |
+| √2^0 | The same statement. It is 1. |
+
+√2 is the master mechanic. The unit is halved inward, count by count. Even depths are rational. Odd depths carry √2. Five active counts, c = 1 to 5, unfold nine active depths, d = 1 to 9. The reading is the domains, 2^c, times the unit, √2^d.
+
+| c | d | Unit | Domains | Reading |
+|---|---|---|---|---|
+| 0 | 0 | 1 | 1 | 1 |
+| 1 | 1 | √2 | 2 | 2√2 ≈ 2.828 |
+| 2 | 2 | 2 | 4 | 8 |
+| 2 | 3 | 2√2 | 4 | 8√2 ≈ 11.314 |
+| 3 | 4 | 4 | 8 | 32 |
+| 3 | 5 | 4√2 | 8 | 32√2 ≈ 45.255 |
+| 4 | 6 | 8 | 16 | 128 |
+| 4 | 7 | 8√2 | 16 | 128√2 ≈ 181.019 |
+| 5 | 8 | 16 | 32 | 512 |
+| 5 | 9 | 16√2 | 32 | 512√2 ≈ 724.077 |
+
+The count closes at c = 5. Domains 32. Rational reading 512 at d = 8. Irrational reading ≈ 724.077 at d = 9.
+
+The 720 is machined from that table. It is not imported.
+
+720 = 5 × 9 × 16
+
+Five active counts, nine active depths, and the terminal rational unit 16, which is √2^8. At the same closure the rational face is 32 × 16 = 512. The irrational face is 512√2 ≈ 724.077. The bridge is 720/512 = 45/32 = 1.40625.
+
+| Count | Pieces | Name |
+|---|---|---|
+| 0 | 1 | Floor |
+| 1 | 2 | Dual |
+| 2 | 4 | Quadrant |
+| 3 | 8 | Octant |
+| 4 | 16 | Hexadecant |
+| 5 | 32 | Closure |
+
+A physics quantity is a count of fused base units. Velocity and area are count 1. Momentum and acceleration are count 2. Energy, force, and pressure are count 3. Power and action are count 4. G is the closure, count 5.
+
+The clock is the step. The 32 bases are the domains at the closure, already loaded. Nothing is fetched. On a rise, each base adds 1 to its cycle and 128 to its stride. 128 is the count-4 reading. A byte is eight weights: 1, 2, 4, 8, 16, 32, 64, 128. Base *k* takes the byte plus *k*. The seat held on the tile is 512, as `4 × 128`. A pin's 720 column is that seat reading times `720 / 512`. The tile does not carry the 724.077 tail.
 
 ## On this tile
 
@@ -51,8 +98,9 @@ On that die, from the same clock:
 | Returned weight | The number beside the result: 1, 2, 8, or a larger power of two. Not one of the eight weights. |
 | Stride | The cycle count times 128. Cycle 4 is stride 512. |
 | Rung | One step of the stride. One rung is 4 on the seat, and 5.625°. |
-| Seat | 512. The cubic. Register r7 is held at 128. Register r14 is held at 4. `4 × 128 = 512`. |
-| 720 | The sphere. The seat times `720 / 512`. The same number, read in degrees. |
+| Seat | 512. The rational closure, 32 × 16. On the tile, r7 is 128 and r14 is 4. `4 × 128 = 512`. |
+| 720 | Machined as 5 × 9 × 16. On a pin, the seat reading times `720 / 512`. |
+| 724.077 | 512√2. The irrational face at depth 9. Not carried on the tile. |
 | Map | `ui[4:3]`. Which pins carry the bit. |
 | Hold | `ui[7:5]`. How many cycles the bit stays. Also called the count. |
 | Walk | The pin sequence for that map. UART, SPI, I2C, or a hook. |
@@ -109,7 +157,7 @@ The loads are the CPU, UART, SPI, I2C, and, on the hook, the memory, JTAG, Manch
 |---|---|
 | The register | Map, count, and byte. Raise `ui[0]` for one cycle on the memory pads. That stores them. After that the outputs follow the register. |
 | CPU 1.1 | One clock cycle. Base *k* gets the byte plus *k*. |
-| 512 and 720 | The same seat. r7 is 128. r14 is 4. `4 × 128 = 512`. The 720 reading is that number times `720 / 512`. |
+| 512 and 720 | 512 is 32 × 16, held as `4 × 128`. 720 is 5 × 9 × 16. A pin reads the seat times `720 / 512`. |
 
 | Field | Pins | Values |
 |---|---|---|
