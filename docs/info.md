@@ -1,6 +1,8 @@
 # ONE CPU 1.1 32
 
-Jane Street protocol-emulator ASIC. IHP CMOS5L, tile 8×4. The clock is 50 MHz. `ui[0]` sits low. Raise it for one cycle. That cycle is FIRE. The byte is already on the pins, and all 32 bases take it. Base *k* gets the byte plus *k*. Every cycle, on all 32, is the 1.6 GB/s. The line at count 1 is 100 Mbit/s, both edges. Four `512×32` macros. Two behind the bases hold a cycle each. Two in front hold the list.
+Jane Street protocol-emulator ASIC. IHP CMOS5L, tile 8×4. This tile is Nuijens Collapse Mechanics, Joshua Luke Nuijens, Axiom 1 Technology, LLC. The clock is the step. The 32 bases are already loaded. Nothing is fetched. The name is this framework. It is not structural collapse, and it is not a quantum wave-function model.
+
+The clock is 50 MHz. `ui[0]` sits low. Raise it for one cycle. That cycle is FIRE. The byte is already on the pins, and all 32 bases take it. Base *k* gets the byte plus *k*. Every cycle, on all 32, is the 1.6 GB/s. The line at count 1 is 100 Mbit/s, both edges. Four `512×32` macros. Two behind the bases hold a cycle each. Two in front hold the list.
 
 Jane Street asked for one part that can be used for more than one thing after fabrication. This one is. The register is the program: the map, the count, and the byte. No separate file is sent. The loads are the CPU, UART, SPI, I2C, and, on the hook, the memory, JTAG, Manchester, SWD, PS/2, a USB low-speed bit cell, and a CAN bit cell. Same clock, same FIRE, same 32 bases.
 
