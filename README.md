@@ -10,7 +10,7 @@ The demo is [this page](https://cdn.jsdelivr.net/gh/JLNuijens/ttihp-cpu-1-1-uart
 
 ## Nuijens Operational Collapse Mechanics
 
-This tile is that framework. Joshua Luke Nuijens, Axiom 1 Technology, LLC.
+This tile is that framework. Joshua Luke Nuijens, Axiom 1 Technology, LLC. The Jane Street protocol-emulator competition is the platform. These mechanics are what is on the tile.
 
 The operational counting, the mathematics, the physics, and the quantum mechanics are mapped into ONE. ONE is the Optimized Numeric Engine: the mapping of the physical mechanics of 1. √2 is the action. Count 1 makes two of the 1 that is already there. 1 is the singularity. The collapse is inward.
 
