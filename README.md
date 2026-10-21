@@ -12,7 +12,9 @@ The demo is [this page](https://cdn.jsdelivr.net/gh/JLNuijens/ttihp-cpu-1-1-uart
 
 This tile is that framework. Joshua Luke Nuijens, Axiom 1 Technology, LLC. The Jane Street protocol-emulator competition is the platform. These mechanics are what is on the tile.
 
-The operational counting, the mathematics, the physics, and the quantum mechanics are mapped into ONE. ONE is the Optimized Numeric Engine: the mapping of the physical mechanics of 1. √2 is the action. Count 1 makes two of the 1 that is already there. 1 is the singularity. The collapse is inward.
+It is a remapping of everything backwards. 1 is the largest. The collapse goes inward. √2 is the action. Count 1 makes two of the 1 that is already there.
+
+The counting, the mathematics, the physics, and the quantum mechanics are that same remap. They are mapped into ONE. ONE is the Optimized Numeric Engine: the mapping of the physical mechanics of 1.
 
 The clock is the step. The 32 bases are already loaded. Nothing is fetched. On a rise, each base adds 1 to its cycle and 128 to its stride. A byte is eight weights: 1, 2, 4, 8, 16, 32, 64, 128. Base *k* takes the byte plus *k*. The seat is 512, held as `4 × 128`. The 720 is that same seat in degrees.
 
@@ -35,7 +37,7 @@ On that die, from the same clock:
 
 | Word | What it is |
 |---|---|
-| Nuijens Operational Collapse Mechanics | This framework. The operational counting, mathematics, physics, and quantum mechanics, mapped into ONE. |
+| Nuijens Operational Collapse Mechanics | This framework. A remapping of everything backwards, mapped into ONE. |
 | ONE | The Optimized Numeric Engine. The mapping of the physical mechanics of 1. |
 | Cycle | One tick of the 50 MHz clock. 20 ns. |
 | FIRE | `ui[0]` high for one cycle, low the cycle before. That is the whole word. |
