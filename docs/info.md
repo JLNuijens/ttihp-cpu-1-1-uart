@@ -1,18 +1,27 @@
 # ONE CPU 1.1 32
 
-Jane Street protocol-emulator ASIC. IHP CMOS5L, tile 8×4. The competition is the platform. This tile is Nuijens Operational Collapse Mechanics, Joshua Luke Nuijens, Axiom 1 Technology, LLC. It is a remapping of everything backwards. 1 is the largest. The collapse goes inward. The counting, the mathematics, the physics, the units, and the quantum mechanics are that same remap. The rational closure is 512, which is 32 × 16. The 720 is machined as 5 × 9 × 16. The irrational face is 512√2 ≈ 724.077, and the tile does not carry that tail. A pin's 720 column is the seat reading times 720/512. The processor is universal and 100% hot. The clock is the power. The 32 bases are the domains at the closure, already loaded. Nothing is fetched.
+Jane Street protocol-emulator ASIC. Tiny Tapeout, IHP CMOS5L, tile 8×4. 1724 by 711 µm. Joshua Luke Nuijens / Axiom 1 Technology, LLC.
 
-The clock is 50 MHz. `ui[0]` sits low. Raise it for one cycle. That cycle is FIRE. The byte is already on the pins, and all 32 bases take it. Base *k* gets the byte plus *k*. Every cycle, on all 32, is the 1.6 GB/s. The line at count 1 is 100 Mbit/s, both edges. Four `512×32` macros. Two behind the bases hold a cycle each. Two in front hold the list.
+One clock, 50 MHz. Thirty-two copies of the same base. Every rise adds 1 to the cycle and 128 to the stride. That is 1.6 GB/s inside the tile. The eight output pins together are 400 Mbit/s. Nothing is fetched. There is no cache. `ui[0]` is a one-cycle strobe. The byte is on `uio[7:0]`. Base *k* takes the byte plus *k*. The low byte of the result is the byte that went in.
 
-Jane Street asked for one part that can be used for more than one thing after fabrication. This one is. The register is the program: the map, the count, and the byte. No separate file is sent. The loads are the CPU, UART, SPI, I2C, and, on the hook, the memory, JTAG, Manchester, SWD, PS/2, a USB low-speed bit cell, and a CAN bit cell. Same clock, same FIRE, same 32 bases.
-
-The words are in the README under "Words." FIRE is `ui[0]` high for one cycle. A base is one of the 32 copies. The stride is the cycle count times 128. The seat is 512. A walk is the pin sequence for the map. The hook is map `11`.
+113 machines were run, 185 cycles. Every byte came back as itself. The chip does not decode the instruction set. `ui[4:3]` picks UART, SPI, I2C, or the hook. `ui[7:5]` picks the bit time. UART at count 1 is 100 Mbit/s, both edges. The hook is JTAG, SWD, PS/2, Manchester, a USB low-speed bit, or a CAN bit.
 
 ## SRAM
 
-Two copies of `RM_IHPSG13_1P_512x32_c2_bm_bist` sit behind the bases. Both store a cycle. On FIRE the new cycle and the one before it are held. `uo[7:0]` is the low byte of the new one minus the one before it, on that same cycle. The second macro stores the new cycle. The first stores the one that was there. The clock is not set back. 256 of the 512 words are named by the pins. Two more sit in front and hold the list, 1,024 cells, 13 bits used in each. One of those two is on at a time.
+Four `RM_IHPSG13_1P_512x32_c2_bm_bist` macros. 512 words by 32 bits is the size of each block. It is not the width of the program.
 
-Map `11`, count `000`. `uio[7:0]` is the address. The upper address bit is held at 0, so 256 of 512 words are reachable. Both macros use that address. The first stores the cycle that was already there. The second stores the cycle at this FIRE. `uo[7:0]` is the low byte of the new cycle minus the one before it, taken on that FIRE.
+| Macro | Where | What it holds |
+|---|---|---|
+| 1 | Behind the bases | The cycle that was already there. 256 of 512 words. The address is `uio[7:0]`. |
+| 2 | Behind the bases | The cycle at this strobe. Same 256 addresses. |
+| 3 | In front | Steps 0 to 511. |
+| 4 | In front | Steps 512 to 1,023. |
+
+Macros 1 and 2 are not programmed. Map `11`, count `000`, strobe `ui[0]`. Macro 2 stores the cycle. Macro 1 stores the cycle that was there. `uo[7:0]` is the low byte of the new one minus the old one.
+
+Macros 3 and 4 are the program. 1,024 steps. A step is 13 of the 32 bits: map (2), count (3), byte (8). The other 19 are 0. Set the map, the count, and the byte first. Then set map `11`, count `000`, raise `ui[1]`, and strobe `ui[0]`. That writes the next step. A byte of `FF` does not write. It starts the list at step 0. The register that holds the current map, count, and byte is not these macros.
+
+The mechanics are below, after the pins. 1 is the largest. The collapse goes inward. The rational closure is 512, which is 32 × 16. The 720 is machined as 5 × 9 × 16. The irrational face is 512√2 ≈ 724.077, and the tile does not carry that tail.
 
 ## Pin layout
 
