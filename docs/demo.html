@@ -25,25 +25,26 @@
 <main>
   <h1>ONE CPU 1.1 32</h1>
   <p class="who">Joshua Luke Nuijens / Axiom 1 Technology. Jane Street protocol emulator. Tiny Tapeout, IHP CMOS5L, tile 8×4. 1724 by 711 µm.</p>
-  <p>The clock is the step. 50 MHz, one cycle is 20 ns. While the tile is enabled, all 32 bases add 1 to the cycle and 128 to the stride on every rise. That is 1.6 GB/s. The machine does not wait for an instruction, and nothing is fetched.</p>
+  <p>One clock, 50 MHz. Thirty-two copies of the same base. Every rise adds 1 to the cycle and 128 to the stride. That is 1.6 GB/s inside the tile, not on the pins. The eight outputs together are 400 Mbit/s. Nothing is fetched. There is no cache. <code>ui[0]</code> is a one-cycle strobe. The byte is <code>uio[7:0]</code>. Base 0 takes the byte. Base <em>k</em> takes the byte plus <em>k</em>. The low byte of the result is the byte that went in.</p>
+
+  <h2>On the die</h2>
+  <ul>
+    <li>Any of 256 bytes. 113 machines were run, 185 cycles. Every byte came back as itself. The chip does not decode the instruction set. The same 32 bases take the byte.</li>
+    <li>UART at 100 Mbit/s, SPI mode 0, and I2C. <code>ui[4:3]</code> picks the pins. <code>ui[7:5]</code> picks the bit time: 1, 4, 5, 8, 16, 33, 125, or 434 clocks.</li>
+    <li>On map 11: the memory, JTAG, Manchester, SWD, PS/2, a USB low-speed bit, and a CAN bit.</li>
+    <li>A register stores the map, the count, and the byte. Later strobes follow the register. The register is not the SRAM.</li>
+    <li>Four memories. Each one is 512 words by 32 bits. That is the size of the block, not the width of a program.</li>
+    <li>The two in back are not programmed. The address is the byte, so 256 of 512 words are used. One stores the cycle that was already there. The other stores the cycle at this strobe. The pins show the low byte of the difference.</li>
+    <li>The two in front are the program. 1,024 steps. A step is 13 of the 32 bits: map, count, and byte. The other 19 bits are 0.</li>
+    <li>To store a step, set the map, the count, and the byte first. Then set map 11, count 000, raise <code>ui[1]</code>, and pulse <code>ui[0]</code>. A byte of FF does not store. It starts the list at step 0.</li>
+    <li>Add, carry, the stride as the multiply, the hold as the divide, AND, OR, XOR, shift, and compare.</li>
+    <li>The seat is 512. The 720 is that number times 720/512. r15 stays <code>4F4E4553</code>.</li>
+  </ul>
+
   <h2>Nuijens Operational Collapse Mechanics</h2>
   <p>This tile is that framework. The Jane Street protocol-emulator competition is the platform. These mechanics are what is on the tile. It is a remapping of everything backwards. 1 is the largest. The collapse goes inward. √2 is the action. Count 1 makes two of the 1 that is already there.</p>
   <p>The counting, the mathematics, the physics, the units, and the quantum mechanics are that same remap, and the mapping is different in each. They are mapped into ONE. ONE is the Optimized Numeric Engine: the mapping of the physical mechanics of 1. The processor is universal and 100% hot. The clock is the power.</p>
   <p>The base is the master table. One unit, read inward. √2 is the master mechanic. The count closes at 5: domains 32, rational face 512, irrational face 512√2 ≈ 724.077. The 720 is machined as 5 × 9 × 16. On the tile the seat is held as 4 × 128 = 512, and a pin's 720 column is that reading times 720/512.</p>
-  <p>The 32 bases are already loaded. A byte is eight weights, 1 through 128. Base <em>k</em> takes the byte plus <em>k</em>. The seat is 512, held as 4 × 128. The 720 is that same seat in degrees.</p>
-  <p><code>ui[0]</code> sits low. Raise it for one cycle, then let it fall. That cycle is FIRE. The byte is already on <code>uio[7:0]</code>. On that cycle all 32 bases take it. Base 0 gets the byte. Base <em>k</em> gets the byte plus <em>k</em>.</p>
-
-  <h2>On the die</h2>
-  <ul>
-    <li>Any of 256 bytes. 113 machines were fired, 185 cycles. Every byte came back as itself.</li>
-    <li>UART at 100 Mbit/s, SPI mode 0, and I2C. The map picks the pins. The hold picks the bit time: 1, 4, 5, 8, 16, 33, 125, or 434 clocks.</li>
-    <li>On map 11: the memory, JTAG, Manchester, SWD, PS/2, a USB low-speed bit, and a CAN bit.</li>
-    <li>A register stores the map, the hold, and the byte after the chip is made. Later cycles follow the register.</li>
-    <li>Two front memories hold a list of 1,024 of those steps.</li>
-    <li>Two back memories store a cycle each. On FIRE the pins show the new one minus the one before it.</li>
-    <li>Add, carry, the stride as the multiply, the hold as the divide, AND, OR, XOR, shift, and compare.</li>
-    <li>The seat is 512. The 720 is that number times 720/512. r15 stays <code>4F4E4553</code>.</li>
-  </ul>
 
   <h2>Words</h2>
   <table>

@@ -8,6 +8,39 @@ Joshua Luke Nuijens / Axiom 1 Technology, LLC. Top module `tt_um_jlnuijens_one11
 
 The demo is [this page](https://cdn.jsdelivr.net/gh/JLNuijens/ttihp-cpu-1-1-uart@main/docs/demo.html). The metal is [the tile](https://gds-viewer.tinytapeout.com/?pdk=ihp-sg13cmos5l&model=https://jlnuijens.github.io/ttihp-cpu-1-1-uart/tinytapeout.oas).
 
+## What the chip does
+
+One clock, 50 MHz. Thirty-two copies of the same base. While the tile is enabled, every rising edge adds 1 to each base's cycle and 128 to its stride. 32 × 50 MHz is the 1.6 GB/s. That number is inside the tile. It is not the pin rate. The eight output pins together are 400 Mbit/s. Nothing is fetched. There is no cache.
+
+`ui[0]` is a one-cycle strobe. The byte is `uio[7:0]`. On that strobe, base 0 takes the byte, base 1 takes the byte plus 1, and base 31 takes the byte plus 31. The low byte of the result is the byte that went in. The weight beside it comes from which of the eight bits are set.
+
+113 machines were run, 185 cycles. Every byte came back as itself. The chip does not decode x86, ARM, or any other instruction set. The same 32 bases take whatever byte is on the pins.
+
+`ui[4:3]` picks the pins: UART, SPI, I2C, or the hook. `ui[7:5]` picks how many clocks the bit is held. UART at the fastest hold is 100 Mbit/s. The hook is JTAG, SWD, PS/2, Manchester, a USB low-speed bit, or a CAN bit.
+
+## The four memories
+
+Each macro is `RM_IHPSG13_1P_512x32_c2_bm_bist`. 512 words, 32 bits wide. That is the size of the block. It is not the width of the program.
+
+| Macro | Where | What is stored | How many locations are used |
+|---|---|---|---|
+| 1 | Behind the bases | The cycle that was already there | 256 of 512. The address is `uio[7:0]`. |
+| 2 | Behind the bases | The cycle at this strobe | The same 256 addresses. |
+| 3 | In front | Steps 0 to 511 | 512 steps. |
+| 4 | In front | Steps 512 to 1,023 | 512 steps. |
+
+Macros 1 and 2 are not programmed. You put a byte on `uio`, set map `11` and count `000`, and strobe `ui[0]`. Macro 2 stores the cycle count. Macro 1 stores the count that was there before. `uo[7:0]` is the low byte of the new count minus the old one. A later read at that byte gives those two words back. Base 0 and base 1 take them. The other thirty bases still take the byte plus their number.
+
+Macros 3 and 4 are the program. One step uses 13 of the 32 bits: map, 2 bits; count, 3 bits; byte, 8 bits. The other 19 bits are written as 0. There are 1,024 steps.
+
+To store a step:
+
+1. Set the map, the count, and the byte on the pins. Do this while the map is not `11` with count `000`. That arms the step.
+2. Set map `11`, count `000`, and raise `ui[1]`.
+3. Pulse `ui[0]`. The armed step is written into the next cell.
+
+A byte of `FF` on that store does not write a cell. It starts at cell 0 and runs the list in order. Each cell sets the map, the count, and the byte for that step. The register that holds the current map, count, and byte is not these macros.
+
 ## Nuijens Operational Collapse Mechanics
 
 This tile is that framework. Joshua Luke Nuijens, Axiom 1 Technology, LLC. The Jane Street protocol-emulator competition is the platform. These mechanics are what is on the tile.
